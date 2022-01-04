@@ -11,6 +11,7 @@
     "serve": "^13.0.2"
   },
   "workspaces": [
-    "packages/virtual-background"
+    "packages/virtual-background",
+    "packages/noise-suppression"
   ]
 }
