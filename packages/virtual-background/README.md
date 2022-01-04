@@ -52,13 +52,12 @@ selfie_segmentation_landscape.tflite selfie_segmentation_solution_wasm_bin.wasm
 ミニマムな使用例は以下のようになります:
 ```html
 <script>
-    const assetsPath = "/path/to/assets/";
     const options = {blurRadius: 15};  // 背景ぼかし
 
     let processor;
     navigator.mediaDevices.getUserMedia({video: true}).then((stream) => {
         const track = stream.getVideoTracks()[0];
-        processor = new window.Shiguredo.VirtualBackgroundProcessor(track, assetsPath, options);
+        processor = new window.Shiguredo.VirtualBackgroundProcessor(track, options);
 
         // 仮想背景処理開始
         processor.startProcessing().then((processed_track) => {
@@ -73,7 +72,7 @@ selfie_segmentation_landscape.tflite selfie_segmentation_solution_wasm_bin.wasm
 </script>
 ```
 
-実際に動くデモは TODO (GitHub Pagesへのリンク?) で見ることができます。
+TODO: デモページへのリンクを貼る
 
 
 サポートブラウザ
