@@ -10,9 +10,9 @@
     "fmt": "prettier --write src"
   },
   "dependencies": {
-    "@mediapipe/selfie_segmentation": "^0.1.1632777926"
   },
   "devDependencies": {
+    "@mediapipe/selfie_segmentation": "^0.1.1632777926",
     "@rollup/plugin-commonjs": "^21.0.1",
     "@rollup/plugin-node-resolve": "^13.0.6",
     "@rollup/plugin-typescript": "^8.3.0",
