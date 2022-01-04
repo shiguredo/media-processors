@@ -1,0 +1,33 @@
+name: test
+
+on:
+  push:
+    paths-ignore:
+      - '**.md'
+      - 'LICENSE'
+      - 'NOTICE'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node: ['16']
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+      - run: npm --version
+      - run: npm install
+      - run: npm run build
+      - run: npm run lint
+      - name: Slack Notification
+        if: failure()
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_CHANNEL: media-processors
+          SLACK_COLOR: danger
+          SLACK_TITLE: Failure test
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}

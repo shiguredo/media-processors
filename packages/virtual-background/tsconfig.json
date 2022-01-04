@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "lib": ["es2015", "dom"],
+    "target": "esnext",
+    "module": "commonjs",
+    "outDir": "dist",
+    "strict": true,
+    "declaration": true,
+    "strictNullChecks": true,
+    "importHelpers": true,
+    "experimentalDecorators": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "newLine": "LF",
+  },
+  "include": [
+    "src"
+  ]
+}
