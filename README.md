@@ -1,4 +1,4 @@
-# media-processors
+# Media Processors
 
 仮想背景やノイズ抑制といったメディア処理をブラウザで簡単に行えるようにするためのライブラリです。
 
