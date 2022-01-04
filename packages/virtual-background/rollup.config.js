@@ -4,6 +4,7 @@ import typescript from '@rollup/plugin-typescript';
 import pkg from './package.json';
 import commonjs from '@rollup/plugin-commonjs';
 import resolve from '@rollup/plugin-node-resolve';
+import copy from 'rollup-plugin-copy';
 
 const banner = `/**
  * ${pkg.name}
@@ -22,6 +23,16 @@ export default [
       commonjs(),
       resolve(),
       mediapipe_workaround(),
+      copy({
+        targets: [{
+          src: [
+            '../../node_modules/@mediapipe/*.wasm',
+            '../../node_modules/@mediapipe/*.tflite',
+            '../../node_modules/@mediapipe/*wasm_bin.js'
+          ],
+          dest: 'dist/'
+        }]
+      })
     ],
     output: {
       sourcemap: false,
