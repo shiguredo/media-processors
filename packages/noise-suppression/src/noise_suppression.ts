@@ -30,7 +30,7 @@ class NoiseSuppressionProcessor {
       throw Error("NoiseSuppressionProcessor has already been started.");
     }
 
-    this.rnnoise = await Rnnoise.load({ assetsPath: this.options.assetsPath });
+    this.rnnoise = await Rnnoise.load({ assetsPath: this.options.assetsPath || "." });
     this.buffer = new Float32Array(this.rnnoise.frameSize);
 
     this.abortController = new AbortController();

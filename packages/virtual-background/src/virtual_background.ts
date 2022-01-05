@@ -42,12 +42,10 @@ class VirtualBackgroundProcessor {
 
     // セグメンテーションモデルの初期化
     const config: SelfieSegmentationConfig = {};
-    const assetsPath = options.assetsPath;
-    if (assetsPath !== undefined) {
-      config.locateFile = (file: string) => {
-        return `${assetsPath}/${file}`;
-      };
-    }
+    const assetsPath = options.assetsPath || ".";
+    config.locateFile = (file: string) => {
+      return `${assetsPath}/${file}`;
+    };
     this.segmentation = new SelfieSegmentation(config);
     let modelSelection = 1; // `1` means "landscape".
     if (options.selfieSegmentationOptions && options.selfieSegmentationOptions.modelType === "general") {
@@ -128,11 +126,15 @@ class VirtualBackgroundProcessor {
     this.canvasCtx.globalCompositeOperation = "source-in";
     this.canvasCtx.drawImage(segmentationResults.image, 0, 0, this.canvas.width, this.canvas.height);
 
-    this.canvasCtx.globalCompositeOperation = "destination-atop";
-
     if (this.options.blurRadius !== undefined) {
       this.canvasCtx.filter = `blur(${this.options.blurRadius}px)`;
     }
+
+    // NOTE: mediapipeの例 (https://google.github.io/mediapipe/solutions/selfie_segmentation.html) では、
+    //       "destination-atop"が使われているけれど、背景画像にアルファチャンネルが含まれている場合には、
+    //       "destination-atop"だと透過部分と人物が重なる領域が除去されてしまうので、
+    //       "destination-over"にしている。
+    this.canvasCtx.globalCompositeOperation = "destination-over";
     if (this.options.backgroundImage !== undefined) {
       this.canvasCtx.drawImage(this.options.backgroundImage, 0, 0, this.canvas.width, this.canvas.height);
     } else {
