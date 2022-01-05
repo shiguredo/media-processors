@@ -26,9 +26,9 @@ export default [
       copy({
         targets: [{
           src: [
-            '../../node_modules/@mediapipe/*.wasm',
-            '../../node_modules/@mediapipe/*.tflite',
-            '../../node_modules/@mediapipe/*wasm_bin.js'
+            '../../node_modules/@mediapipe/selfie_segmentation/*.wasm',
+            '../../node_modules/@mediapipe/selfie_segmentation/*.tflite',
+            '../../node_modules/@mediapipe/selfie_segmentation/*wasm_bin.js'
           ],
           dest: 'dist/'
         }]
