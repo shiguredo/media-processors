@@ -14,8 +14,8 @@ Please read https://github.com/shiguredo/oss/blob/master/README.en.md before use
 
 ## 方針
 
-- 動作するブラウザは最新の Chrome または Edge のみです
-    - それ以外のブラウザでは動作しません
+- 動作するブラウザは最新の Chrome または Edge のみです。それ以外のブラウザでは動作しません
+    - iOS の Chrome や Edge では動作しません
 
 ## 機能
 
@@ -38,6 +38,22 @@ GitHub Pages にサンプルを用意しています。完全にクライアン�
 - 露出補正
 - ホワイトバランス編集
 - エコーキャンセル
+
+## サポートについて
+
+### Discord
+
+- サポートしません
+- アドバイスします
+- フィードバック歓迎します
+
+最新の状況などは Discord で共有しています。質問や相談も Discord でのみ受け付けています。
+
+https://discord.gg/shiguredo
+
+### バグ報告
+
+Discord へお願いします。
 
 ## ライセンス
 
