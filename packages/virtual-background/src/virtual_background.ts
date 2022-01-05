@@ -42,12 +42,10 @@ class VirtualBackgroundProcessor {
 
     // セグメンテーションモデルの初期化
     const config: SelfieSegmentationConfig = {};
-    const assetsPath = options.assetsPath;
-    if (assetsPath !== undefined) {
-      config.locateFile = (file: string) => {
-        return `${assetsPath}/${file}`;
-      };
-    }
+    const assetsPath = options.assetsPath || ".";
+    config.locateFile = (file: string) => {
+      return `${assetsPath}/${file}`;
+    };
     this.segmentation = new SelfieSegmentation(config);
     let modelSelection = 1; // `1` means "landscape".
     if (options.selfieSegmentationOptions && options.selfieSegmentationOptions.modelType === "general") {
