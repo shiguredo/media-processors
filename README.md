@@ -26,12 +26,10 @@ Please read https://github.com/shiguredo/oss/blob/master/README.en.md before use
 
 GitHub Pages にサンプルを用意しています。完全にクライアントでのみ動作します。
 
-- 仮想背景 / 背景ぼかし
-    - https://shiguredo.github.io/media-processors/examples/virtual-background.html
-- ノイズ抑制
-    - https://shiguredo.github.io/media-processors/examples/noise-suppression.html
+- [仮想背景 / 背景ぼかし](https://shiguredo.github.io/media-processors/examples/virtual-background.html)
+- [ノイズ抑制](https://shiguredo.github.io/media-processors/examples/noise-suppression.html)
 
-## 今後の予定
+## 今後
 
 **予定は未定です**
 
