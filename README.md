@@ -12,12 +12,24 @@ Please read https://github.com/shiguredo/oss/blob/master/README.en.md before use
 
 利用前に https://github.com/shiguredo/oss をお読みください。
 
+## 方針
+
+- 動作するブラウザは最新の Chrome または Edge のみです
+    - それ以外のブラウザでは動作しません
+
 ## 機能
 
+- [仮想背景 / 背景ぼかし](https://github.com/shiguredo/media-processors/tree/develop/packages/virtual-background)
+- [ノイズ抑制](https://github.com/shiguredo/media-processors/tree/develop/packages/noise-suppression)
+
+## サンプル
+
+GitHub Pages にサンプルを用意しています。完全にクライアントでのみ動作します。
+
 - 仮想背景 / 背景ぼかし
-    - https://github.com/shiguredo/media-processors/tree/develop/packages/virtual-background
+    - https://shiguredo.github.io/media-processors/examples/virtual-background.html
 - ノイズ抑制
-    - https://github.com/shiguredo/media-processors/tree/develop/packages/noise-suppression
+    - https://shiguredo.github.io/media-processors/examples/noise-suppression.html
 
 ## 今後の予定
 
