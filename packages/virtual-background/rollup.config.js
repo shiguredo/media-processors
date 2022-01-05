@@ -28,6 +28,7 @@ export default [
           src: [
             '../../node_modules/@mediapipe/selfie_segmentation/*.wasm',
             '../../node_modules/@mediapipe/selfie_segmentation/*.tflite',
+            '../../node_modules/@mediapipe/selfie_segmentation/*.binarypb',
             '../../node_modules/@mediapipe/selfie_segmentation/*wasm_bin.js'
           ],
           dest: 'dist/'
