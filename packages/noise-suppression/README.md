@@ -1,65 +1,44 @@
-@shiguredo/noise-suppression
-============================
+# @shiguredo/noise-suppression
 
-JavaScript/TypeScriptでノイズ低減機能を実現するためのライブラリです。
+JavaScript/TypeScriptでノイズ抑制機能を実現するためのライブラリです。
 
 雑音を抑制して、人の音声を聞き取りやすくすることができます。
 
-なお、内部では[RNNoise](https://jmvalin.ca/demo/rnnoise/)を利用してノイズ低減を実現しています。
+なお、ノイズ抑制部分には [shiguredo/rnnoise-wasm](https://github.com/shiguredo/rnnoise-wasm) を使用しています。
 
-インストールと使用例
---------------------
+## 使い方
 
-### JavaScript/TypeScriptから利用する場合
+### ブラウザから利用する場合
 
-TODO: まだNPMに未登録なので以下は動作しない。
-
-以下のコマンドでインストールが可能です:
-```
-npm install @shiguredo/noise-suppression --save
-```
-
-コードでは、以下のようにimportしてください:
-```typescript
-import {NoiseSuppressionProcessor} from '@shiguredo/noise-suppression';
-```
-
-### HTML(scriptタグ)で利用する場合
-
-最初に[media-processor](../../)リポジトリのルートに移動して、プロジェクトをビルドする必要があります:
-```console
-$ git clone https://github.com/shiguredo/media-processors-private
-$ cd media-processors-private/
-$ npm install
-$ npm run build
-
-
-// 以下のディレクトリに、ビルド後のJavaScriptと必要なアセットが配置されています
-// ※`assets/`ディレクトリは、今は存在しない（こんな感じになるかな、というイメージを書いているだけ）
-$ ls packages/noise-suppression/dist/
-noise_suppression.js
-
-$ ls packages/noise-suppression/assets/
-rnnoise.wasm rnnoise-simd.wasm
-```
-
-ビルドが完了したら、以下のように以下のようにscriptタグから読み込んで使用することができます:
+まずは script タグで JavaScript ファイルを読み込みます:
 ```html
-<script src="path/to/noise_suppression.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@shiguredo/noise-suppression@latest/dist/noise_suppression.js"></script>
 ```
 
-ミニマムな使用例は以下のようになります:
+ノイズ抑制を行うコードは、以下のようになります:
 ```html
 <script>
-    let processor;
-    navigator.mediaDevices.getUserMedia({audio: true}).then((stream) => {
-        const track = stream.getAudioTracks()[0];
-        processor = new window.Shiguredo.NoiseSuppressionProcessor(track);
+    // wasm ファイルの配置先
+    const options = {
+        assetsPath: "https://cdn.jsdelivr.net/npm/@shiguredo/noise-suppression@latest/dist/"
+    };
 
-        // ノイズ低減処理開始
+    // RNNoiseの推奨設定
+    const constraints = {
+        sampleRate: {ideal: 48000},
+        sampleSize: {ideal: 480},
+        channelCount: {exact: 1}
+    }
+
+    let processor;
+    navigator.mediaDevices.getUserMedia({audio: constraints}).then((stream) => {
+        const track = stream.getAudioTracks()[0];
+        processor = new Shiguredo.VirtualBackgroundProcessor(track, options);
+
+        // ノイズ抑制処理開始
         processor.startProcessing().then((processed_track) => {
-            // 処理後の`MediaStreamTrack`が得られたので、適当な処理を行う
-            ...
+            const audioElement = document.getElementById("outputAudio"); // 音声の出力先を取得
+            audioElement.srcObject = new MediaStream([processed_track]);
         });
     });
     ...
@@ -69,10 +48,57 @@ rnnoise.wasm rnnoise-simd.wasm
 </script>
 ```
 
-TODO: デモページへのリンクを貼る
+実際の動作は[デモページ](https://shiguredo.github.io/media-processors/examples/noise-suppression.html)（
+[ソースコード](https://github.com/shiguredo/media-processors/blob/develop/examples/noise-suppression.html)）で確認できます。
 
+### JavaScript/TypeScript から利用する場合
 
-サポートブラウザ
-----------------
+以下のコマンドでパッケージがインストールできます:
+```
+$ npm install --save @shiguredo/noise-suppression
+```
 
-TODO: 使っている機能とか想定ブラウザ（e.g., Chrome）を書く。
+TypeScript での使用方法は次のようになります:
+```typescript
+import { NoiseSuppressionProcessor } from "@shiguredo/noise-suppression";
+
+const processor = NoiseSuppressionProcessr(original_audio_track);
+const processed_audio_track = await processor.startProcessing();
+
+...
+
+processor.stopProcessing();
+```
+
+## サポートブラウザ
+
+本ライブラリは MediaStreamTrack Insertable Streams (aka Breakout Box) というブラウザの機能を利用しています。
+そのため2022年1月現在では、ChromeやEdge等のChromiumベースのブラウザでのみ動作します。
+
+## ライセンス
+
+[Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0)
+
+```
+Copyright 2022-2022, Takeru Ohta (Original Author)
+Copyright 2022-2022, Shiguredo Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+```
+
+npm パッケージに同梱されている以下のファイルのライセンスについては
+[rnnoise/COPYING](https://github.com/shiguredo/rnnoise/) を参照してください:
+```
+- rnnoise.wasm
+- rnnoise-simd.wasm
+```
