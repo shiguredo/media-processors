@@ -4,17 +4,46 @@ import {
   Results as SelfieSegmentationResults,
 } from "@mediapipe/selfie_segmentation";
 
-interface SelfieSegmentationOptions {
-  modelType?: "landscape" | "general";
-}
-
+/**
+ * {@link VirtualBackgroundProcessor} に指定可能なオプション
+ */
 interface VirtualBackgroundProcessorOptions {
+  /**
+   * wasm 等のファイルの配置先ディレクトリパスないしURL
+   *
+   * デフォルトでは、カレントディレクトリが使用されます
+   */
   assetsPath?: string;
+
+  /**
+   * 仮想背景に使用する画像
+   *
+   * 省略された場合には、元々の背景が使用されます
+   */
   backgroundImage?: CanvasImageSourceWebCodecs;
+
+  /**
+   * 背景ぼかし効果の半径（pixel）
+   *
+   * 値が大きいほど、ぼかしが強くなります。
+   * デフォルトではぼかしは無効で、これは値として0を指定した場合の挙動と等しいです。
+   */
   blurRadius?: number;
-  selfieSegmentationOptions?: SelfieSegmentationOptions;
+
+  /**
+   * セグメンテーションに使用するモデル
+   *
+   * デフォルトでは"selfie-landscape"が使用されます。
+   * それぞれのモデルの詳細については
+   * [MediaPipe Selfie Segmentation](https://google.github.io/mediapipe/solutions/selfie_segmentation.html)
+   * を参照してください。
+   */
+  segmentationModel?: "selfie-landscape" | "selfie-general";
 }
 
+/**
+ * 映像トラックに仮想背景処理を適用するためのプロセッサ
+ */
 class VirtualBackgroundProcessor {
   private options: VirtualBackgroundProcessorOptions;
   private track: MediaStreamVideoTrack;
@@ -23,6 +52,15 @@ class VirtualBackgroundProcessor {
   private segmentation: SelfieSegmentation;
   private abortController?: AbortController;
 
+  /**
+   * {@link VirtualBackgroundProcessor} インスタンスを生成します
+   *
+   * {@link VirtualBackgroundProcessor.startProcessing} メソッドが呼び出されるまでは、
+   * 処理は開始されません
+   *
+   * @param track 処理適用対象となる映像トラック
+   * @param options 各種オプション
+   */
   constructor(track: MediaStreamVideoTrack, options: VirtualBackgroundProcessorOptions = {}) {
     this.options = options;
     this.track = track;
@@ -47,8 +85,8 @@ class VirtualBackgroundProcessor {
       return `${assetsPath}/${file}`;
     };
     this.segmentation = new SelfieSegmentation(config);
-    let modelSelection = 1; // `1` means "landscape".
-    if (options.selfieSegmentationOptions && options.selfieSegmentationOptions.modelType === "general") {
+    let modelSelection = 1; // `1` means "selfie-landscape".
+    if (options.segmentationModel && options.segmentationModel === "selfie-general") {
       modelSelection = 0;
     }
     this.segmentation.setOptions({
@@ -59,10 +97,22 @@ class VirtualBackgroundProcessor {
     });
   }
 
+  /**
+   * 実行環境が必要な機能をサポートしているかどうかを判定します
+   *
+   * "MediaStreamTrack Insertable Streams"が利用可能である必要があります
+   *
+   * @returns サポートされているかどうか
+   */
   static isSupported(): boolean {
     return !(typeof MediaStreamTrackProcessor === "undefined" || typeof MediaStreamTrackGenerator === "undefined");
   }
 
+  /**
+   * 仮想背景処理の適用を開始します
+   *
+   * @returns 処理適用後の映像トラック
+   */
   startProcessing(): Promise<MediaStreamTrack> {
     this.abortController = new AbortController();
     const signal = this.abortController.signal;
@@ -97,6 +147,12 @@ class VirtualBackgroundProcessor {
     return Promise.resolve(generator);
   }
 
+  /**
+   * 仮想背景処理の適用を停止します
+   *
+   * コンストラクタに渡された映像トラックは閉じないので、
+   * 必要であれば、別途呼び出し側で対処する必要があります
+   */
   stopProcessing() {
     if (this.abortController !== undefined) {
       this.abortController.abort();
@@ -145,4 +201,4 @@ class VirtualBackgroundProcessor {
   }
 }
 
-export { VirtualBackgroundProcessorOptions, VirtualBackgroundProcessor, SelfieSegmentationOptions };
+export { VirtualBackgroundProcessorOptions, VirtualBackgroundProcessor };
