@@ -1,0 +1,10 @@
+{
+  "entryPoints": ["src/noise_suppression.ts"],
+  "tsconfig": "./tsconfig.json",
+  "disableSources": true,
+  "excludePrivate": true,
+  "excludeProtected": true,
+  "excludeInternal": true,
+  "readme": "./README.md",
+  "out": "apidoc"
+}

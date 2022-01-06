@@ -1,9 +1,20 @@
 import { Rnnoise } from "@shiguredo/rnnoise-wasm";
 
+/**
+ * {@link NoiseSuppressionProcessor} に指定可能なオプション
+ */
 interface NoiseSuppressionProcessorOptions {
+  /**
+   * wasm ファイルの配置先ディレクトリパスないしURL
+   *
+   * デフォルトでは、カレントディレクトリが使用されます
+   */
   assetsPath?: string;
 }
 
+/**
+ * 音声トラックにノイズ抑制処理を適用するためのプロセッサ
+ */
 class NoiseSuppressionProcessor {
   private rnnoise?: Rnnoise;
   private track: MediaStreamAudioTrack;
@@ -13,6 +24,23 @@ class NoiseSuppressionProcessor {
   private bufferFrameCount: number;
   private nextTimestamp: number;
 
+  /**
+   * {@link NoiseSuppressionProcessor}インスタンスを生成します
+   *
+   * {@link NoiseSuppressionProcessor.startProcessing}メソッドが呼び出されるまでは、
+   * ノイズ抑制処理は適用されません
+   *
+   * @param track 処理適用対象となる音声トラック
+   * @param options 各種オプション
+   *
+   * @remarks
+   * ノイズ抑制用に利用しているRNNoiseというライブラリが、音声フォーマットとして、
+   * サンプリングレートに48kHz、一フレーム辺りのサンプル数に480を想定しているため、
+   * 可能であれば、入力音声をこのフォーマットに合わせて設定することを推奨します。
+   *
+   * また、現時点ではモノラルのみの対応となっており、複数チャンネルを含む音声トラックの場合には、
+   * 実行時にエラーが送出されます。
+   */
   constructor(track: MediaStreamAudioTrack, options: NoiseSuppressionProcessorOptions = {}) {
     this.track = track;
     this.options = options;
@@ -21,10 +49,22 @@ class NoiseSuppressionProcessor {
     this.nextTimestamp = 0;
   }
 
+  /**
+   * 実行環境が必要な機能をサポートしているかどうかを判定します
+   *
+   * "MediaStreamTrack Insertable Streams"が利用可能である必要があります
+   *
+   * @returns サポートされているかどうか
+   */
   static isSupported(): boolean {
     return !(typeof MediaStreamTrackProcessor === "undefined" || typeof MediaStreamTrackGenerator === "undefined");
   }
 
+  /**
+   * ノイズ抑制処理の適用を開始します
+   *
+   * @returns 処理適用後の音声トラック
+   */
   async startProcessing(): Promise<MediaStreamTrack> {
     if (this.rnnoise !== undefined) {
       throw Error("NoiseSuppressionProcessor has already been started.");
@@ -65,6 +105,12 @@ class NoiseSuppressionProcessor {
     return Promise.resolve(generator);
   }
 
+  /**
+   * ノイズ抑制処理の適用を停止します
+   *
+   * コンストラクタに渡された音声トラックは閉じないので、
+   * 必要であれば、別途呼び出し側で対処する必要があります
+   */
   stopProcessing() {
     if (this.abortController !== undefined) {
       this.abortController.abort();
