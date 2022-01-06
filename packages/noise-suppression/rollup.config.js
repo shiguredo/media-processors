@@ -2,6 +2,7 @@ import typescript from '@rollup/plugin-typescript';
 import pkg from './package.json';
 import commonjs from '@rollup/plugin-commonjs';
 import resolve from '@rollup/plugin-node-resolve';
+import copy from 'rollup-plugin-copy';
 
 const banner = `/**
  * ${pkg.name}
@@ -18,7 +19,13 @@ export default [
     plugins: [
       typescript({module: "esnext"}),
       commonjs(),
-      resolve()
+      resolve(),
+      copy({
+        targets: [{
+          src: '../../node_modules/@shiguredo/rnnoise-wasm/dist/*.wasm',
+          dest: 'dist/'
+        }]
+      })
     ],
     output: {
       sourcemap: false,

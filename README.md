@@ -12,6 +12,49 @@ Please read https://github.com/shiguredo/oss/blob/master/README.en.md before use
 
 利用前に https://github.com/shiguredo/oss をお読みください。
 
+## 方針
+
+- 動作するブラウザは最新の Chrome または Edge のみです。それ以外のブラウザでは動作しません
+    - iOS の Chrome や Edge では動作しません
+
+## 機能
+
+- [仮想背景 / 背景ぼかし](https://github.com/shiguredo/media-processors/tree/develop/packages/virtual-background)
+- [ノイズ抑制](https://github.com/shiguredo/media-processors/tree/develop/packages/noise-suppression)
+
+## サンプル
+
+GitHub Pages にサンプルを用意しています。完全にクライアントでのみ動作します。
+
+- [仮想背景 / 背景ぼかし](https://shiguredo.github.io/media-processors/examples/virtual-background.html)
+- [ノイズ抑制](https://shiguredo.github.io/media-processors/examples/noise-suppression.html)
+
+## 今後
+
+**予定は未定です**
+
+- フェイスフレーミング
+- ノイズ抑制プラグイン機能
+- 露出補正
+- ホワイトバランス編集
+- エコーキャンセル
+
+## サポートについて
+
+### Discord
+
+- サポートしません
+- アドバイスします
+- フィードバック歓迎します
+
+最新の状況などは Discord で共有しています。質問や相談も Discord でのみ受け付けています。
+
+https://discord.gg/shiguredo
+
+### バグ報告
+
+Discord へお願いします。
+
 ## ライセンス
 
 [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0)
