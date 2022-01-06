@@ -44,6 +44,23 @@ export default [
       banner: banner,
     }
   },
+  {
+    input: 'src/virtual_background.ts',
+    plugins: [
+      typescript({module: "esnext"}),
+      commonjs(),
+      resolve(),
+      mediapipe_workaround()
+    ],
+    output: {
+      sourcemap: false,
+      file: './dist/virtual_background.mjs',
+      format: 'module',
+      name: 'Shiguredo',
+      extend: true,
+      banner: banner,
+    }
+  },
 ];
 
 // https://github.com/google/mediapipe/issues/2883 が本家で対応されるまでのワークアラウンド

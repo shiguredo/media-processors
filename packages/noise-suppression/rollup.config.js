@@ -36,4 +36,20 @@ export default [
       banner: banner,
     }
   },
+  {
+    input: 'src/noise_suppression.ts',
+    plugins: [
+      typescript({module: "esnext"}),
+      commonjs(),
+      resolve()
+    ],
+    output: {
+      sourcemap: false,
+      file: './dist/noise_suppression.mjs',
+      format: 'module',
+      name: 'Shiguredo',
+      extend: true,
+      banner: banner,
+    }
+  },
 ];

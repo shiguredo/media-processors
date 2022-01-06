@@ -1,15 +1,32 @@
 {
   "name": "@shiguredo/noise-suppression",
-  "version": "0.0.0",
+  "version": "2022.1.0",
   "description": "Noise Suppression Library",
   "author": "Shiguredo Inc.",
   "license": "Apache-2.0",
+  "main": "dist/noise_suppression.js",
+  "module": "dist/noise_suppression.mjs",
+  "types": "dist/noise_suppression.d.ts",
   "scripts": {
-    "build": "rollup -c ./rollup.config.js",
+    "build": "rollup -c ./rollup.config.js && tsc --emitDeclarationOnly",
     "lint": "eslint --ext .ts ./src",
     "fmt": "prettier --write src",
     "doc": "typedoc"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/shiguredo/media-processors.git"
+  },
+  "keywords": [
+    "noise-suppression"
+  ],
+  "bugs": {
+    "url": "https://discord.gg/shiguredo"
+  },
+  "homepage": "https://github.com/shiguredo/media-processors#readme",
+  "files": [
+    "dist"
+  ],
   "devDependencies": {
     "@rollup/plugin-commonjs": "^21.0.1",
     "@rollup/plugin-node-resolve": "^13.1.1",
