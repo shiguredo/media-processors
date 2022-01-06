@@ -5,6 +5,7 @@
     "build": "npm run build --workspaces",
     "lint": "npm run lint --workspaces",
     "fmt": "npm run fmt --workspaces",
+    "doc": "npm run doc --workspaces",
     "start": "npx serve -S -l 8080 ."
   },
   "devDependencies": {
