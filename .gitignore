@@ -39,3 +39,6 @@ dist
 
 # ignore yarn.lock
 yarn.lock
+
+# Ignore typedoc output
+apidoc/
