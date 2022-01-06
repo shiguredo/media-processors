@@ -19,7 +19,7 @@
     <canvas id="oscilloscopeProcessed"></canvas>
 
     <br />
-    <video id="audio" autoplay playsinline></video>
+    <audio id="audio" autoplay playsinline></audio>
 
     <script src="../packages/noise-suppression/dist/noise_suppression.js"></script>
     <script>
@@ -52,6 +52,7 @@
           const constraints = {audio: {
               sampleRate: {ideal: 48000},
               sampleSize: {ideal: 480},
+              channelCount: {exact: 1}
           }};
           return navigator.mediaDevices.getUserMedia(constraints).then((stream) => {
               initAudioAnalysersIfNeed();
