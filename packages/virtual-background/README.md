@@ -71,7 +71,7 @@ TypeScript での使用方法は次のようになります:
 ```typescript
 import { VirtualBackgroundProcessor } from "@shiguredo/virtual-background";
 
-const processor = VirtualBackgroundProcessr(original_video_track);
+const processor = VirtualBackgroundProcessor(original_video_track);
 const processed_video_track = await processor.startProcessing();
 
 ...

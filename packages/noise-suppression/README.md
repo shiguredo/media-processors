@@ -62,7 +62,7 @@ TypeScript での使用方法は次のようになります:
 ```typescript
 import { NoiseSuppressionProcessor } from "@shiguredo/noise-suppression";
 
-const processor = NoiseSuppressionProcessr(original_audio_track);
+const processor = NoiseSuppressionProcessor(original_audio_track);
 const processed_audio_track = await processor.startProcessing();
 
 ...
