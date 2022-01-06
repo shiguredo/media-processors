@@ -1,5 +1,4 @@
-@shiguredo/virtual-background
-=============================
+# @shiguredo/virtual-background
 
 JavaScript/TypeScriptで仮想背景機能を実現するためのライブラリです。
 
@@ -7,62 +6,32 @@ JavaScript/TypeScriptで仮想背景機能を実現するためのライブラ�
 
 なお、背景画像の切り出し部分には[@mediapipe/selfie_segmentation](https://www.npmjs.com/package/@mediapipe/selfie_segmentation)を利用しています。
 
-インストールと使用例
---------------------
+## 使い方
 
-### JavaScript/TypeScriptから利用する場合
+### ブラウザから利用する場合
 
-TODO: まだNPMに未登録なので以下は動作しない。
-
-以下のコマンドでインストールが可能です:
-```
-npm install @shiguredo/virtual-background --save
-```
-
-コードでは、以下のようにimportしてください:
-```typescript
-import {VirtualBackgroundProcessor} from '@shiguredo/virtual-background';
-```
-
-### HTML(scriptタグ)で利用する場合
-
-最初に[media-processor](../../)リポジトリのルートに移動して、プロジェクトをビルドする必要があります:
-```console
-$ git clone https://github.com/shiguredo/media-processors-private
-$ cd media-processors-private/
-$ npm install
-$ npm run build
-
-
-// 以下のディレクトリに、ビルド後のJavaScriptと必要なアセットが配置されています
-// ※`assets/`ディレクトリは、今は存在しない（こんな感じになるかな、というイメージを書いているだけ）
-$ ls packages/virtual-background/dist/
-virtual_background.js
-
-$ ls packages/virtual-background/assets/
-selfie_segmentation.tflite           selfie_segmentation_solution_simd_wasm_bin.wasm
-selfie_segmentation_landscape.tflite selfie_segmentation_solution_wasm_bin.wasm
-```
-
-ビルドが完了したら、以下のように以下のようにscriptタグから読み込んで使用することができます:
+まずは script タグで JavaScript ファイルを読み込みます:
 ```html
-<script src="path/to/virtual_background.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@shiguredo/virtual-background@latest/dist/virtual_background.js"></script>
 ```
 
-ミニマムな使用例は以下のようになります:
+背景ぼかしを行う場合は、以下のようなコードになります:
 ```html
 <script>
-    const options = {blurRadius: 15};  // 背景ぼかし
+    const options = {
+        blurRadius: 15,  // 背景ぼかし設定
+        assetsPath: "https://cdn.jsdelivr.net/npm/@shiguredo/virtual-background@latest/dist/"
+    };
 
     let processor;
     navigator.mediaDevices.getUserMedia({video: true}).then((stream) => {
         const track = stream.getVideoTracks()[0];
-        processor = new window.Shiguredo.VirtualBackgroundProcessor(track, options);
+        processor = new Shiguredo.VirtualBackgroundProcessor(track, options);
 
         // 仮想背景処理開始
         processor.startProcessing().then((processed_track) => {
-            // 処理後の`MediaStreamTrack`が得られたので、適当な処理を行う
-            ...
+            const videoElement = document.getElementById("outputVideo"); // 映像の出力先を取得
+            videoElement.srcObject = new MediaStream([processed_track]);
         });
     });
     ...
@@ -72,10 +41,78 @@ selfie_segmentation_landscape.tflite selfie_segmentation_solution_wasm_bin.wasm
 </script>
 ```
 
-TODO: デモページへのリンクを貼る
+ぼかすのではなく、背景画像を差し替えたい場合には、以下のようにオプションを指定してください:
+```html
+<script>
+    const backgroundImage = new Image();
+    backgroundImage.src = "/path/to/background-image";
+
+    const options = {
+        backgroundImage,
+        assetsPath: "https://cdn.jsdelivr.net/npm/@shiguredo/virtual-background@latest/dist/"
+    };
+
+    ...以降のコードは同様...
+</script>
+```
+
+実際の動作は[デモページ](https://shiguredo.github.io/media-processors/examples/virtual-background.html)（
+[ソースコード](https://github.com/shiguredo/media-processors/blob/develop/examples/virtual-background.html)）で確認できます。
 
 
-サポートブラウザ
-----------------
+### JavaScript/TypeScript から利用する場合
 
-TODO: 使っている機能とか想定ブラウザ（e.g., Chrome）を書く。
+以下のコマンドでパッケージがインストールできます:
+```
+$ npm install --save @shiguredo/virtual-background
+```
+
+TypeScript での使用方法は次のようになります:
+```typescript
+import { VirtualBackgroundProcessor } from "@shiguredo/virtual-background";
+
+const processor = VirtualBackgroundProcessr(original_video_track);
+const processed_video_track = await processor.startProcessing();
+
+...
+
+processor.stopProcessing();
+```
+
+## サポートブラウザ
+
+本ライブラリは MediaStreamTrack Insertable Streams (aka Breakout Box) というブラウザの機能を利用しています。
+そのため2022年1月現在では、ChromeやEdge等のChromiumベースのブラウザでのみ動作します。
+
+## ライセンス
+
+[Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0)
+
+```
+Copyright 2022-2022, Takeru Ohta (Original Author)
+Copyright 2022-2022, Shiguredo Inc.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+```
+
+npm パッケージに同梱されている以下のファイルのライセンスについては
+[@mediapipe/selfie_segmentation](https://www.npmjs.com/package/@mediapipe/selfie_segmentation) を参照してください:
+```
+- selfie_segmentation.binarypb
+- selfie_segmentation_landscape.tflite
+- selfie_segmentation_solution_simd_wasm_bin.wasm
+- selfie_segmentation_solution_wasm_bin.wasm
+- selfie_segmentation.tflite
+- selfie_segmentation_solution_simd_wasm_bin.js
+- selfie_segmentation_solution_wasm_bin.js
+```
