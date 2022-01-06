@@ -1,15 +1,32 @@
 {
   "name": "@shiguredo/virtual-background",
-  "version": "0.0.0",
+  "version": "2022.1.0",
   "description": "Virtual Background Library",
   "author": "Shiguredo Inc.",
   "license": "Apache-2.0",
+  "main": "dist/virtual_background.js",
+  "module": "dist/virtual_background.mjs",
+  "types": "dist/virtual_background.d.ts",
   "scripts": {
-    "build": "rollup -c ./rollup.config.js",
+    "build": "rollup -c ./rollup.config.js && tsc --emitDeclarationOnly",
     "lint": "eslint --ext .ts ./src",
     "fmt": "prettier --write src",
     "doc": "typedoc"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/shiguredo/media-processors.git"
+  },
+  "keywords": [
+    "virtual-background"
+  ],
+  "bugs": {
+    "url": "https://discord.gg/shiguredo"
+  },
+  "homepage": "https://github.com/shiguredo/media-processors#readme",
+  "files": [
+    "dist"
+  ],
   "devDependencies": {
     "@mediapipe/selfie_segmentation": "^0.1.1632777926",
     "@rollup/plugin-commonjs": "^21.0.1",
