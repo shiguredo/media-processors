@@ -1,5 +1,7 @@
 # Media Processors
 
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+
 仮想背景やノイズ抑制といったメディア処理をブラウザで簡単に行えるようにするためのライブラリです。
 
 ## About Shiguredo's open source software
