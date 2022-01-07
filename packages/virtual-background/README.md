@@ -1,5 +1,8 @@
 # @shiguredo/virtual-background
 
+[![npm version](https://badge.fury.io/js/@shiguredo%2Fvirtual-background.svg)](https://badge.fury.io/js/@shiguredo%2Fvirtual-background)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+
 JavaScript/TypeScriptで仮想背景機能を実現するためのライブラリです。
 
 背景の画像の差し替えやぼかしを簡単に行うことができます。
