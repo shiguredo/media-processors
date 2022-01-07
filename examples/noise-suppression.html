@@ -21,14 +21,14 @@
     <br />
     <audio id="audio" autoplay playsinline></audio>
 
-    <script src="../packages/noise-suppression/dist/noise_suppression.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@shiguredo/noise-suppression@latest/dist/noise_suppression.js"></script>
     <script>
       if (!Shiguredo.NoiseSuppressionProcessor.isSupported()) {
           alert("Unsupported platform");
           throw Error("Unsupported platform");
       }
 
-      const assetsPath = "../packages/noise-suppression/dist/";
+      const assetsPath = "https://cdn.jsdelivr.net/npm/@shiguredo/noise-suppression@latest/dist";
       let processor;
 
       let audioCtx;
