@@ -1,5 +1,8 @@
 # @shiguredo/noise-suppression
 
+[![npm version](https://badge.fury.io/js/@shiguredo%2Fnoise-suppression.svg)](https://badge.fury.io/js/@shiguredo%2Fnoise-suppression)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+
 JavaScript/TypeScriptでノイズ抑制機能を実現するためのライブラリです。
 
 雑音を抑制して、人の音声を聞き取りやすくすることができます。
