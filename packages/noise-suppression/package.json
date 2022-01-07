@@ -1,0 +1,46 @@
+{
+  "name": "@shiguredo/noise-suppression",
+  "version": "2022.1.0",
+  "description": "Noise Suppression Library",
+  "author": "Shiguredo Inc.",
+  "license": "Apache-2.0",
+  "main": "dist/noise_suppression.js",
+  "module": "dist/noise_suppression.mjs",
+  "types": "dist/noise_suppression.d.ts",
+  "scripts": {
+    "build": "rollup -c ./rollup.config.js && tsc --emitDeclarationOnly",
+    "lint": "eslint --ext .ts ./src",
+    "fmt": "prettier --write src",
+    "doc": "typedoc"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/shiguredo/media-processors.git"
+  },
+  "keywords": [
+    "noise-suppression"
+  ],
+  "bugs": {
+    "url": "https://discord.gg/shiguredo"
+  },
+  "homepage": "https://github.com/shiguredo/media-processors#readme",
+  "files": [
+    "dist"
+  ],
+  "devDependencies": {
+    "@rollup/plugin-commonjs": "^21.0.1",
+    "@rollup/plugin-node-resolve": "^13.1.1",
+    "@rollup/plugin-typescript": "^8.3.0",
+    "@shiguredo/rnnoise-wasm": "^2021.1.0",
+    "@types/dom-mediacapture-transform": "^0.1.2",
+    "@typescript-eslint/eslint-plugin": "^5.7.0",
+    "@typescript-eslint/parser": "^5.7.0",
+    "eslint": "^8.4.1",
+    "eslint-config-prettier": "^8.3.0",
+    "eslint-plugin-prettier": "^4.0.0",
+    "rollup": "^2.61.1",
+    "rollup-plugin-copy": "^3.4.0",
+    "typedoc": "^0.22.10",
+    "typescript": "^4.5.3"
+  }
+}

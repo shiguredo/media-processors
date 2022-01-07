@@ -1,0 +1,84 @@
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Media Processors: 仮想背景サンプル</title>
+  </head>
+  <body>
+    <h1>Media Processors: 仮想背景サンプル</h1>
+
+    <h3>入力設定</h3>
+    解像度: <input id="videoWidth" type="text" value="640">x<input id="videoHeight" type="text" value="360"><br />
+    FPS: <input id="videoFps" type="text" value="15">
+
+    <h3>仮想背景設定</h3>
+    ぼかし半径: <input id="blurFilterRadius", type="text" value="15"><br />
+    背景画像URL: <input id="backgroundImage" type="text"><br />
+    <br />
+
+    <input type="button" value="仮想背景ON" onClick="showProcessedVideo()">
+    <input type="button" value="仮想背景OFF" onClick="showOriginalVideo()">
+    <br /><br />
+
+    <video id="video" autoplay playsinline></video>
+
+    <script src="../packages/virtual-background/dist/virtual_background.js"></script>
+    <script>
+      if (!Shiguredo.VirtualBackgroundProcessor.isSupported()) {
+          alert("Unsupported platform");
+          throw Error("Unsupported platform");
+      }
+
+      const assetsPath = "../packages/virtual-background/dist/";
+      let processor;
+
+      function getUserMedia() {
+          const constraints = {
+              width: document.getElementById("videoWidth").value,
+              height: document.getElementById("videoHeight").value,
+              frameRate: {ideal: document.getElementById("videoFps").value},
+          };
+          return navigator.mediaDevices.getUserMedia({video: constraints});
+      }
+
+      function showOriginalVideo() {
+          if (processor) {
+              processor.stopProcessing();
+              processor = undefined;
+          }
+
+          const videoElement = document.getElementById('video');
+          getUserMedia().then((stream) => {
+              videoElement.srcObject = stream;
+          });
+      }
+
+      function showProcessedVideo() {
+          if (processor) {
+              processor.stopProcessing();
+              processor = undefined;
+          }
+
+          const videoElement = document.getElementById('video');
+          getUserMedia().then((stream) => {
+              const track = stream.getVideoTracks()[0];
+              const blurRadius = document.getElementById("blurFilterRadius").value;
+              let backgroundImage;
+              if (document.getElementById("backgroundImage").value) {
+                  backgroundImage = new Image();
+                  backgroundImage.src = document.getElementById("backgroundImage").value;
+                  backgroundImage.crossOrigin = "Anonymous";
+              }
+              processor = new Shiguredo.VirtualBackgroundProcessor(
+                  track,
+                  {assetsPath, blurRadius, backgroundImage}
+              );
+              processor.startProcessing().then((processed_track) => {
+                  videoElement.srcObject = new MediaStream([processed_track]);
+              });
+          });
+      }
+
+      showOriginalVideo();
+    </script>
+  </body>
+</html>

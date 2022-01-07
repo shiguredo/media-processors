@@ -1,0 +1,18 @@
+{
+  "author": "Shiguredo Inc.",
+  "license": "Apache-2.0",
+  "scripts": {
+    "build": "npm run build --workspaces",
+    "lint": "npm run lint --workspaces",
+    "fmt": "npm run fmt --workspaces",
+    "doc": "npm run doc --workspaces",
+    "start": "npx serve -S -l 8080 ."
+  },
+  "devDependencies": {
+    "serve": "^13.0.2"
+  },
+  "workspaces": [
+    "packages/virtual-background",
+    "packages/noise-suppression"
+  ]
+}
