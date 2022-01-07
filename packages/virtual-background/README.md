@@ -20,7 +20,7 @@ JavaScript/TypeScriptで仮想背景機能を実現するためのライブラ�
 <script>
     const options = {
         blurRadius: 15,  // 背景ぼかし設定
-        assetsPath: "https://cdn.jsdelivr.net/npm/@shiguredo/virtual-background@latest/dist/"
+        assetsPath: "https://cdn.jsdelivr.net/npm/@shiguredo/virtual-background@latest/dist"
     };
 
     let processor;

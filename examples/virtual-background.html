@@ -21,14 +21,14 @@
 
     <video id="video" autoplay playsinline></video>
 
-    <script src="../packages/virtual-background/dist/virtual_background.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@shiguredo/virtual-background@latest/dist/virtual_background.js"></script>
     <script>
       if (!Shiguredo.VirtualBackgroundProcessor.isSupported()) {
           alert("Unsupported platform");
           throw Error("Unsupported platform");
       }
 
-      const assetsPath = "../packages/virtual-background/dist/";
+      const assetsPath = "https://cdn.jsdelivr.net/npm/@shiguredo/virtual-background@latest/dist";
       let processor;
 
       function getUserMedia() {

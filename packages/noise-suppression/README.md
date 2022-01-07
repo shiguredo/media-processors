@@ -20,7 +20,7 @@ JavaScript/TypeScriptでノイズ抑制機能を実現するためのライブ�
 <script>
     // wasm ファイルの配置先
     const options = {
-        assetsPath: "https://cdn.jsdelivr.net/npm/@shiguredo/noise-suppression@latest/dist/"
+        assetsPath: "https://cdn.jsdelivr.net/npm/@shiguredo/noise-suppression@latest/dist"
     };
 
     // RNNoiseの推奨設定
