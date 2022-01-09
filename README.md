@@ -24,6 +24,11 @@ Please read https://github.com/shiguredo/oss/blob/master/README.en.md before use
 - [仮想背景 / 背景ぼかし](https://github.com/shiguredo/media-processors/tree/develop/packages/virtual-background)
 - [ノイズ抑制](https://github.com/shiguredo/media-processors/tree/develop/packages/noise-suppression)
 
+## npm
+
+- [@shiguredo/virtual\-background \- npm](https://www.npmjs.com/package/@shiguredo/virtual-background)
+- [@shiguredo/noise\-suppression \- npm](https://www.npmjs.com/package/@shiguredo/noise-suppression)
+
 ## サンプル
 
 GitHub Pages にサンプルを用意しています。完全にクライアントでのみ動作します。
