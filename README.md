@@ -1,5 +1,7 @@
 # Media Processors
 
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+
 仮想背景やノイズ抑制といったメディア処理をブラウザで簡単に行えるようにするためのライブラリです。
 
 ## About Shiguredo's open source software
@@ -21,6 +23,11 @@ Please read https://github.com/shiguredo/oss/blob/master/README.en.md before use
 
 - [仮想背景 / 背景ぼかし](https://github.com/shiguredo/media-processors/tree/develop/packages/virtual-background)
 - [ノイズ抑制](https://github.com/shiguredo/media-processors/tree/develop/packages/noise-suppression)
+
+## npm
+
+- [@shiguredo/virtual\-background \- npm](https://www.npmjs.com/package/@shiguredo/virtual-background)
+- [@shiguredo/noise\-suppression \- npm](https://www.npmjs.com/package/@shiguredo/noise-suppression)
 
 ## サンプル
 

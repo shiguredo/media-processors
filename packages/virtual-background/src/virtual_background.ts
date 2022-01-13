@@ -80,7 +80,7 @@ class VirtualBackgroundProcessor {
 
     // セグメンテーションモデルの初期化
     const config: SelfieSegmentationConfig = {};
-    const assetsPath = options.assetsPath || ".";
+    const assetsPath = trimLastSlash(options.assetsPath || ".");
     config.locateFile = (file: string) => {
       return `${assetsPath}/${file}`;
     };
@@ -199,6 +199,13 @@ class VirtualBackgroundProcessor {
 
     this.canvasCtx.restore();
   }
+}
+
+function trimLastSlash(s: string): string {
+  if (s.slice(-1) === "/") {
+    return s.slice(0, -1);
+  }
+  return s;
 }
 
 export { VirtualBackgroundProcessorOptions, VirtualBackgroundProcessor };

@@ -1,5 +1,8 @@
 # @shiguredo/virtual-background
 
+[![npm version](https://badge.fury.io/js/@shiguredo%2Fvirtual-background.svg)](https://badge.fury.io/js/@shiguredo%2Fvirtual-background)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+
 JavaScript/TypeScriptで仮想背景機能を実現するためのライブラリです。
 
 背景の画像の差し替えやぼかしを簡単に行うことができます。
@@ -20,7 +23,7 @@ JavaScript/TypeScriptで仮想背景機能を実現するためのライブラ�
 <script>
     const options = {
         blurRadius: 15,  // 背景ぼかし設定
-        assetsPath: "https://cdn.jsdelivr.net/npm/@shiguredo/virtual-background@latest/dist/"
+        assetsPath: "https://cdn.jsdelivr.net/npm/@shiguredo/virtual-background@latest/dist"
     };
 
     let processor;
@@ -71,7 +74,7 @@ TypeScript での使用方法は次のようになります:
 ```typescript
 import { VirtualBackgroundProcessor } from "@shiguredo/virtual-background";
 
-const processor = VirtualBackgroundProcessor(original_video_track);
+const processor = new VirtualBackgroundProcessor(original_video_track);
 const processed_video_track = await processor.startProcessing();
 
 ...

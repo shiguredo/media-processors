@@ -9,8 +9,6 @@ jobs:
   create-release-draft:
     name: Create GitHub Release Draft
     runs-on: ubuntu-latest
-    needs:
-      - build-assets
     steps:
       - name: Get the version
         id: get_version

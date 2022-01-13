@@ -1,5 +1,8 @@
 # @shiguredo/noise-suppression
 
+[![npm version](https://badge.fury.io/js/@shiguredo%2Fnoise-suppression.svg)](https://badge.fury.io/js/@shiguredo%2Fnoise-suppression)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+
 JavaScript/TypeScriptでノイズ抑制機能を実現するためのライブラリです。
 
 雑音を抑制して、人の音声を聞き取りやすくすることができます。
@@ -20,7 +23,7 @@ JavaScript/TypeScriptでノイズ抑制機能を実現するためのライブ�
 <script>
     // wasm ファイルの配置先
     const options = {
-        assetsPath: "https://cdn.jsdelivr.net/npm/@shiguredo/noise-suppression@latest/dist/"
+        assetsPath: "https://cdn.jsdelivr.net/npm/@shiguredo/noise-suppression@latest/dist"
     };
 
     // RNNoiseの推奨設定
@@ -33,7 +36,7 @@ JavaScript/TypeScriptでノイズ抑制機能を実現するためのライブ�
     let processor;
     navigator.mediaDevices.getUserMedia({audio: constraints}).then((stream) => {
         const track = stream.getAudioTracks()[0];
-        processor = new Shiguredo.VirtualBackgroundProcessor(track, options);
+        processor = new Shiguredo.NoiseSuppressionProcessor(track, options);
 
         // ノイズ抑制処理開始
         processor.startProcessing().then((processed_track) => {
@@ -62,7 +65,7 @@ TypeScript での使用方法は次のようになります:
 ```typescript
 import { NoiseSuppressionProcessor } from "@shiguredo/noise-suppression";
 
-const processor = NoiseSuppressionProcessor(original_audio_track);
+const processor = new NoiseSuppressionProcessor(original_audio_track);
 const processed_audio_track = await processor.startProcessing();
 
 ...

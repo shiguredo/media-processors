@@ -11,9 +11,12 @@
     FPS: <input id="videoFps" type="text" value="15">
 
     <h3>仮想背景設定</h3>
-    ぼかし半径: <input id="blurFilterRadius", type="text" value="15"><br />
-    背景画像URL: <input id="backgroundImage" type="text"><br />
-    <br />
+    <select id="virtualBackgroundType" size="3">
+      <option value="blur-5" selected>ぼかし（弱）</option>
+      <option value="blur-15">ぼかし（強）</option>
+      <option value="image">画像</option>
+    </select>
+    <br /><br />
 
     <input type="button" value="仮想背景ON" onClick="showProcessedVideo()">
     <input type="button" value="仮想背景OFF" onClick="showOriginalVideo()">
@@ -21,14 +24,14 @@
 
     <video id="video" autoplay playsinline></video>
 
-    <script src="../packages/virtual-background/dist/virtual_background.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@shiguredo/virtual-background@latest/dist/virtual_background.js"></script>
     <script>
       if (!Shiguredo.VirtualBackgroundProcessor.isSupported()) {
           alert("Unsupported platform");
           throw Error("Unsupported platform");
       }
 
-      const assetsPath = "../packages/virtual-background/dist/";
+      const assetsPath = "https://cdn.jsdelivr.net/npm/@shiguredo/virtual-background@latest/dist";
       let processor;
 
       function getUserMedia() {
@@ -61,13 +64,21 @@
           const videoElement = document.getElementById('video');
           getUserMedia().then((stream) => {
               const track = stream.getVideoTracks()[0];
-              const blurRadius = document.getElementById("blurFilterRadius").value;
+
+              let blurRadius;
               let backgroundImage;
-              if (document.getElementById("backgroundImage").value) {
+              switch (document.getElementById("virtualBackgroundType").value) {
+              case 'blur-5':
+                  blurRadius = 5;
+                  break;
+              case 'blur-15':
+                  blurRadius = 15;
+                  break;
+              case 'image':
                   backgroundImage = new Image();
-                  backgroundImage.src = document.getElementById("backgroundImage").value;
-                  backgroundImage.crossOrigin = "Anonymous";
+                  backgroundImage.src = 'background.jpg';
               }
+
               processor = new Shiguredo.VirtualBackgroundProcessor(
                   track,
                   {assetsPath, blurRadius, backgroundImage}
