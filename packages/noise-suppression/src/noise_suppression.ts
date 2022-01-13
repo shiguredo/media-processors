@@ -183,11 +183,10 @@ class NoiseSuppressionProcessor {
 }
 
 function trimLastSlash(s: string): string {
-  if (s[s.length - 1] == "/") {
+  if (s.slice(-1) === "/") {
     return s.slice(0, -1);
-  } else {
-    return s;
   }
+  return s;
 }
 
 export { NoiseSuppressionProcessor, NoiseSuppressionProcessorOptions };
