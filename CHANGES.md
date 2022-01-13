@@ -11,6 +11,13 @@
 
 ## develop
 
+## noise-suppression-2022.2.0
+- [UPDATE] 末尾にスラッシュを含む `assetsPath` をサポート
+    - https://github.com/shiguredo/media-processors/pull/9
+    - @sile
+- [FIX] README.md 内の typo 修正
+    - @sile
+
 ## virtual-background-2022.2.0
 - [UPDATE] 末尾にスラッシュを含む `assetsPath` をサポート
     - https://github.com/shiguredo/media-processors/pull/9
