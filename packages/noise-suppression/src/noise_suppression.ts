@@ -70,7 +70,8 @@ class NoiseSuppressionProcessor {
       throw Error("NoiseSuppressionProcessor has already been started.");
     }
 
-    this.rnnoise = await Rnnoise.load({ assetsPath: this.options.assetsPath || "." });
+    const assetsPath = trimLastSlash(this.options.assetsPath || ".");
+    this.rnnoise = await Rnnoise.load({ assetsPath });
     this.buffer = new Float32Array(this.rnnoise.frameSize);
 
     this.abortController = new AbortController();
@@ -178,6 +179,14 @@ class NoiseSuppressionProcessor {
     }
 
     data.close();
+  }
+}
+
+function trimLastSlash(s: string): string {
+  if (s[s.length - 1] == "/") {
+    return s.slice(0, -1);
+  } else {
+    return s;
   }
 }
 
