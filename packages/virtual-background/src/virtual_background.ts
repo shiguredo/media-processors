@@ -47,10 +47,13 @@ interface VirtualBackgroundProcessorOptions {
 class VirtualBackgroundProcessor {
   private options: VirtualBackgroundProcessorOptions;
   private track: MediaStreamVideoTrack;
-  private canvas: OffscreenCanvas;
-  private canvasCtx: OffscreenCanvasRenderingContext2D;
   private segmentation: SelfieSegmentation;
-  private abortController?: AbortController;
+  private originalVideo: HTMLVideoElement;
+  private workingCanvas: HTMLCanvasElement;
+  private workingCanvasCtx: CanvasRenderingContext2D;
+  private processedCanvas: HTMLCanvasElement;
+  private processedCanvasCtx: CanvasRenderingContext2D;
+  private requestVideoFrameCallbackHandle?: number;
 
   /**
    * {@link VirtualBackgroundProcessor} インスタンスを生成します
@@ -71,12 +74,27 @@ class VirtualBackgroundProcessor {
     if (width === undefined || height === undefined) {
       throw Error(`Could not retrieve the resolution of the video track: {track}`);
     }
-    this.canvas = new OffscreenCanvas(width, height);
-    const canvasCtx = this.canvas.getContext("2d", { desynchronized: true });
-    if (!canvasCtx) {
-      throw Error("Failed to get the 2D context of an OffscreenCanvas");
+
+    this.originalVideo = document.createElement("video");
+    this.originalVideo.srcObject = new MediaStream([track]);
+
+    this.workingCanvas = document.createElement("canvas");
+    this.workingCanvas.width = width;
+    this.workingCanvas.height = height;
+    const workingCanvasCtx = this.workingCanvas.getContext("2d");
+    if (!workingCanvasCtx) {
+      throw Error("Failed to create 2D canvas context");
     }
-    this.canvasCtx = canvasCtx;
+    this.workingCanvasCtx = workingCanvasCtx;
+
+    this.processedCanvas = document.createElement("canvas");
+    this.processedCanvas.width = width;
+    this.processedCanvas.height = height;
+    const processedCanvasCtx = this.processedCanvas.getContext("2d");
+    if (!processedCanvasCtx) {
+      throw Error("Failed to create 2D canvas context");
+    }
+    this.processedCanvasCtx = processedCanvasCtx;
 
     // セグメンテーションモデルの初期化
     const config: SelfieSegmentationConfig = {};
@@ -93,7 +111,26 @@ class VirtualBackgroundProcessor {
       modelSelection,
     });
     this.segmentation.onResults((results) => {
-      this.updateOffscreenCanvas(results);
+      this.updateWorkingCanvas(results);
+    });
+  }
+
+  private async onFrame() {
+    this.workingCanvasCtx.clearRect(0, 0, this.workingCanvas.width, this.workingCanvas.height);
+    this.workingCanvasCtx.drawImage(this.originalVideo, 0, 0, this.workingCanvas.width, this.workingCanvas.height);
+    let imageData = this.workingCanvasCtx.getImageData(0, 0, this.workingCanvas.width, this.workingCanvas.height);
+
+    // @ts-ignore
+    await this.segmentation.send({ image: imageData });
+
+    imageData = this.workingCanvasCtx.getImageData(0, 0, this.workingCanvas.width, this.workingCanvas.height);
+
+    this.processedCanvasCtx.putImageData(imageData, 0, 0);
+
+    // @ts-ignore
+    // eslint-disable-next-line
+    this.requestVideoFrameCallbackHandle = this.originalVideo.requestVideoFrameCallback(() => {
+      this.onFrame().catch((e) => console.warn("Error: ", e));
     });
   }
 
@@ -105,7 +142,8 @@ class VirtualBackgroundProcessor {
    * @returns サポートされているかどうか
    */
   static isSupported(): boolean {
-    return !(typeof MediaStreamTrackProcessor === "undefined" || typeof MediaStreamTrackGenerator === "undefined");
+    // TODO: requestVideoFrameCallbackの有無を判定する
+    return true;
   }
 
   /**
@@ -113,38 +151,20 @@ class VirtualBackgroundProcessor {
    *
    * @returns 処理適用後の映像トラック
    */
-  startProcessing(): Promise<MediaStreamTrack> {
-    this.abortController = new AbortController();
-    const signal = this.abortController.signal;
+  async startProcessing(): Promise<MediaStreamTrack> {
+    if (this.requestVideoFrameCallbackHandle !== undefined) {
+      throw Error("already started");
+    }
 
-    const generator = new MediaStreamTrackGenerator({ kind: "video" });
-    const processor = new MediaStreamTrackProcessor({ track: this.track });
-    processor.readable
-      .pipeThrough(
-        new TransformStream({
-          transform: async (frame, controller) => {
-            // eslint-disable-next-line  @typescript-eslint/no-unsafe-argument
-            await this.transform(frame, controller);
-          },
-        }),
-        { signal }
-      )
-      .pipeTo(generator.writable)
-      .catch((e) => {
-        if (signal.aborted) {
-          console.log("Shutting down streams after abort.");
-        } else {
-          console.warn("Error from stream transform:", e);
-        }
-        processor.readable.cancel(e).catch((e) => {
-          console.warn("Failed to cancel `MediaStreamTrackProcessor`:", e);
-        });
-        generator.writable.abort(e).catch((e) => {
-          console.warn("Failed to abort `MediaStreamTrackGenerator`:", e);
-        });
-      });
+    // @ts-ignore
+    // eslint-disable-next-line
+    this.requestVideoFrameCallbackHandle = this.originalVideo.requestVideoFrameCallback(() => {
+      this.onFrame().catch((e) => console.warn("Error: ", e));
+    });
+    await this.originalVideo.play();
 
-    return Promise.resolve(generator);
+    const stream = this.processedCanvas.captureStream();
+    return Promise.resolve(stream.getVideoTracks()[0]);
   }
 
   /**
@@ -154,50 +174,57 @@ class VirtualBackgroundProcessor {
    * 必要であれば、別途呼び出し側で対処する必要があります
    */
   stopProcessing() {
-    if (this.abortController !== undefined) {
-      this.abortController.abort();
-      this.abortController = undefined;
+    if (this.requestVideoFrameCallbackHandle !== undefined) {
+      this.originalVideo.pause();
+      // @ts-ignore
+      // eslint-disable-next-line
+      this.originalVideo.cancelVideoFrameCallback(this.requestVideoFrameCallbackHandle);
+      this.requestVideoFrameCallbackHandle = undefined;
     }
   }
 
-  private async transform(frame: VideoFrame, controller: TransformStreamDefaultController<VideoFrame>): Promise<void> {
-    const image = await createImageBitmap(frame);
+  private updateWorkingCanvas(segmentationResults: SelfieSegmentationResults) {
+    this.workingCanvasCtx.save();
+    this.workingCanvasCtx.clearRect(0, 0, this.workingCanvas.width, this.workingCanvas.height);
+    this.workingCanvasCtx.drawImage(
+      segmentationResults.segmentationMask,
+      0,
+      0,
+      this.workingCanvas.width,
+      this.workingCanvas.height
+    );
 
-    // @ts-ignore TS2322: 「`image`の型が合っていない」と怒られるけれど、動作はするので一旦無視
-    await this.segmentation.send({ image });
-    image.close();
-    frame.close();
-
-    // NOTE: この時点で`this.canvas`は`frame`を反映した内容に更新されている
-
-    // @ts-ignore TS2345: 「`canvas`の型が合っていない」と怒られるけれど、動作はするので一旦無視。
-    controller.enqueue(new VideoFrame(this.canvas));
-  }
-
-  private updateOffscreenCanvas(segmentationResults: SelfieSegmentationResults) {
-    this.canvasCtx.save();
-    this.canvasCtx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-    this.canvasCtx.drawImage(segmentationResults.segmentationMask, 0, 0, this.canvas.width, this.canvas.height);
-
-    this.canvasCtx.globalCompositeOperation = "source-in";
-    this.canvasCtx.drawImage(segmentationResults.image, 0, 0, this.canvas.width, this.canvas.height);
+    this.workingCanvasCtx.globalCompositeOperation = "source-in";
+    this.workingCanvasCtx.drawImage(
+      segmentationResults.image,
+      0,
+      0,
+      this.workingCanvas.width,
+      this.workingCanvas.height
+    );
 
     if (this.options.blurRadius !== undefined) {
-      this.canvasCtx.filter = `blur(${this.options.blurRadius}px)`;
+      this.workingCanvasCtx.filter = `blur(${this.options.blurRadius}px)`;
     }
 
     // NOTE: mediapipeの例 (https://google.github.io/mediapipe/solutions/selfie_segmentation.html) では、
     //       "destination-atop"が使われているけれど、背景画像にアルファチャンネルが含まれている場合には、
     //       "destination-atop"だと透過部分と人物が重なる領域が除去されてしまうので、
     //       "destination-over"にしている。
-    this.canvasCtx.globalCompositeOperation = "destination-over";
+    this.workingCanvasCtx.globalCompositeOperation = "destination-over";
     if (this.options.backgroundImage !== undefined) {
-      this.canvasCtx.drawImage(this.options.backgroundImage, 0, 0, this.canvas.width, this.canvas.height);
+      this.workingCanvasCtx.drawImage(
+        this.options.backgroundImage,
+        0,
+        0,
+        this.workingCanvas.width,
+        this.workingCanvas.height
+      );
     } else {
-      this.canvasCtx.drawImage(segmentationResults.image, 0, 0);
+      this.workingCanvasCtx.drawImage(segmentationResults.image, 0, 0);
     }
 
-    this.canvasCtx.restore();
+    this.workingCanvasCtx.restore();
   }
 }
 
