@@ -36,7 +36,7 @@ JavaScript/TypeScriptでノイズ抑制機能を実現するためのライブ�
     let processor;
     navigator.mediaDevices.getUserMedia({audio: constraints}).then((stream) => {
         const track = stream.getAudioTracks()[0];
-        processor = new Shiguredo.VirtualBackgroundProcessor(track, options);
+        processor = new Shiguredo.NoiseSuppressionProcessor(track, options);
 
         // ノイズ抑制処理開始
         processor.startProcessing().then((processed_track) => {
@@ -65,7 +65,7 @@ TypeScript での使用方法は次のようになります:
 ```typescript
 import { NoiseSuppressionProcessor } from "@shiguredo/noise-suppression";
 
-const processor = NoiseSuppressionProcessor(original_audio_track);
+const processor = new NoiseSuppressionProcessor(original_audio_track);
 const processed_audio_track = await processor.startProcessing();
 
 ...
