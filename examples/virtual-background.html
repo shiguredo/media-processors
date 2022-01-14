@@ -32,7 +32,7 @@
       }
 
       const assetsPath = "https://cdn.jsdelivr.net/npm/@shiguredo/virtual-background@latest/dist";
-      let processor;
+      const processor = new Shiguredo.VirtualBackgroundProcessor(assetsPath);
 
       function getUserMedia() {
           const constraints = {
@@ -44,10 +44,7 @@
       }
 
       function showOriginalVideo() {
-          if (processor) {
-              processor.stopProcessing();
-              processor = undefined;
-          }
+          processor.stopProcessing();
 
           const videoElement = document.getElementById('video');
           getUserMedia().then((stream) => {
@@ -56,10 +53,7 @@
       }
 
       function showProcessedVideo() {
-          if (processor) {
-              processor.stopProcessing();
-              processor = undefined;
-          }
+          processor.stopProcessing();
 
           const videoElement = document.getElementById('video');
           getUserMedia().then((stream) => {
@@ -79,11 +73,8 @@
                   backgroundImage.src = 'background.jpg';
               }
 
-              processor = new Shiguredo.VirtualBackgroundProcessor(
-                  track,
-                  {assetsPath, blurRadius, backgroundImage}
-              );
-              processor.startProcessing().then((processed_track) => {
+              let options = {blurRadius, backgroundImage};
+              processor.startProcessing(track, options).then((processed_track) => {
                   videoElement.srcObject = new MediaStream([processed_track]);
               });
           });
