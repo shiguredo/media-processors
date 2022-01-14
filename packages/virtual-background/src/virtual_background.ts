@@ -86,7 +86,7 @@ class VirtualBackgroundProcessor {
     options: VirtualBackgroundProcessorOptions = {}
   ): Promise<MediaStreamTrack> {
     if (this.isProcessing()) {
-      throw Error("Virtual background processing has already been started.");
+      throw Error("Virtual background processing has already started.");
     }
 
     this.trackProcessor = new TrackProcessor(track, this.segmentation, options);
