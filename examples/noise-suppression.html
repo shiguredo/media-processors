@@ -29,7 +29,7 @@
       }
 
       const assetsPath = "https://cdn.jsdelivr.net/npm/@shiguredo/noise-suppression@latest/dist";
-      let processor;
+      const processor = new Shiguredo.NoiseSuppressionProcessor(assetsPath);
 
       let audioCtx;
       let analyserOriginal;
@@ -68,10 +68,7 @@
       }
 
       function playOriginalAudio() {
-          if (processor !== undefined) {
-              processor.stopProcessing();
-              processor = undefined;
-          }
+          processor.stopProcessing();
 
           const audioElement = document.getElementById('audio');
           getUserMedia().then((stream) => {
@@ -84,16 +81,12 @@
       }
 
       function playProcessedAudio() {
-          if (processor !== undefined) {
-              processor.stopProcessing();
-              processor = undefined;
-          }
+          processor.stopProcessing();
 
           const audioElement = document.getElementById('audio');
           getUserMedia().then((stream) => {
               const track = stream.getAudioTracks()[0];
-              processor = new Shiguredo.NoiseSuppressionProcessor(track, {assetsPath});
-              processor.startProcessing().then((processed_track) => {
+              processor.startProcessing(track).then((processed_track) => {
                   const stream = new MediaStream([processed_track]);
 
                   if (sourceProcessed != undefined) {
