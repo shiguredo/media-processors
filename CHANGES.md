@@ -11,6 +11,13 @@
 
 ## develop
 
+## virtual-background-2022.3.0
+- [CHANGE] `VirtualBackgroundProcessors` のインタフェース見直し
+    - 処理の開始・停止の度にインスタンスの作り直す必要がなくなった
+    - オプション指定タイミングをインスタンス生成時から処理開始時に移して、オプション変更を容易に行えるようにした
+    - https://github.com/shiguredo/media-processors/pull/11
+    - @sile
+
 ## noise-suppression-2022.2.0
 - [UPDATE] 末尾にスラッシュを含む `assetsPath` をサポート
     - https://github.com/shiguredo/media-processors/pull/9

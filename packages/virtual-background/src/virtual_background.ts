@@ -5,16 +5,9 @@ import {
 } from "@mediapipe/selfie_segmentation";
 
 /**
- * {@link VirtualBackgroundProcessor} に指定可能なオプション
+ * {@link VirtualBackgroundProcessor.startProcessing} メソッドに指定可能なオプション
  */
 interface VirtualBackgroundProcessorOptions {
-  /**
-   * wasm 等のファイルの配置先ディレクトリパスないしURL
-   *
-   * デフォルトでは、カレントディレクトリが使用されます
-   */
-  assetsPath?: string;
-
   /**
    * 仮想背景に使用する画像
    *
@@ -45,56 +38,22 @@ interface VirtualBackgroundProcessorOptions {
  * 映像トラックに仮想背景処理を適用するためのプロセッサ
  */
 class VirtualBackgroundProcessor {
-  private options: VirtualBackgroundProcessorOptions;
-  private track: MediaStreamVideoTrack;
-  private canvas: OffscreenCanvas;
-  private canvasCtx: OffscreenCanvasRenderingContext2D;
   private segmentation: SelfieSegmentation;
-  private abortController?: AbortController;
+  private trackProcessor?: TrackProcessor;
 
   /**
    * {@link VirtualBackgroundProcessor} インスタンスを生成します
    *
-   * {@link VirtualBackgroundProcessor.startProcessing} メソッドが呼び出されるまでは、
-   * 処理は開始されません
-   *
-   * @param track 処理適用対象となる映像トラック
-   * @param options 各種オプション
+   * @param assetsPath wasm 等のファイルの配置先ディレクトリパスないしURL
    */
-  constructor(track: MediaStreamVideoTrack, options: VirtualBackgroundProcessorOptions = {}) {
-    this.options = options;
-    this.track = track;
-
-    // 仮想背景描画用の中間バッファ（canvas）の初期化
-    const width = track.getSettings().width;
-    const height = track.getSettings().height;
-    if (width === undefined || height === undefined) {
-      throw Error(`Could not retrieve the resolution of the video track: {track}`);
-    }
-    this.canvas = new OffscreenCanvas(width, height);
-    const canvasCtx = this.canvas.getContext("2d", { desynchronized: true });
-    if (!canvasCtx) {
-      throw Error("Failed to get the 2D context of an OffscreenCanvas");
-    }
-    this.canvasCtx = canvasCtx;
-
-    // セグメンテーションモデルの初期化
+  constructor(assetsPath: string) {
+    // セグメンテーションモデルのロード準備
     const config: SelfieSegmentationConfig = {};
-    const assetsPath = trimLastSlash(options.assetsPath || ".");
+    assetsPath = trimLastSlash(assetsPath);
     config.locateFile = (file: string) => {
       return `${assetsPath}/${file}`;
     };
     this.segmentation = new SelfieSegmentation(config);
-    let modelSelection = 1; // `1` means "selfie-landscape".
-    if (options.segmentationModel && options.segmentationModel === "selfie-general") {
-      modelSelection = 0;
-    }
-    this.segmentation.setOptions({
-      modelSelection,
-    });
-    this.segmentation.onResults((results) => {
-      this.updateOffscreenCanvas(results);
-    });
   }
 
   /**
@@ -111,10 +70,101 @@ class VirtualBackgroundProcessor {
   /**
    * 仮想背景処理の適用を開始します
    *
+   * @param track 処理適用対象となる映像トラック
+   * @param options 各種オプション
+   *
    * @returns 処理適用後の映像トラック
+   *
+   * @throws
+   * 既にあるトラックを処理中の場合には、エラーが送出されます
+   *
+   * 処理中かどうかは {@link VirtualBackgroundProcessor.isProcessing} で判定可能です
    */
-  startProcessing(): Promise<MediaStreamTrack> {
+  startProcessing(
+    track: MediaStreamVideoTrack,
+    options: VirtualBackgroundProcessorOptions = {}
+  ): Promise<MediaStreamTrack> {
+    if (this.isProcessing()) {
+      throw Error("Virtual background processing has already started.");
+    }
+
+    this.trackProcessor = new TrackProcessor(track, this.segmentation, options);
+    return this.trackProcessor.startProcessing();
+  }
+
+  /**
+   * 仮想背景処理の適用を停止します
+   *
+   * コンストラクタに渡された映像トラックは閉じないので、
+   * 必要であれば、別途呼び出し側で対処する必要があります
+   */
+  stopProcessing() {
+    // NOTE: コンパイラの警告を防ぐために isProcessing は使わずに判定している
+    if (this.trackProcessor !== undefined) {
+      this.trackProcessor.stopProcessing();
+      this.trackProcessor = undefined;
+    }
+  }
+
+  /**
+   * 仮想背景処理が実行中かどうかを判定します
+   *
+   * @returns 実行中であれば `true` 、そうでなければ `false`
+   */
+  isProcessing(): boolean {
+    return this.trackProcessor !== undefined;
+  }
+}
+
+class TrackProcessor {
+  private options: VirtualBackgroundProcessorOptions;
+  private track: MediaStreamVideoTrack;
+  private canvas: OffscreenCanvas;
+  private canvasCtx: OffscreenCanvasRenderingContext2D;
+  private segmentation: SelfieSegmentation;
+  private abortController: AbortController;
+
+  constructor(
+    track: MediaStreamVideoTrack,
+    segmentation: SelfieSegmentation,
+    options: VirtualBackgroundProcessorOptions
+  ) {
+    this.options = options;
+    this.track = track;
+
+    // 仮想背景描画用の中間バッファ（canvas）の初期化
+    const width = track.getSettings().width;
+    const height = track.getSettings().height;
+    if (width === undefined || height === undefined) {
+      throw Error(`Could not retrieve the resolution of the video track: {track}`);
+    }
+    this.canvas = new OffscreenCanvas(width, height);
+    const canvasCtx = this.canvas.getContext("2d", { desynchronized: true });
+    if (!canvasCtx) {
+      throw Error("Failed to get the 2D context of an OffscreenCanvas");
+    }
+    this.canvasCtx = canvasCtx;
+
+    // セグメンテーションモデルの設定更新
+    let modelSelection = 1; // `1` means "selfie-landscape".
+    if (options.segmentationModel && options.segmentationModel === "selfie-general") {
+      modelSelection = 0;
+    }
+    segmentation.setOptions({
+      modelSelection,
+    });
+    segmentation.onResults((results) => {
+      this.updateOffscreenCanvas(results);
+    });
+    this.segmentation = segmentation;
+
+    // 処理を停止するための AbortController を初期化
     this.abortController = new AbortController();
+  }
+
+  async startProcessing(): Promise<MediaStreamTrack> {
+    await this.segmentation.initialize();
+
     const signal = this.abortController.signal;
 
     const generator = new MediaStreamTrackGenerator({ kind: "video" });
@@ -132,7 +182,7 @@ class VirtualBackgroundProcessor {
       .pipeTo(generator.writable)
       .catch((e) => {
         if (signal.aborted) {
-          console.log("Shutting down streams after abort.");
+          console.debug("Shutting down streams after abort.");
         } else {
           console.warn("Error from stream transform:", e);
         }
@@ -144,20 +194,12 @@ class VirtualBackgroundProcessor {
         });
       });
 
-    return Promise.resolve(generator);
+    return generator;
   }
 
-  /**
-   * 仮想背景処理の適用を停止します
-   *
-   * コンストラクタに渡された映像トラックは閉じないので、
-   * 必要であれば、別途呼び出し側で対処する必要があります
-   */
   stopProcessing() {
-    if (this.abortController !== undefined) {
-      this.abortController.abort();
-      this.abortController = undefined;
-    }
+    this.abortController.abort();
+    this.segmentation.onResults(() => {});
   }
 
   private async transform(frame: VideoFrame, controller: TransformStreamDefaultController<VideoFrame>): Promise<void> {
