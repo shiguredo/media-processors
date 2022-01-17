@@ -22,9 +22,8 @@ JavaScript/TypeScriptでノイズ抑制機能を実現するためのライブ�
 ```html
 <script>
     // wasm ファイルの配置先
-    const options = {
-        assetsPath: "https://cdn.jsdelivr.net/npm/@shiguredo/noise-suppression@latest/dist"
-    };
+    const assetsPath = "https://cdn.jsdelivr.net/npm/@shiguredo/noise-suppression@latest/dist";
+    const processor = new Shiguredo.NoiseSuppressionProcessor(assetsPath);
 
     // RNNoiseの推奨設定
     const constraints = {
@@ -33,13 +32,11 @@ JavaScript/TypeScriptでノイズ抑制機能を実現するためのライブ�
         channelCount: {exact: 1}
     }
 
-    let processor;
     navigator.mediaDevices.getUserMedia({audio: constraints}).then((stream) => {
         const track = stream.getAudioTracks()[0];
-        processor = new Shiguredo.NoiseSuppressionProcessor(track, options);
 
         // ノイズ抑制処理開始
-        processor.startProcessing().then((processed_track) => {
+        processor.startProcessing(track).then((processed_track) => {
             const audioElement = document.getElementById("outputAudio"); // 音声の出力先を取得
             audioElement.srcObject = new MediaStream([processed_track]);
         });
@@ -65,8 +62,9 @@ TypeScript での使用方法は次のようになります:
 ```typescript
 import { NoiseSuppressionProcessor } from "@shiguredo/noise-suppression";
 
-const processor = new NoiseSuppressionProcessor(original_audio_track);
-const processed_audio_track = await processor.startProcessing();
+const assetsPath = "https://cdn.jsdelivr.net/npm/@shiguredo/noise-suppression@latest/dist";
+const processor = new NoiseSuppressionProcessor(assetsPath);
+const processed_audio_track = await processor.startProcessing(original_audio_track);
 
 ...
 
