@@ -49,6 +49,7 @@ class NoiseSuppressionProcessor {
     }
 
     if (this.rnnoise === undefined) {
+      // 最初の `startProcessing` 呼び出し時に RNNoise をロードする
       this.rnnoise = await Rnnoise.load({ assetsPath: this.assetsPath });
     }
 
