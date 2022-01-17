@@ -44,13 +44,12 @@ class VirtualBackgroundProcessor {
   /**
    * {@link VirtualBackgroundProcessor} インスタンスを生成します
    *
-   * {@link VirtualBackgroundProcessor.startProcessing} メソッドが呼び出されるまでは、
-   * 処理は開始されません
+   * @param assetsPath wasm 等のファイルの配置先ディレクトリパスないしURL
    */
   constructor(assetsPath: string) {
     // セグメンテーションモデルのロード準備
     const config: SelfieSegmentationConfig = {};
-    assetsPath = trimLastSlash(assetsPath || ".");
+    assetsPath = trimLastSlash(assetsPath);
     config.locateFile = (file: string) => {
       return `${assetsPath}/${file}`;
     };
