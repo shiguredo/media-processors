@@ -11,6 +11,12 @@
 
 ## develop
 
+## noise-suppression-2022.3.0
+ - [CHANGE] `NoiseSuppressionProcessors` のインタフェース見直し
+     - 処理の開始・停止の度にインスタンスを作り直す必要がなくなった
+     - https://github.com/shiguredo/media-processors/pull/12
+     - @sile
+
 ## virtual-background-2022.3.0
 - [CHANGE] `VirtualBackgroundProcessors` のインタフェース見直し
     - 処理の開始・停止の度にインスタンスの作り直す必要がなくなった
