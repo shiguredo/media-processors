@@ -1,11 +1,6 @@
 import { DenoiseState, Rnnoise } from "@shiguredo/rnnoise-wasm";
 
 /**
- * {@link NoiseSuppressionProcessor.startProcessing} メソッドに指定可能なオプション
- */
-interface NoiseSuppressionProcessorOptions {}
-
-/**
  * 音声トラックにノイズ抑制処理を適用するためのプロセッサ
  */
 class NoiseSuppressionProcessor {
@@ -48,10 +43,7 @@ class NoiseSuppressionProcessor {
    * 実行時にエラーが送出されます。
 
    */
-  async startProcessing(
-    track: MediaStreamAudioTrack,
-    options: NoiseSuppressionProcessorOptions = {}
-  ): Promise<MediaStreamTrack> {
+  async startProcessing(track: MediaStreamAudioTrack): Promise<MediaStreamTrack> {
     if (this.isProcessing()) {
       throw Error("Noise suppression processing has already started.");
     }
@@ -60,7 +52,7 @@ class NoiseSuppressionProcessor {
       this.rnnoise = await Rnnoise.load({ assetsPath: this.assetsPath });
     }
 
-    this.trackProcessor = new TrackProcessor(track, this.rnnoise, options);
+    this.trackProcessor = new TrackProcessor(track, this.rnnoise);
     return this.trackProcessor.startProcessing();
   }
 
@@ -91,16 +83,14 @@ class NoiseSuppressionProcessor {
 class TrackProcessor {
   private track: MediaStreamAudioTrack;
   private abortController: AbortController;
-  private options: NoiseSuppressionProcessorOptions;
   private denoiseState: DenoiseState;
   private buffer: Float32Array;
   private frameSize: number;
   private bufferFrameCount: number;
   private nextTimestamp: number;
 
-  constructor(track: MediaStreamAudioTrack, rnnoise: Rnnoise, options: NoiseSuppressionProcessorOptions) {
+  constructor(track: MediaStreamAudioTrack, rnnoise: Rnnoise) {
     this.track = track;
-    this.options = options;
     this.denoiseState = rnnoise.createDenoiseState();
     this.buffer = new Float32Array(rnnoise.frameSize);
     this.frameSize = rnnoise.frameSize;
@@ -211,4 +201,4 @@ function trimLastSlash(s: string): string {
   return s;
 }
 
-export { NoiseSuppressionProcessor, NoiseSuppressionProcessorOptions };
+export { NoiseSuppressionProcessor };
