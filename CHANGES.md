@@ -11,11 +11,16 @@
 
 ## develop
 
+## virtual-background-2022.3.1
+- [FIX] 仮想背景適用時に画面がカクツクことがある問題を修正
+    - https://github.com/shiguredo/media-processors/pull/14
+    - @sile
+
 ## noise-suppression-2022.3.0
- - [CHANGE] `NoiseSuppressionProcessors` のインタフェース見直し
-     - 処理の開始・停止の度にインスタンスを作り直す必要がなくなった
-     - https://github.com/shiguredo/media-processors/pull/12
-     - @sile
+- [CHANGE] `NoiseSuppressionProcessors` のインタフェース見直し
+    - 処理の開始・停止の度にインスタンスを作り直す必要がなくなった
+    - https://github.com/shiguredo/media-processors/pull/12
+    - @sile
 
 ## virtual-background-2022.3.0
 - [CHANGE] `VirtualBackgroundProcessors` のインタフェース見直し

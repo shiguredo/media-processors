@@ -21,18 +21,18 @@ JavaScript/TypeScriptで仮想背景機能を実現するためのライブラ�
 背景ぼかしを行う場合は、以下のようなコードになります:
 ```html
 <script>
-    const options = {
-        blurRadius: 15,  // 背景ぼかし設定
-        assetsPath: "https://cdn.jsdelivr.net/npm/@shiguredo/virtual-background@latest/dist"
-    };
+    const assetsPath = "https://cdn.jsdelivr.net/npm/@shiguredo/virtual-background@latest/dist";
+    const processor = new Shiguredo.VirtualBackgroundProcessor(assetsPath);
 
-    let processor;
     navigator.mediaDevices.getUserMedia({video: true}).then((stream) => {
         const track = stream.getVideoTracks()[0];
-        processor = new Shiguredo.VirtualBackgroundProcessor(track, options);
+
+        const options = {
+            blurRadius: 15,  // 背景ぼかし設定
+        };
 
         // 仮想背景処理開始
-        processor.startProcessing().then((processed_track) => {
+        processor.startProcessing(track, options).then((processed_track) => {
             const videoElement = document.getElementById("outputVideo"); // 映像の出力先を取得
             videoElement.srcObject = new MediaStream([processed_track]);
         });
@@ -51,11 +51,8 @@ JavaScript/TypeScriptで仮想背景機能を実現するためのライブラ�
     backgroundImage.src = "/path/to/background-image";
 
     const options = {
-        backgroundImage,
-        assetsPath: "https://cdn.jsdelivr.net/npm/@shiguredo/virtual-background@latest/dist/"
+        backgroundImage
     };
-
-    ...以降のコードは同様...
 </script>
 ```
 
@@ -74,8 +71,13 @@ TypeScript での使用方法は次のようになります:
 ```typescript
 import { VirtualBackgroundProcessor } from "@shiguredo/virtual-background";
 
-const processor = new VirtualBackgroundProcessor(original_video_track);
-const processed_video_track = await processor.startProcessing();
+const assetsPath = "https://cdn.jsdelivr.net/npm/@shiguredo/virtual-background@latest/dist";
+const processor = new VirtualBackgroundProcessor(assetsPath);
+
+const options = {
+    blurRadius: 15,  // 背景ぼかし設定
+};
+const processed_video_track = await processor.startProcessing(original_video_track, options);
 
 ...
 
