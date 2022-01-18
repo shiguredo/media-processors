@@ -203,17 +203,19 @@ class TrackProcessor {
   }
 
   private async transform(frame: VideoFrame, controller: TransformStreamDefaultController<VideoFrame>): Promise<void> {
+    const timestamp = frame.timestamp;
+    const duration = frame.duration;
     const image = await createImageBitmap(frame);
+    frame.close();
 
     // @ts-ignore TS2322: 「`image`の型が合っていない」と怒られるけれど、動作はするので一旦無視
     await this.segmentation.send({ image });
     image.close();
-    frame.close();
 
     // NOTE: この時点で`this.canvas`は`frame`を反映した内容に更新されている
 
     // @ts-ignore TS2345: 「`canvas`の型が合っていない」と怒られるけれど、動作はするので一旦無視。
-    controller.enqueue(new VideoFrame(this.canvas));
+    controller.enqueue(new VideoFrame(this.canvas, { timestamp, duration }));
   }
 
   private updateOffscreenCanvas(segmentationResults: SelfieSegmentationResults) {
