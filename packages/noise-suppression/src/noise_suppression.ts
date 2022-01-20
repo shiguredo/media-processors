@@ -69,7 +69,16 @@ class NoiseSuppressionProcessor {
       this.rnnoise = await Rnnoise.load({ assetsPath: this.assetsPath });
     }
 
-    this.trackProcessor = new TrackProcessor(track, this.rnnoise, options);
+    let denoiseState;
+    if (options.modelPath === undefined) {
+      denoiseState = this.rnnoise.createDenoiseState();
+    } else {
+      const modelString = await fetch(options.modelPath).then((res) => res.text());
+      const model = this.rnnoise.createModel(modelString);
+      denoiseState = this.rnnoise.createDenoiseState(model);
+    }
+
+    this.trackProcessor = new TrackProcessor(track, this.rnnoise, denoiseState);
     return this.trackProcessor.startProcessing();
   }
 
@@ -98,7 +107,6 @@ class NoiseSuppressionProcessor {
 }
 
 class TrackProcessor {
-  private rnnoise: Rnnoise;
   private track: MediaStreamAudioTrack;
   private abortController: AbortController;
   private denoiseState: DenoiseState;
@@ -106,28 +114,18 @@ class TrackProcessor {
   private frameSize: number;
   private bufferFrameCount: number;
   private nextTimestamp: number;
-  private options: NoiseSuppressionProcessorOptions;
 
-  constructor(track: MediaStreamAudioTrack, rnnoise: Rnnoise, options: NoiseSuppressionProcessorOptions) {
-    this.rnnoise = rnnoise;
+  constructor(track: MediaStreamAudioTrack, rnnoise: Rnnoise, denoiseState: DenoiseState) {
     this.track = track;
-    this.denoiseState = rnnoise.createDenoiseState();
     this.buffer = new Float32Array(rnnoise.frameSize);
     this.frameSize = rnnoise.frameSize;
     this.bufferFrameCount = 0;
     this.nextTimestamp = 0;
     this.abortController = new AbortController();
-    this.options = options;
+    this.denoiseState = denoiseState;
   }
 
-  async startProcessing(): Promise<MediaStreamTrack> {
-    if (this.options.modelPath !== undefined) {
-      this.denoiseState.destroy();
-      const modelString = await fetch(this.options.modelPath).then((res) => res.text());
-      const model = this.rnnoise.createModel(modelString);
-      this.denoiseState = this.rnnoise.createDenoiseState(model);
-    }
-
+  startProcessing(): MediaStreamTrack {
     const signal = this.abortController.signal;
     const generator = new MediaStreamTrackGenerator({ kind: "audio" });
     const processor = new MediaStreamTrackProcessor({ track: this.track });
