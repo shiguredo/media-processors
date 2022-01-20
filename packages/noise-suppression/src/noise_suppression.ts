@@ -1,6 +1,18 @@
 import { DenoiseState, Rnnoise } from "@shiguredo/rnnoise-wasm";
 
 /**
+ * {@link NoiseSuppressionProcessor.startProcessing} メソッドに指定可能なオプション
+ */
+interface NoiseSuppressionProcessorOptions {
+  /**
+   * 使用する RNNoise のモデルのパスないし URL
+   *
+   * 省略された場合は、デフォルトモデルが使用されます
+   */
+  modelPath?: string;
+}
+
+/**
  * 音声トラックにノイズ抑制処理を適用するためのプロセッサ
  */
 class NoiseSuppressionProcessor {
@@ -32,6 +44,7 @@ class NoiseSuppressionProcessor {
    * ノイズ抑制処理の適用を開始します
    *
    * @param track 処理適用対象となる音声トラック
+   * @param options 各種オプション
    * @returns 処理適用後の音声トラック
    *
    * @remarks
@@ -43,7 +56,10 @@ class NoiseSuppressionProcessor {
    * 実行時にエラーが送出されます。
 
    */
-  async startProcessing(track: MediaStreamAudioTrack): Promise<MediaStreamTrack> {
+  async startProcessing(
+    track: MediaStreamAudioTrack,
+    options: NoiseSuppressionProcessorOptions = {}
+  ): Promise<MediaStreamTrack> {
     if (this.isProcessing()) {
       throw Error("Noise suppression processing has already started.");
     }
@@ -53,7 +69,16 @@ class NoiseSuppressionProcessor {
       this.rnnoise = await Rnnoise.load({ assetsPath: this.assetsPath });
     }
 
-    this.trackProcessor = new TrackProcessor(track, this.rnnoise);
+    let denoiseState;
+    if (options.modelPath === undefined) {
+      denoiseState = this.rnnoise.createDenoiseState();
+    } else {
+      const modelString = await fetch(options.modelPath).then((res) => res.text());
+      const model = this.rnnoise.createModel(modelString);
+      denoiseState = this.rnnoise.createDenoiseState(model);
+    }
+
+    this.trackProcessor = new TrackProcessor(track, this.rnnoise, denoiseState);
     return this.trackProcessor.startProcessing();
   }
 
@@ -90,17 +115,17 @@ class TrackProcessor {
   private bufferFrameCount: number;
   private nextTimestamp: number;
 
-  constructor(track: MediaStreamAudioTrack, rnnoise: Rnnoise) {
+  constructor(track: MediaStreamAudioTrack, rnnoise: Rnnoise, denoiseState: DenoiseState) {
     this.track = track;
-    this.denoiseState = rnnoise.createDenoiseState();
     this.buffer = new Float32Array(rnnoise.frameSize);
     this.frameSize = rnnoise.frameSize;
     this.bufferFrameCount = 0;
     this.nextTimestamp = 0;
     this.abortController = new AbortController();
+    this.denoiseState = denoiseState;
   }
 
-  startProcessing(): Promise<MediaStreamTrack> {
+  startProcessing(): MediaStreamTrack {
     const signal = this.abortController.signal;
     const generator = new MediaStreamTrackGenerator({ kind: "audio" });
     const processor = new MediaStreamTrackProcessor({ track: this.track });
@@ -128,12 +153,15 @@ class TrackProcessor {
           console.warn("Failed to abort `MediaStreamTrackGenerator`:", e);
         });
       });
-    return Promise.resolve(generator);
+    return generator;
   }
 
   stopProcessing() {
     this.abortController.abort();
     this.denoiseState.destroy();
+    if (this.denoiseState.model !== undefined) {
+      this.denoiseState.model.free();
+    }
   }
 
   private transform(data: AudioData, controller: TransformStreamDefaultController<AudioData>): void {
@@ -202,4 +230,4 @@ function trimLastSlash(s: string): string {
   return s;
 }
 
-export { NoiseSuppressionProcessor };
+export { NoiseSuppressionProcessor, NoiseSuppressionProcessorOptions };
