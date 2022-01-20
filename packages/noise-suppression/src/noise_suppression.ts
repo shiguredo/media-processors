@@ -1,6 +1,14 @@
-import { DenoiseState, RNNModel, Rnnoise } from "@shiguredo/rnnoise-wasm";
+import { DenoiseState, Rnnoise } from "@shiguredo/rnnoise-wasm";
 
+/**
+ * {@link NoiseSuppressionProcessor.startProcessing} メソッドに指定可能なオプション
+ */
 interface NoiseSuppressionProcessorOptions {
+  /**
+   * 使用する RNNoise のモデルのパスないし URL
+   *
+   * 省略された場合は、デフォルトモデルが使用されます
+   */
   modelPath?: string;
 }
 
@@ -36,6 +44,7 @@ class NoiseSuppressionProcessor {
    * ノイズ抑制処理の適用を開始します
    *
    * @param track 処理適用対象となる音声トラック
+   * @param options 各種オプション
    * @returns 処理適用後の音声トラック
    *
    * @remarks
@@ -115,8 +124,7 @@ class TrackProcessor {
     if (this.options.modelPath !== undefined) {
       this.denoiseState.destroy();
       const modelString = await fetch(this.options.modelPath).then((res) => res.text());
-      console.log(modelString);
-      const model = this.rnnoise.createRNNModel(modelString);
+      const model = this.rnnoise.createModel(modelString);
       this.denoiseState = this.rnnoise.createDenoiseState(model);
     }
 
@@ -224,4 +232,4 @@ function trimLastSlash(s: string): string {
   return s;
 }
 
-export { NoiseSuppressionProcessor };
+export { NoiseSuppressionProcessor, NoiseSuppressionProcessorOptions };
