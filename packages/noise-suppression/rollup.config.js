@@ -22,7 +22,11 @@ export default [
       resolve(),
       copy({
         targets: [{
-          src: './node_modules/@shiguredo/rnnoise-wasm/dist/*.wasm',
+          src: [
+            // node_modulesの場所が変わることがあるので、両方のパターンに対応しておく
+            './node_modules/@shiguredo/rnnoise-wasm/dist/*.wasm',
+            '../../node_modules/@shiguredo/rnnoise-wasm/dist/*.wasm'
+          ],
           dest: 'dist/'
         }]
       })

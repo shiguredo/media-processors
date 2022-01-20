@@ -26,10 +26,16 @@ export default [
       copy({
         targets: [{
           src: [
+            // node_modulesの場所が変わることがあるので、両方のパターンに対応しておく
             './node_modules/@mediapipe/selfie_segmentation/*.wasm',
             './node_modules/@mediapipe/selfie_segmentation/*.tflite',
             './node_modules/@mediapipe/selfie_segmentation/*.binarypb',
-            './node_modules/@mediapipe/selfie_segmentation/*wasm_bin.js'
+            './node_modules/@mediapipe/selfie_segmentation/*wasm_bin.js',
+
+            '../../node_modules/@mediapipe/selfie_segmentation/*.wasm',
+            '../../node_modules/@mediapipe/selfie_segmentation/*.tflite',
+            '../../node_modules/@mediapipe/selfie_segmentation/*.binarypb',
+            '../../node_modules/@mediapipe/selfie_segmentation/*wasm_bin.js'
           ],
           dest: 'dist/'
         }]
