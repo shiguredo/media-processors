@@ -19,6 +19,8 @@ class NoiseSuppressionProcessor {
   private assetsPath: string;
   private rnnoise?: Rnnoise;
   private trackProcessor?: TrackProcessor;
+  private processedTrack?: MediaStreamAudioTrack;
+  private originalTrack?: MediaStreamAudioTrack;
 
   /**
    * {@link NoiseSuppressionProcessor}インスタンスを生成します
@@ -59,7 +61,7 @@ class NoiseSuppressionProcessor {
   async startProcessing(
     track: MediaStreamAudioTrack,
     options: NoiseSuppressionProcessorOptions = {}
-  ): Promise<MediaStreamTrack> {
+  ): Promise<MediaStreamAudioTrack> {
     if (this.isProcessing()) {
       throw Error("Noise suppression processing has already started.");
     }
@@ -79,7 +81,9 @@ class NoiseSuppressionProcessor {
     }
 
     this.trackProcessor = new TrackProcessor(track, this.rnnoise, denoiseState);
-    return this.trackProcessor.startProcessing();
+    this.originalTrack = track;
+    this.processedTrack = this.trackProcessor.startProcessing();
+    return this.processedTrack;
   }
 
   /**
@@ -93,6 +97,8 @@ class NoiseSuppressionProcessor {
     if (this.trackProcessor !== undefined) {
       this.trackProcessor.stopProcessing();
       this.trackProcessor = undefined;
+      this.originalTrack = undefined;
+      this.processedTrack = undefined;
     }
   }
 
@@ -103,6 +109,34 @@ class NoiseSuppressionProcessor {
    */
   isProcessing(): boolean {
     return this.trackProcessor !== undefined;
+  }
+
+  /**
+   * 処理適用前の音声トラックを返します
+   *
+   * これは {@link NoiseSuppressionProcessor.startProcessing} に渡したトラックと等しいです
+   *
+   * {@link NoiseSuppressionProcessor.startProcessing} 呼び出し前、あるいは、
+   * {@link NoiseSuppressionProcessor.stopProcessing} 呼び出し後には `undefined` が返されます
+   *
+   * @returns 処理適用中の場合は音声トラック、それ以外なら `undefined`
+   */
+  getOriginalTrack(): MediaStreamAudioTrack | undefined {
+    return this.originalTrack;
+  }
+
+  /**
+   * 処理適用後の音声トラックを返します
+   *
+   * これは {@link NoiseSuppressionProcessor.startProcessing} が返したトラックと等しいです
+   *
+   * {@link NoiseSuppressionProcessor.startProcessing} 呼び出し前、あるいは、
+   * {@link NoiseSuppressionProcessor.stopProcessing} 呼び出し後には `undefined` が返されます
+   *
+   * @returns 処理適用中の場合は音声トラック、それ以外なら `undefined`
+   */
+  getProcessedTrack(): MediaStreamAudioTrack | undefined {
+    return this.processedTrack;
   }
 }
 
@@ -125,7 +159,7 @@ class TrackProcessor {
     this.denoiseState = denoiseState;
   }
 
-  startProcessing(): MediaStreamTrack {
+  startProcessing(): MediaStreamAudioTrack {
     const signal = this.abortController.signal;
     const generator = new MediaStreamTrackGenerator({ kind: "audio" });
     const processor = new MediaStreamTrackProcessor({ track: this.track });
