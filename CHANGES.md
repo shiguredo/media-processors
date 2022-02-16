@@ -11,6 +11,15 @@
 
 ## develop
 
+## noise-suppression-2022.4.0
+- [ADD] RNNoiseモデルの差し替えに対応
+    - https://github.com/shiguredo/media-processors/pull/15
+    - @sile
+
+- [ADD] 処理適用前後のメディアトラックを取得するためのAPIを追加
+    - https://github.com/shiguredo/media-processors/pull/25
+    - @sile
+
 ## virtual-background-2022.4.0
 - [ADD] 処理適用前後のメディアトラックを取得するためのAPIを追加
     - https://github.com/shiguredo/media-processors/pull/25
