@@ -11,6 +11,11 @@
 
 ## develop
 
+## virtual-background-2022.4.0
+- [ADD] 処理適用前後のメディアトラックを取得するためのAPIを追加
+    - https://github.com/shiguredo/media-processors/pull/25
+    - @sile
+
 ## virtual-background-2022.3.1
 - [FIX] 仮想背景適用時に画面がカクツクことがある問題を修正
     - https://github.com/shiguredo/media-processors/pull/14
