@@ -31,16 +31,16 @@
     "@rollup/plugin-commonjs": "^21.0.1",
     "@rollup/plugin-node-resolve": "^13.1.1",
     "@rollup/plugin-typescript": "^8.3.0",
-    "@shiguredo/rnnoise-wasm": "^2022.1.0",
+    "@shiguredo/rnnoise-wasm": "^2022.2.0",
     "@types/dom-mediacapture-transform": "^0.1.2",
-    "@typescript-eslint/eslint-plugin": "^5.7.0",
-    "@typescript-eslint/parser": "^5.7.0",
-    "eslint": "^8.4.1",
+    "@typescript-eslint/eslint-plugin": "^5.12.0",
+    "@typescript-eslint/parser": "^5.12.0",
+    "eslint": "^8.9.0",
     "eslint-config-prettier": "^8.3.0",
     "eslint-plugin-prettier": "^4.0.0",
-    "rollup": "^2.61.1",
+    "rollup": "^2.67.2",
     "rollup-plugin-copy": "^3.4.0",
     "typedoc": "^0.22.10",
-    "typescript": "^4.5.3"
+    "typescript": "^4.5.5"
   }
 }

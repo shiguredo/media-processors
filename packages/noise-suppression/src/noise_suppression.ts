@@ -1,12 +1,26 @@
 import { DenoiseState, Rnnoise } from "@shiguredo/rnnoise-wasm";
 
 /**
+ * {@link NoiseSuppressionProcessor.startProcessing} メソッドに指定可能なオプション
+ */
+interface NoiseSuppressionProcessorOptions {
+  /**
+   * 使用する RNNoise のモデルのパスないし URL
+   *
+   * 省略された場合は、デフォルトモデルが使用されます
+   */
+  modelPath?: string;
+}
+
+/**
  * 音声トラックにノイズ抑制処理を適用するためのプロセッサ
  */
 class NoiseSuppressionProcessor {
   private assetsPath: string;
   private rnnoise?: Rnnoise;
   private trackProcessor?: TrackProcessor;
+  private processedTrack?: MediaStreamAudioTrack;
+  private originalTrack?: MediaStreamAudioTrack;
 
   /**
    * {@link NoiseSuppressionProcessor}インスタンスを生成します
@@ -32,6 +46,7 @@ class NoiseSuppressionProcessor {
    * ノイズ抑制処理の適用を開始します
    *
    * @param track 処理適用対象となる音声トラック
+   * @param options 各種オプション
    * @returns 処理適用後の音声トラック
    *
    * @remarks
@@ -43,7 +58,10 @@ class NoiseSuppressionProcessor {
    * 実行時にエラーが送出されます。
 
    */
-  async startProcessing(track: MediaStreamAudioTrack): Promise<MediaStreamTrack> {
+  async startProcessing(
+    track: MediaStreamAudioTrack,
+    options: NoiseSuppressionProcessorOptions = {}
+  ): Promise<MediaStreamAudioTrack> {
     if (this.isProcessing()) {
       throw Error("Noise suppression processing has already started.");
     }
@@ -53,8 +71,19 @@ class NoiseSuppressionProcessor {
       this.rnnoise = await Rnnoise.load({ assetsPath: this.assetsPath });
     }
 
-    this.trackProcessor = new TrackProcessor(track, this.rnnoise);
-    return this.trackProcessor.startProcessing();
+    let denoiseState;
+    if (options.modelPath === undefined) {
+      denoiseState = this.rnnoise.createDenoiseState();
+    } else {
+      const modelString = await fetch(options.modelPath).then((res) => res.text());
+      const model = this.rnnoise.createModel(modelString);
+      denoiseState = this.rnnoise.createDenoiseState(model);
+    }
+
+    this.trackProcessor = new TrackProcessor(track, this.rnnoise, denoiseState);
+    this.originalTrack = track;
+    this.processedTrack = this.trackProcessor.startProcessing();
+    return this.processedTrack;
   }
 
   /**
@@ -68,6 +97,8 @@ class NoiseSuppressionProcessor {
     if (this.trackProcessor !== undefined) {
       this.trackProcessor.stopProcessing();
       this.trackProcessor = undefined;
+      this.originalTrack = undefined;
+      this.processedTrack = undefined;
     }
   }
 
@@ -78,6 +109,34 @@ class NoiseSuppressionProcessor {
    */
   isProcessing(): boolean {
     return this.trackProcessor !== undefined;
+  }
+
+  /**
+   * 処理適用前の音声トラックを返します
+   *
+   * これは {@link NoiseSuppressionProcessor.startProcessing} に渡したトラックと等しいです
+   *
+   * {@link NoiseSuppressionProcessor.startProcessing} 呼び出し前、あるいは、
+   * {@link NoiseSuppressionProcessor.stopProcessing} 呼び出し後には `undefined` が返されます
+   *
+   * @returns 処理適用中の場合は音声トラック、それ以外なら `undefined`
+   */
+  getOriginalTrack(): MediaStreamAudioTrack | undefined {
+    return this.originalTrack;
+  }
+
+  /**
+   * 処理適用後の音声トラックを返します
+   *
+   * これは {@link NoiseSuppressionProcessor.startProcessing} が返したトラックと等しいです
+   *
+   * {@link NoiseSuppressionProcessor.startProcessing} 呼び出し前、あるいは、
+   * {@link NoiseSuppressionProcessor.stopProcessing} 呼び出し後には `undefined` が返されます
+   *
+   * @returns 処理適用中の場合は音声トラック、それ以外なら `undefined`
+   */
+  getProcessedTrack(): MediaStreamAudioTrack | undefined {
+    return this.processedTrack;
   }
 }
 
@@ -90,17 +149,17 @@ class TrackProcessor {
   private bufferFrameCount: number;
   private nextTimestamp: number;
 
-  constructor(track: MediaStreamAudioTrack, rnnoise: Rnnoise) {
+  constructor(track: MediaStreamAudioTrack, rnnoise: Rnnoise, denoiseState: DenoiseState) {
     this.track = track;
-    this.denoiseState = rnnoise.createDenoiseState();
     this.buffer = new Float32Array(rnnoise.frameSize);
     this.frameSize = rnnoise.frameSize;
     this.bufferFrameCount = 0;
     this.nextTimestamp = 0;
     this.abortController = new AbortController();
+    this.denoiseState = denoiseState;
   }
 
-  startProcessing(): Promise<MediaStreamTrack> {
+  startProcessing(): MediaStreamAudioTrack {
     const signal = this.abortController.signal;
     const generator = new MediaStreamTrackGenerator({ kind: "audio" });
     const processor = new MediaStreamTrackProcessor({ track: this.track });
@@ -128,12 +187,15 @@ class TrackProcessor {
           console.warn("Failed to abort `MediaStreamTrackGenerator`:", e);
         });
       });
-    return Promise.resolve(generator);
+    return generator;
   }
 
   stopProcessing() {
     this.abortController.abort();
     this.denoiseState.destroy();
+    if (this.denoiseState.model !== undefined) {
+      this.denoiseState.model.free();
+    }
   }
 
   private transform(data: AudioData, controller: TransformStreamDefaultController<AudioData>): void {
@@ -202,4 +264,4 @@ function trimLastSlash(s: string): string {
   return s;
 }
 
-export { NoiseSuppressionProcessor };
+export { NoiseSuppressionProcessor, NoiseSuppressionProcessorOptions };

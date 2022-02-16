@@ -40,6 +40,8 @@ interface VirtualBackgroundProcessorOptions {
 class VirtualBackgroundProcessor {
   private segmentation: SelfieSegmentation;
   private trackProcessor?: TrackProcessor;
+  private processedTrack?: MediaStreamVideoTrack;
+  private originalTrack?: MediaStreamVideoTrack;
 
   /**
    * {@link VirtualBackgroundProcessor} インスタンスを生成します
@@ -80,16 +82,18 @@ class VirtualBackgroundProcessor {
    *
    * 処理中かどうかは {@link VirtualBackgroundProcessor.isProcessing} で判定可能です
    */
-  startProcessing(
+  async startProcessing(
     track: MediaStreamVideoTrack,
     options: VirtualBackgroundProcessorOptions = {}
-  ): Promise<MediaStreamTrack> {
+  ): Promise<MediaStreamVideoTrack> {
     if (this.isProcessing()) {
       throw Error("Virtual background processing has already started.");
     }
 
     this.trackProcessor = new TrackProcessor(track, this.segmentation, options);
-    return this.trackProcessor.startProcessing();
+    this.originalTrack = track;
+    this.processedTrack = await this.trackProcessor.startProcessing();
+    return this.processedTrack;
   }
 
   /**
@@ -103,6 +107,8 @@ class VirtualBackgroundProcessor {
     if (this.trackProcessor !== undefined) {
       this.trackProcessor.stopProcessing();
       this.trackProcessor = undefined;
+      this.originalTrack = undefined;
+      this.processedTrack = undefined;
     }
   }
 
@@ -113,6 +119,34 @@ class VirtualBackgroundProcessor {
    */
   isProcessing(): boolean {
     return this.trackProcessor !== undefined;
+  }
+
+  /**
+   * 処理適用前の映像トラックを返します
+   *
+   * これは {@link VirtualBackgroundProcessor.startProcessing} に渡したトラックと等しいです
+   *
+   * {@link VirtualBackgroundProcessor.startProcessing} 呼び出し前、あるいは、
+   * {@link VirtualBackgroundProcessor.stopProcessing} 呼び出し後には `undefined` が返されます
+   *
+   * @returns 処理適用中の場合は映像トラック、それ以外なら `undefined`
+   */
+  getOriginalTrack(): MediaStreamVideoTrack | undefined {
+    return this.originalTrack;
+  }
+
+  /**
+   * 処理適用後の映像トラックを返します
+   *
+   * これは {@link VirtualBackgroundProcessor.startProcessing} が返したトラックと等しいです
+   *
+   * {@link VirtualBackgroundProcessor.startProcessing} 呼び出し前、あるいは、
+   * {@link VirtualBackgroundProcessor.stopProcessing} 呼び出し後には `undefined` が返されます
+   *
+   * @returns 処理適用中の場合は映像トラック、それ以外なら `undefined`
+   */
+  getProcessedTrack(): MediaStreamVideoTrack | undefined {
+    return this.processedTrack;
   }
 }
 
@@ -162,7 +196,7 @@ class TrackProcessor {
     this.abortController = new AbortController();
   }
 
-  async startProcessing(): Promise<MediaStreamTrack> {
+  async startProcessing(): Promise<MediaStreamVideoTrack> {
     await this.segmentation.initialize();
 
     const signal = this.abortController.signal;
