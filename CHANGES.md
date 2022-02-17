@@ -11,6 +11,11 @@
 
 ## develop
 
+## noise-suppression-2022.4.1
+- [FIX] 公開APIに含まれる型を定義しているパッケージをdependenciesに追加
+    - https://github.com/shiguredo/media-processors/pull/26
+    - @sile
+
 ## virtual-background-2022.4.1
 - [FIX] 公開APIに含まれる型を定義しているパッケージをdependenciesに追加
     - https://github.com/shiguredo/media-processors/pull/26
