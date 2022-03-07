@@ -44,7 +44,7 @@
     "eslint-plugin-prettier": "^4.0.0",
     "rollup": "^2.69.1",
     "rollup-plugin-copy": "^3.4.0",
-    "typedoc": "^0.22.12",
+    "typedoc": "^0.22.13",
     "typescript": "^4.6.2"
   }
 }
