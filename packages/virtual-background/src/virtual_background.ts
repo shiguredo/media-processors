@@ -217,11 +217,13 @@ class TrackProcessor {
       .pipeTo(generator.writable)
       .catch((e) => {
         if (signal.aborted) {
+          // VirtualBackground.stopProcessing() 経由で止まった場合
           console.debug("Shutting down streams after abort.");
         } else if (generator.readyState === "ended") {
+          // generator.stop() 経由で止まった場合
           console.debug("Processed track was closed.");
         } else {
-          // 未知のエラーなので、警告ログを出しておく
+          // 未知の経路なので、警告ログを出しておく
           console.warn("Error from stream transform:", e);
         }
         if (this.lastFrame !== undefined) {

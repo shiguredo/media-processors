@@ -176,8 +176,13 @@ class TrackProcessor {
       .pipeTo(generator.writable)
       .catch((e) => {
         if (signal.aborted) {
+          // NoiseSuppressor.stopProcessing() 経由で止まった場合
           console.debug("Shutting down streams after abort.");
+        } else if (generator.readyState === "ended") {
+          // generator.stop() 経由で止まった場合
+          console.debug("Processed track was closed.");
         } else {
+          // 未知の経路なので、警告ログを出しておく
           console.warn("Error from stream transform:", e);
         }
         processor.readable.cancel(e).catch((e) => {
