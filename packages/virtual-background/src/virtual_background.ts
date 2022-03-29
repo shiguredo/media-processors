@@ -157,6 +157,7 @@ class TrackProcessor {
   private canvasCtx: OffscreenCanvasRenderingContext2D;
   private segmentation: SelfieSegmentation;
   private abortController: AbortController;
+  private lastFrame?: VideoFrame;
 
   constructor(
     track: MediaStreamVideoTrack,
@@ -217,9 +218,26 @@ class TrackProcessor {
       .catch((e) => {
         if (signal.aborted) {
           console.debug("Shutting down streams after abort.");
+        } else if (generator.readyState === "ended") {
+          console.debug("Processed track was closed.");
         } else {
+          // 未知のエラーなので、警告ログを出しておく
           console.warn("Error from stream transform:", e);
         }
+        if (this.lastFrame !== undefined) {
+          // 処理済みトラック（i.e., generator）のクローズタイミング次第では、
+          // transfrom メソッド内で controller.enqueue() で追加したフレームが未処理となり、
+          // クローズされずに放置されることになる。
+          //
+          // そのようなケースでは、最終的に以下のようなエラーメッセージが Chrome で表示されるため、
+          // その対策として、ここで自前で close() を呼んでいる。
+          //
+          // > A VideoFrame was garbage collected without being closed.
+          // > Applications should call close() on frames when done with them to prevent stalls.
+          this.lastFrame.close();
+          this.lastFrame = undefined;
+        }
+
         processor.readable.cancel(e).catch((e) => {
           console.warn("Failed to cancel `MediaStreamTrackProcessor`:", e);
         });
@@ -249,7 +267,8 @@ class TrackProcessor {
     // NOTE: この時点で`this.canvas`は`frame`を反映した内容に更新されている
 
     // @ts-ignore TS2345: 「`canvas`の型が合っていない」と怒られるけれど、動作はするので一旦無視。
-    controller.enqueue(new VideoFrame(this.canvas, { timestamp, duration }));
+    this.lastFrame = new VideoFrame(this.canvas, { timestamp, duration });
+    controller.enqueue(this.lastFrame);
   }
 
   private updateOffscreenCanvas(segmentationResults: SelfieSegmentationResults) {
