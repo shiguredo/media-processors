@@ -148,6 +148,8 @@ class TrackProcessor {
   private frameSize: number;
   private bufferFrameCount: number;
   private nextTimestamp: number;
+  private generator: MediaStreamAudioTrackGenerator;
+  private processor: MediaStreamTrackProcessor<AudioData>;
 
   constructor(track: MediaStreamAudioTrack, rnnoise: Rnnoise, denoiseState: DenoiseState) {
     this.track = track;
@@ -157,13 +159,15 @@ class TrackProcessor {
     this.nextTimestamp = 0;
     this.abortController = new AbortController();
     this.denoiseState = denoiseState;
+
+    // generator / processor インスタンスを生成（まだ処理は開始しない）
+    this.generator = new MediaStreamTrackGenerator({ kind: "audio" });
+    this.processor = new MediaStreamTrackProcessor({ track: this.track });
   }
 
   startProcessing(): MediaStreamAudioTrack {
     const signal = this.abortController.signal;
-    const generator = new MediaStreamTrackGenerator({ kind: "audio" });
-    const processor = new MediaStreamTrackProcessor({ track: this.track });
-    processor.readable
+    this.processor.readable
       .pipeThrough(
         new TransformStream({
           transform: (frame, controller) => {
@@ -173,21 +177,21 @@ class TrackProcessor {
         }),
         { signal }
       )
-      .pipeTo(generator.writable)
+      .pipeTo(this.generator.writable)
       .catch((e) => {
         if (signal.aborted) {
           console.debug("Shutting down streams after abort.");
         } else {
           console.warn("Error from stream transform:", e);
         }
-        processor.readable.cancel(e).catch((e) => {
+        this.processor.readable.cancel(e).catch((e) => {
           console.warn("Failed to cancel `MediaStreamTrackProcessor`:", e);
         });
-        generator.writable.abort(e).catch((e) => {
+        this.generator.writable.abort(e).catch((e) => {
           console.warn("Failed to abort `MediaStreamTrackGenerator`:", e);
         });
       });
-    return generator;
+    return this.generator;
   }
 
   stopProcessing() {
@@ -235,6 +239,17 @@ class TrackProcessor {
         // f32-planarに戻す
         for (const [i, value] of this.buffer.entries()) {
           this.buffer[i] = value / 0x7fff;
+        }
+
+        if (this.generator.readyState === "ended") {
+          // ジェネレータ（ユーザに渡している処理結果トラック）がクローズ済み。
+          // この状態で `controller.enqueue()` を呼び出すとエラーが発生するのでスキップする。
+          // また `stopProcessing()` を呼び出して変換処理を停止し、以後は `transform()` 自体が呼ばれないようにする。
+          //
+          // なお、上の条件判定と下のエンキューの間でジェネレータの状態が変わり、エラーが発生する可能性もないとは
+          // 言い切れないが、かなりレアケースだと想定され、そこまでケアするのはコスパが悪いので諦めることとする。
+          this.stopProcessing();
+          break;
         }
 
         controller.enqueue(
