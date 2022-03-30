@@ -10,6 +10,9 @@
     - バグ修正
 
 ## develop
+- [FIX] `stopProcessing()`呼び出し前に、処理適用後のトラックを止めると警告やエラーログが出力される問題を修正
+    - https://github.com/shiguredo/media-processors/pull/59
+    - @sile
 
 ## noise-suppression-2022.4.1
 - [FIX] 公開APIに含まれる型を定義しているパッケージをdependenciesに追加
