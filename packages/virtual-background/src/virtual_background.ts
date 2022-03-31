@@ -157,6 +157,8 @@ class TrackProcessor {
   private canvasCtx: OffscreenCanvasRenderingContext2D;
   private segmentation: SelfieSegmentation;
   private abortController: AbortController;
+  private generator: MediaStreamVideoTrackGenerator;
+  private processor: MediaStreamTrackProcessor<VideoFrame>;
 
   constructor(
     track: MediaStreamVideoTrack,
@@ -194,16 +196,17 @@ class TrackProcessor {
 
     // 処理を停止するための AbortController を初期化
     this.abortController = new AbortController();
+
+    // generator / processor インスタンスを生成（まだ処理は開始しない）
+    this.generator = new MediaStreamTrackGenerator({ kind: "video" });
+    this.processor = new MediaStreamTrackProcessor({ track: this.track });
   }
 
   async startProcessing(): Promise<MediaStreamVideoTrack> {
     await this.segmentation.initialize();
 
     const signal = this.abortController.signal;
-
-    const generator = new MediaStreamTrackGenerator({ kind: "video" });
-    const processor = new MediaStreamTrackProcessor({ track: this.track });
-    processor.readable
+    this.processor.readable
       .pipeThrough(
         new TransformStream({
           transform: async (frame, controller) => {
@@ -213,22 +216,21 @@ class TrackProcessor {
         }),
         { signal }
       )
-      .pipeTo(generator.writable)
+      .pipeTo(this.generator.writable)
       .catch((e) => {
         if (signal.aborted) {
           console.debug("Shutting down streams after abort.");
         } else {
           console.warn("Error from stream transform:", e);
         }
-        processor.readable.cancel(e).catch((e) => {
+        this.processor.readable.cancel(e).catch((e) => {
           console.warn("Failed to cancel `MediaStreamTrackProcessor`:", e);
         });
-        generator.writable.abort(e).catch((e) => {
+        this.generator.writable.abort(e).catch((e) => {
           console.warn("Failed to abort `MediaStreamTrackGenerator`:", e);
         });
       });
-
-    return generator;
+    return this.generator;
   }
 
   stopProcessing() {
@@ -247,6 +249,17 @@ class TrackProcessor {
     image.close();
 
     // NOTE: この時点で`this.canvas`は`frame`を反映した内容に更新されている
+
+    if (this.generator.readyState === "ended") {
+      // ジェネレータ（ユーザに渡している処理結果トラック）がクローズ済み。
+      // この状態で `controller.enqueue()` を呼び出すとエラーが発生するのでスキップする。
+      // また `stopProcessing()` を呼び出して変換処理を停止し、以後は `transform()` 自体が呼ばれないようにする。
+      //
+      // なお、上の条件判定と下のエンキューの間でジェネレータの状態が変わり、エラーが発生する可能性もないとは
+      // 言い切れないが、かなりレアケースだと想定され、そこまでケアするのはコスパが悪いので諦めることとする。
+      this.stopProcessing();
+      return;
+    }
 
     // @ts-ignore TS2345: 「`canvas`の型が合っていない」と怒られるけれど、動作はするので一旦無視。
     controller.enqueue(new VideoFrame(this.canvas, { timestamp, duration }));
