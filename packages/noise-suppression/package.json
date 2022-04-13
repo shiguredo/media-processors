@@ -33,7 +33,7 @@
   "devDependencies": {
     "@rollup/plugin-commonjs": "^21.0.3",
     "@rollup/plugin-node-resolve": "^13.2.0",
-    "@rollup/plugin-typescript": "^8.3.1",
+    "@rollup/plugin-typescript": "^8.3.2",
     "@shiguredo/rnnoise-wasm": "^2022.2.0",
     "@typescript-eslint/eslint-plugin": "^5.19.0",
     "@typescript-eslint/parser": "^5.19.0",
