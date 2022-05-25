@@ -261,8 +261,9 @@ class TrackProcessor {
       return;
     }
 
-    // @ts-ignore TS2345: 「`canvas`の型が合っていない」と怒られるけれど、動作はするので一旦無視。
-    controller.enqueue(new VideoFrame(this.canvas, { timestamp, duration }));
+    const imageData = this.canvasCtx.getImageData(0, 0, this.canvas.width, this.canvas.height);
+    const imageBitmap = await createImageBitmap(imageData);
+    controller.enqueue(new VideoFrame(imageBitmap, { timestamp, duration } as VideoFrameInit));
   }
 
   private updateOffscreenCanvas(segmentationResults: SelfieSegmentationResults) {
