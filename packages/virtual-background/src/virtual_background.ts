@@ -261,6 +261,10 @@ class TrackProcessor {
       return;
     }
 
+    // `VideoFrame` の第一引数に `this.canvas` を直接渡したり、
+    // `this.canvas.transferToImageBitmap()` を使って `ImageBitmap` を取得することも可能だが、
+    // この方法だと環境によっては、透過時の背景色やぼかしの境界部分処理が変になる現象が確認できているため、
+    // ワークアラウンドとして、一度 `ImageData` を経由する方法を採用している
     const imageData = this.canvasCtx.getImageData(0, 0, this.canvas.width, this.canvas.height);
     const imageBitmap = await createImageBitmap(imageData);
     controller.enqueue(new VideoFrame(imageBitmap, { timestamp, duration } as VideoFrameInit));
