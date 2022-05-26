@@ -11,6 +11,11 @@
 
 ## develop
 
+## virtual-background-2022.4.3
+- [FIX] 仮想背景適用時に映像がチラつくことがある問題を修正
+    - https://github.com/shiguredo/media-processors/pull/100
+    - @sile
+
 ## noise-suppression-2022.4.2
 - [FIX] `stopProcessing()`呼び出し前に、処理適用後のトラックを止めると警告やエラーログが出力される問題を修正
     - https://github.com/shiguredo/media-processors/pull/59
