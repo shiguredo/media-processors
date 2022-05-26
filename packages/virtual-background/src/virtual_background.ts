@@ -261,8 +261,16 @@ class TrackProcessor {
       return;
     }
 
-    // @ts-ignore TS2345: 「`canvas`の型が合っていない」と怒られるけれど、動作はするので一旦無視。
-    controller.enqueue(new VideoFrame(this.canvas, { timestamp, duration }));
+    // `VideoFrame` の第一引数に `this.canvas` を直接渡したり、
+    // `this.canvas.transferToImageBitmap()` を使って `ImageBitmap` を取得することも可能だが、
+    // この方法だと環境によっては、透過時の背景色やぼかしの境界部分処理が変になる現象が確認できているため、
+    // ワークアラウンドとして、一度 `ImageData` を経由する方法を採用している
+    //
+    // `ImageData` を経由しない場合の問題としては https://bugs.chromium.org/p/chromium/issues/detail?id=961777 で
+    // 報告されているものが近そう
+    const imageData = this.canvasCtx.getImageData(0, 0, this.canvas.width, this.canvas.height);
+    const imageBitmap = await createImageBitmap(imageData);
+    controller.enqueue(new VideoFrame(imageBitmap, { timestamp, duration } as VideoFrameInit));
   }
 
   private updateOffscreenCanvas(segmentationResults: SelfieSegmentationResults) {
