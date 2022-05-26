@@ -36,15 +36,20 @@ GitHub Pages にサンプルを用意しています。完全にクライアン�
 - [仮想背景 / 背景ぼかし](https://shiguredo.github.io/media-processors/examples/virtual-background.html)
 - [ノイズ抑制](https://shiguredo.github.io/media-processors/examples/noise-suppression.html)
 
-## 今後
+## 優先実装
 
-**予定は未定です**
+優先実装とは Sora のライセンスを契約頂いているお客様限定で Media Processors の実装予定機能を有償にて前倒しで実装することです。
+
+### 優先実装が可能な機能一覧
+
+**詳細は Discord やメールなどでお気軽にお問い合わせください**
 
 - フェイスフレーミング
-- ノイズ抑制プラグイン機能
 - 露出補正
 - ホワイトバランス編集
 - エコーキャンセル
+
+すでに存在するライブラリや仕組みを利用する前提となります。
 
 ## サポートについて
 
