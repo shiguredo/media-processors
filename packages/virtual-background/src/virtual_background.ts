@@ -13,7 +13,7 @@ interface VirtualBackgroundProcessorOptions {
    *
    * 省略された場合には、元々の背景が使用されます
    */
-  backgroundImage?: CanvasImageSourceWebCodecs;
+  backgroundImage?: HTMLImageElement | HTMLVideoElement | HTMLCanvasElement | ImageBitmap | OffscreenCanvas;
 
   /**
    * 背景ぼかし効果の半径（pixel）
