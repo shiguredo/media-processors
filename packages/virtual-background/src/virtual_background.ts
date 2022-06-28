@@ -32,6 +32,61 @@ interface VirtualBackgroundProcessorOptions {
    * を参照してください。
    */
   segmentationModel?: "selfie-landscape" | "selfie-general";
+
+  /**
+   * 背景画像のどの領域を使用するかを決定する関数
+   *
+   * 主に、背景画像と処理対象映像のアスペクト比が異なる場合に、どこをクロップするかを決めるために使用される
+   *
+   * デフォルトは {@link cropBackgroundImageCenter}
+   */
+  backgroundImageRegion?: (canvas: ImageSize, backgroundImage: ImageSize) => ImageRegion;
+}
+
+/**
+ * 画像の幅と高さ
+ */
+interface ImageSize {
+  width: number;
+  height: number;
+}
+
+/**
+ * 画像の領域（始点とサイズ）
+ */
+interface ImageRegion {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+function cropBackgroundImageCenter(canvas: ImageSize, backgroundImage: ImageSize): ImageRegion {
+  let x = 0;
+  let y = 0;
+  let width = backgroundImage.width;
+  let height = backgroundImage.height;
+
+  const canvasRatio = canvas.width / canvas.height;
+  const backgroundImageRatio = backgroundImage.width / backgroundImage.height;
+  if (backgroundImageRatio > canvasRatio) {
+    const newHeight = canvas.height * (backgroundImage.width / canvas.width);
+    y = Math.round((height - newHeight) / 2);
+    height = Math.round(newHeight);
+  } else if (backgroundImageRatio < canvasRatio) {
+    const newWidth = canvas.width * (backgroundImage.height / canvas.height);
+    x = Math.round((width - newWidth) / 2);
+    width = Math.round(newWidth);
+  }
+
+  return { x, y, width, height };
+}
+
+/**
+ *
+ */
+function fillBackgroundImage(_canvas: ImageSize, backgroundImage: ImageSize): ImageRegion {
+  return { x: 0, y: 0, width: backgroundImage.width, height: backgroundImage.height };
 }
 
 /**
@@ -291,7 +346,20 @@ class TrackProcessor {
     //       "destination-over"にしている。
     this.canvasCtx.globalCompositeOperation = "destination-over";
     if (this.options.backgroundImage !== undefined) {
-      this.canvasCtx.drawImage(this.options.backgroundImage, 0, 0, this.canvas.width, this.canvas.height);
+      const crop = this.options.backgroundImageRegion || cropBackgroundImageCenter;
+
+      const region = crop(this.canvas, this.options.backgroundImage);
+      this.canvasCtx.drawImage(
+        this.options.backgroundImage,
+        region.x,
+        region.y,
+        region.width,
+        region.height,
+        0,
+        0,
+        this.canvas.width,
+        this.canvas.height
+      );
     } else {
       this.canvasCtx.drawImage(segmentationResults.image, 0, 0);
     }
@@ -307,4 +375,11 @@ function trimLastSlash(s: string): string {
   return s;
 }
 
-export { VirtualBackgroundProcessorOptions, VirtualBackgroundProcessor };
+export {
+  VirtualBackgroundProcessorOptions,
+  VirtualBackgroundProcessor,
+  ImageRegion,
+  ImageSize,
+  cropBackgroundImageCenter,
+  fillBackgroundImage,
+};
