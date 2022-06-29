@@ -36,11 +36,11 @@ interface VirtualBackgroundProcessorOptions {
   /**
    * 背景画像のどの領域を使用するかを決定する関数
    *
-   * 主に、背景画像と処理対象映像のアスペクト比が異なる場合に、どこをクロップするかを決めるために使用される
+   * 主に、背景画像と処理対象映像のアスペクト比が異なる場合に、どこをクロップするかを決めるために使用されます
    *
-   * デフォルトは {@link cropBackgroundImageCenter}
+   * デフォルトでは画像のアスペクト非を維持したまま中央部分を切り抜く {@link cropBackgroundImageCenter} が使用されます
    */
-  backgroundImageRegion?: (canvas: ImageSize, backgroundImage: ImageSize) => ImageRegion;
+  backgroundImageRegion?: (videoFrame: ImageSize, backgroundImage: ImageSize) => ImageRegion;
 }
 
 /**
@@ -61,20 +61,25 @@ interface ImageRegion {
   height: number;
 }
 
-function cropBackgroundImageCenter(canvas: ImageSize, backgroundImage: ImageSize): ImageRegion {
+/**
+ * {@link VirtualBackgroundProcessorOptions.backgroundImageRegion} オプションのデフォルトの挙動
+ *
+ * 背景画像と処理対象映像のアスペクトが異なる場合には、背景画像の中央部分を切り抜いて使用されます
+ */
+function cropBackgroundImageCenter(videoFrame: ImageSize, backgroundImage: ImageSize): ImageRegion {
   let x = 0;
   let y = 0;
   let width = backgroundImage.width;
   let height = backgroundImage.height;
 
-  const canvasRatio = canvas.width / canvas.height;
+  const videoFrameRatio = videoFrame.width / videoFrame.height;
   const backgroundImageRatio = backgroundImage.width / backgroundImage.height;
-  if (backgroundImageRatio > canvasRatio) {
-    const newHeight = canvas.height * (backgroundImage.width / canvas.width);
+  if (backgroundImageRatio > videoFrameRatio) {
+    const newHeight = videoFrame.height * (backgroundImage.width / videoFrame.width);
     y = Math.round((height - newHeight) / 2);
     height = Math.round(newHeight);
-  } else if (backgroundImageRatio < canvasRatio) {
-    const newWidth = canvas.width * (backgroundImage.height / canvas.height);
+  } else if (backgroundImageRatio < videoFrameRatio) {
+    const newWidth = videoFrame.width * (backgroundImage.height / videoFrame.height);
     x = Math.round((width - newWidth) / 2);
     width = Math.round(newWidth);
   }
@@ -83,9 +88,12 @@ function cropBackgroundImageCenter(canvas: ImageSize, backgroundImage: ImageSize
 }
 
 /**
+ * {@link VirtualBackgroundProcessorOptions.backgroundImageRegion} オプションに指定可能な関数
  *
+ * 背景画像の全領域を使用する。
+ * 背景画像と処理対象映像のアスペクト比が異なる場合には、背景画像が引き伸ばされます。
  */
-function fillBackgroundImage(_canvas: ImageSize, backgroundImage: ImageSize): ImageRegion {
+function fillBackgroundImage(_videoFrame: ImageSize, backgroundImage: ImageSize): ImageRegion {
   return { x: 0, y: 0, width: backgroundImage.width, height: backgroundImage.height };
 }
 
