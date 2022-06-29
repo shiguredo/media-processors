@@ -74,11 +74,11 @@ function cropBackgroundImageCenter(videoFrame: ImageSize, backgroundImage: Image
 
   const videoFrameRatio = videoFrame.width / videoFrame.height;
   const backgroundImageRatio = backgroundImage.width / backgroundImage.height;
-  if (backgroundImageRatio > videoFrameRatio) {
+  if (backgroundImageRatio < videoFrameRatio) {
     const newHeight = videoFrame.height * (backgroundImage.width / videoFrame.width);
     y = Math.round((height - newHeight) / 2);
     height = Math.round(newHeight);
-  } else if (backgroundImageRatio < videoFrameRatio) {
+  } else if (backgroundImageRatio > videoFrameRatio) {
     const newWidth = videoFrame.width * (backgroundImage.height / videoFrame.height);
     x = Math.round((width - newWidth) / 2);
     width = Math.round(newWidth);
