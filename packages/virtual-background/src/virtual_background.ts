@@ -354,9 +354,9 @@ class TrackProcessor {
     //       "destination-over"にしている。
     this.canvasCtx.globalCompositeOperation = "destination-over";
     if (this.options.backgroundImage !== undefined) {
-      const crop = this.options.backgroundImageRegion || cropBackgroundImageCenter;
+      const decideRegion = this.options.backgroundImageRegion || cropBackgroundImageCenter;
 
-      const region = crop(this.canvas, this.options.backgroundImage);
+      const region = decideRegion(this.canvas, this.options.backgroundImage);
       this.canvasCtx.drawImage(
         this.options.backgroundImage,
         region.x,
