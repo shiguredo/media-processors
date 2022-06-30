@@ -36,9 +36,9 @@ interface VirtualBackgroundProcessorOptions {
   /**
    * 背景画像のどの領域を使用するかを決定する関数
    *
-   * 主に、背景画像と処理対象映像のアスペクト比が異なる場合に、どこをクロップするかを決めるために使用されます
+   * 背景画像と処理対象映像のアスペクト比が異なる場合の扱いを決定するために使用されます
    *
-   * デフォルトでは画像のアスペクト非を維持したまま中央部分を切り抜く {@link cropBackgroundImageCenter} が使用されます
+   * デフォルトでは、背景画像のアスペクト比を維持したまま中央部分を切り抜く {@link cropBackgroundImageCenter} が使われます
    */
   backgroundImageRegion?: (videoFrame: ImageSize, backgroundImage: ImageSize) => ImageRegion;
 }
@@ -62,9 +62,9 @@ interface ImageRegion {
 }
 
 /**
- * {@link VirtualBackgroundProcessorOptions.backgroundImageRegion} オプションのデフォルトの挙動
+ * 背景画像と処理対象映像のアスペクトが異なる場合に、背景画像の中央部分を切り抜いた領域を返します
  *
- * 背景画像と処理対象映像のアスペクトが異なる場合には、背景画像の中央部分を切り抜いて使用されます
+ * これは {@link VirtualBackgroundProcessorOptions.backgroundImageRegion} オプションのデフォルトの挙動です
  */
 function cropBackgroundImageCenter(videoFrame: ImageSize, backgroundImage: ImageSize): ImageRegion {
   let x = 0;
@@ -88,10 +88,10 @@ function cropBackgroundImageCenter(videoFrame: ImageSize, backgroundImage: Image
 }
 
 /**
- * {@link VirtualBackgroundProcessorOptions.backgroundImageRegion} オプションに指定可能な関数
+ * 常に背景画像の全領域を返します
  *
- * 背景画像の全領域を使用する。
- * 背景画像と処理対象映像のアスペクト比が異なる場合には、背景画像が引き伸ばされます。
+ * これは {@link VirtualBackgroundProcessorOptions.backgroundImageRegion} オプションに指定可能な関数で、
+ * 背景画像と処理対象映像のアスペクト比が異なる場合には、背景画像が映像に合わせて引き伸ばされます
  */
 function fillBackgroundImage(_videoFrame: ImageSize, backgroundImage: ImageSize): ImageRegion {
   return { x: 0, y: 0, width: backgroundImage.width, height: backgroundImage.height };
@@ -355,7 +355,6 @@ class TrackProcessor {
     this.canvasCtx.globalCompositeOperation = "destination-over";
     if (this.options.backgroundImage !== undefined) {
       const decideRegion = this.options.backgroundImageRegion || cropBackgroundImageCenter;
-
       const region = decideRegion(this.canvas, this.options.backgroundImage);
       this.canvasCtx.drawImage(
         this.options.backgroundImage,
