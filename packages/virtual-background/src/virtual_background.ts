@@ -13,7 +13,7 @@ interface VirtualBackgroundProcessorOptions {
    *
    * 省略された場合には、元々の背景が使用されます
    */
-  backgroundImage?: CanvasImageSourceWebCodecs;
+  backgroundImage?: HTMLImageElement | HTMLVideoElement | HTMLCanvasElement | ImageBitmap | OffscreenCanvas;
 
   /**
    * 背景ぼかし効果の半径（pixel）
@@ -32,6 +32,69 @@ interface VirtualBackgroundProcessorOptions {
    * を参照してください。
    */
   segmentationModel?: "selfie-landscape" | "selfie-general";
+
+  /**
+   * 背景画像のどの領域を使用するかを決定する関数
+   *
+   * 背景画像と処理対象映像のアスペクト比が異なる場合の扱いを決定するために使用されます
+   *
+   * デフォルトでは、背景画像のアスペクト比を維持したまま中央部分を切り抜く {@link cropBackgroundImageCenter} が使われます
+   */
+  backgroundImageRegion?: (videoFrame: ImageSize, backgroundImage: ImageSize) => ImageRegion;
+}
+
+/**
+ * 画像の幅と高さ
+ */
+interface ImageSize {
+  width: number;
+  height: number;
+}
+
+/**
+ * 画像の領域（始点とサイズ）
+ */
+interface ImageRegion {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+/**
+ * 背景画像と処理対象映像のアスペクトが異なる場合に、背景画像の中央部分を切り抜いた領域を返します
+ *
+ * これは {@link VirtualBackgroundProcessorOptions.backgroundImageRegion} オプションのデフォルトの挙動です
+ */
+function cropBackgroundImageCenter(videoFrame: ImageSize, backgroundImage: ImageSize): ImageRegion {
+  let x = 0;
+  let y = 0;
+  let width = backgroundImage.width;
+  let height = backgroundImage.height;
+
+  const videoFrameRatio = videoFrame.width / videoFrame.height;
+  const backgroundImageRatio = backgroundImage.width / backgroundImage.height;
+  if (backgroundImageRatio < videoFrameRatio) {
+    const newHeight = videoFrame.height * (backgroundImage.width / videoFrame.width);
+    y = Math.round((height - newHeight) / 2);
+    height = Math.round(newHeight);
+  } else if (backgroundImageRatio > videoFrameRatio) {
+    const newWidth = videoFrame.width * (backgroundImage.height / videoFrame.height);
+    x = Math.round((width - newWidth) / 2);
+    width = Math.round(newWidth);
+  }
+
+  return { x, y, width, height };
+}
+
+/**
+ * 常に背景画像の全領域を返します
+ *
+ * これは {@link VirtualBackgroundProcessorOptions.backgroundImageRegion} オプションに指定可能な関数で、
+ * 背景画像と処理対象映像のアスペクト比が異なる場合には、背景画像が映像に合わせて引き伸ばされます
+ */
+function fillBackgroundImage(_videoFrame: ImageSize, backgroundImage: ImageSize): ImageRegion {
+  return { x: 0, y: 0, width: backgroundImage.width, height: backgroundImage.height };
 }
 
 /**
@@ -291,7 +354,19 @@ class TrackProcessor {
     //       "destination-over"にしている。
     this.canvasCtx.globalCompositeOperation = "destination-over";
     if (this.options.backgroundImage !== undefined) {
-      this.canvasCtx.drawImage(this.options.backgroundImage, 0, 0, this.canvas.width, this.canvas.height);
+      const decideRegion = this.options.backgroundImageRegion || cropBackgroundImageCenter;
+      const region = decideRegion(this.canvas, this.options.backgroundImage);
+      this.canvasCtx.drawImage(
+        this.options.backgroundImage,
+        region.x,
+        region.y,
+        region.width,
+        region.height,
+        0,
+        0,
+        this.canvas.width,
+        this.canvas.height
+      );
     } else {
       this.canvasCtx.drawImage(segmentationResults.image, 0, 0);
     }
@@ -307,4 +382,11 @@ function trimLastSlash(s: string): string {
   return s;
 }
 
-export { VirtualBackgroundProcessorOptions, VirtualBackgroundProcessor };
+export {
+  VirtualBackgroundProcessorOptions,
+  VirtualBackgroundProcessor,
+  ImageRegion,
+  ImageSize,
+  cropBackgroundImageCenter,
+  fillBackgroundImage,
+};
