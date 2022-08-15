@@ -3,6 +3,7 @@ import {
   SelfieSegmentationConfig,
   Results as SelfieSegmentationResults,
 } from "@mediapipe/selfie_segmentation";
+import * as StackBlur from "stackblur-canvas";
 
 /**
  * {@link VirtualBackgroundProcessor.startProcessing} メソッドに指定可能なオプション
@@ -275,7 +276,11 @@ abstract class TrackProcessor {
     this.canvasCtx.drawImage(segmentationResults.image, 0, 0, this.canvas.width, this.canvas.height);
 
     if (this.options.blurRadius !== undefined) {
-      this.canvasCtx.filter = `blur(${this.options.blurRadius}px)`;
+      // this.canvasCtx.filter = `blur(${this.options.blurRadius}px)`;
+      //this.canvasCtx.filter = `blur(${this.options.blurRadius}px)`;
+
+      // @ts-ignore
+      StackBlur.canvasRGBA(this.canvas, 0, 0, this.canvas.width, this.canvas.height, this.options.blurRadius);
     }
 
     // NOTE: mediapipeの例 (https://google.github.io/mediapipe/solutions/selfie_segmentation.html) では、
