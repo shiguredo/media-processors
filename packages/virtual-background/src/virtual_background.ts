@@ -220,8 +220,8 @@ class VirtualBackgroundProcessor {
 abstract class TrackProcessor {
   protected options: VirtualBackgroundProcessorOptions;
   protected track: MediaStreamVideoTrack;
-  protected canvas: OffscreenCanvas;
-  protected canvasCtx: OffscreenCanvasRenderingContext2D;
+  protected canvas: OffscreenCanvas | HTMLCanvasElement;
+  protected canvasCtx: OffscreenCanvasRenderingContext2D | CanvasRenderingContext2D;
   protected segmentation: SelfieSegmentation;
 
   constructor(
@@ -238,7 +238,13 @@ abstract class TrackProcessor {
     if (width === undefined || height === undefined) {
       throw Error(`Could not retrieve the resolution of the video track: {track}`);
     }
-    this.canvas = new OffscreenCanvas(width, height);
+    if (typeof OffscreenCanvas === "undefined") {
+      this.canvas = document.createElement("canvas");
+      this.canvas.width = width;
+      this.canvas.height = height;
+    } else {
+      this.canvas = new OffscreenCanvas(width, height);
+    }
     const canvasCtx = this.canvas.getContext("2d", { desynchronized: true });
     if (!canvasCtx) {
       throw Error("Failed to get the 2D context of an OffscreenCanvas");
