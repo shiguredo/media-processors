@@ -153,8 +153,13 @@ class VirtualBackgroundProcessor {
       throw Error("Virtual background processing has already started.");
     }
 
-    // TODO:
-    this.trackProcessor = new TrackProcessorWithBreakoutBox(track, this.segmentation, options);
+    if (TrackProcessorWithBreakoutBox.isSupported()) {
+      this.trackProcessor = new TrackProcessorWithBreakoutBox(track, this.segmentation, options);
+    } else if (TrackProcessorWithRequestVideoFrameCallback.isSupported()) {
+      this.trackProcessor = new TrackProcessorWithRequestVideoFrameCallback(track, this.segmentation, options);
+    } else {
+      throw Error("Unsupported browser");
+    }
     this.originalTrack = track;
     this.processedTrack = await this.trackProcessor.startProcessing();
     return this.processedTrack;
