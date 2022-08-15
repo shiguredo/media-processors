@@ -129,10 +129,7 @@ class VirtualBackgroundProcessor {
    * @returns サポートされているかどうか
    */
   static isSupported(): boolean {
-    return (
-      !(typeof MediaStreamTrackProcessor === "undefined" || typeof MediaStreamTrackGenerator === "undefined") &&
-      !("requestVideoFrameCallback" in HTMLVideoElement.prototype)
-    );
+    return TrackProcessorWithBreakoutBox.isSupported() || TrackProcessorWithRequestVideoFrameCallback.isSupported();
   }
 
   /**
@@ -238,13 +235,8 @@ abstract class TrackProcessor {
     if (width === undefined || height === undefined) {
       throw Error(`Could not retrieve the resolution of the video track: {track}`);
     }
-    if (typeof OffscreenCanvas === "undefined") {
-      this.canvas = document.createElement("canvas");
-      this.canvas.width = width;
-      this.canvas.height = height;
-    } else {
-      this.canvas = new OffscreenCanvas(width, height);
-    }
+
+    this.canvas = createOffscreenCanvas(width, height);
     const canvasCtx = this.canvas.getContext("2d", { desynchronized: true });
     if (!canvasCtx) {
       throw Error("Failed to get the 2D context of an OffscreenCanvas");
@@ -268,46 +260,6 @@ abstract class TrackProcessor {
   abstract startProcessing(): Promise<MediaStreamVideoTrack>;
 
   abstract stopProcessing(): void;
-
-  abstract isGeneratorEnded(): boolean;
-
-  protected async transform(
-    frame: VideoFrame,
-    controller: TransformStreamDefaultController<VideoFrame>
-  ): Promise<void> {
-    const timestamp = frame.timestamp;
-    const duration = frame.duration;
-    const image = await createImageBitmap(frame);
-    frame.close();
-
-    // @ts-ignore TS2322: 「`image`の型が合っていない」と怒られるけれど、動作はするので一旦無視
-    await this.segmentation.send({ image });
-    image.close();
-
-    // NOTE: この時点で`this.canvas`は`frame`を反映した内容に更新されている
-
-    if (this.isGeneratorEnded()) {
-      // ジェネレータ（ユーザに渡している処理結果トラック）がクローズ済み。
-      // この状態で `controller.enqueue()` を呼び出すとエラーが発生するのでスキップする。
-      // また `stopProcessing()` を呼び出して変換処理を停止し、以後は `transform()` 自体が呼ばれないようにする。
-      //
-      // なお、上の条件判定と下のエンキューの間でジェネレータの状態が変わり、エラーが発生する可能性もないとは
-      // 言い切れないが、かなりレアケースだと想定され、そこまでケアするのはコスパが悪いので諦めることとする。
-      this.stopProcessing();
-      return;
-    }
-
-    // `VideoFrame` の第一引数に `this.canvas` を直接渡したり、
-    // `this.canvas.transferToImageBitmap()` を使って `ImageBitmap` を取得することも可能だが、
-    // この方法だと環境によっては、透過時の背景色やぼかしの境界部分処理が変になる現象が確認できているため、
-    // ワークアラウンドとして、一度 `ImageData` を経由する方法を採用している
-    //
-    // `ImageData` を経由しない場合の問題としては https://bugs.chromium.org/p/chromium/issues/detail?id=961777 で
-    // 報告されているものが近そう
-    const imageData = this.canvasCtx.getImageData(0, 0, this.canvas.width, this.canvas.height);
-    const imageBitmap = await createImageBitmap(imageData);
-    controller.enqueue(new VideoFrame(imageBitmap, { timestamp, duration } as VideoFrameInit));
-  }
 
   protected updateOffscreenCanvas(segmentationResults: SelfieSegmentationResults) {
     this.canvasCtx.save();
@@ -348,9 +300,6 @@ abstract class TrackProcessor {
   }
 }
 
-// TODO
-// class TrackProcessorWithRequestVideoFrameCallback extends TrackProcessor {}
-
 class TrackProcessorWithBreakoutBox extends TrackProcessor {
   private abortController: AbortController;
   private generator: MediaStreamVideoTrackGenerator;
@@ -363,41 +312,16 @@ class TrackProcessorWithBreakoutBox extends TrackProcessor {
   ) {
     super(track, segmentation, options);
 
-    this.options = options;
-    this.track = track;
-
-    // 仮想背景描画用の中間バッファ（canvas）の初期化
-    const width = track.getSettings().width;
-    const height = track.getSettings().height;
-    if (width === undefined || height === undefined) {
-      throw Error(`Could not retrieve the resolution of the video track: {track}`);
-    }
-    this.canvas = new OffscreenCanvas(width, height);
-    const canvasCtx = this.canvas.getContext("2d", { desynchronized: true });
-    if (!canvasCtx) {
-      throw Error("Failed to get the 2D context of an OffscreenCanvas");
-    }
-    this.canvasCtx = canvasCtx;
-
-    // セグメンテーションモデルの設定更新
-    let modelSelection = 1; // `1` means "selfie-landscape".
-    if (options.segmentationModel && options.segmentationModel === "selfie-general") {
-      modelSelection = 0;
-    }
-    segmentation.setOptions({
-      modelSelection,
-    });
-    segmentation.onResults((results) => {
-      this.updateOffscreenCanvas(results);
-    });
-    this.segmentation = segmentation;
-
     // 処理を停止するための AbortController を初期化
     this.abortController = new AbortController();
 
     // generator / processor インスタンスを生成（まだ処理は開始しない）
     this.generator = new MediaStreamTrackGenerator({ kind: "video" });
     this.processor = new MediaStreamTrackProcessor({ track: this.track });
+  }
+
+  static isSupported(): boolean {
+    return !(typeof MediaStreamTrackProcessor === "undefined" || typeof MediaStreamTrackGenerator === "undefined");
   }
 
   async startProcessing(): Promise<MediaStreamVideoTrack> {
@@ -436,8 +360,115 @@ class TrackProcessorWithBreakoutBox extends TrackProcessor {
     this.segmentation.onResults(() => {});
   }
 
-  isGeneratorEnded(): boolean {
-    return this.generator.readyState === "ended";
+  private async transform(frame: VideoFrame, controller: TransformStreamDefaultController<VideoFrame>): Promise<void> {
+    const timestamp = frame.timestamp;
+    const duration = frame.duration;
+    const image = await createImageBitmap(frame);
+    frame.close();
+
+    // @ts-ignore TS2322: 「`image`の型が合っていない」と怒られるけれど、動作はするので一旦無視
+    await this.segmentation.send({ image });
+    image.close();
+
+    // NOTE: この時点で`this.canvas`は`frame`を反映した内容に更新されている
+
+    if (this.generator.readyState === "ended") {
+      // ジェネレータ（ユーザに渡している処理結果トラック）がクローズ済み。
+      // この状態で `controller.enqueue()` を呼び出すとエラーが発生するのでスキップする。
+      // また `stopProcessing()` を呼び出して変換処理を停止し、以後は `transform()` 自体が呼ばれないようにする。
+      //
+      // なお、上の条件判定と下のエンキューの間でジェネレータの状態が変わり、エラーが発生する可能性もないとは
+      // 言い切れないが、かなりレアケースだと想定され、そこまでケアするのはコスパが悪いので諦めることとする。
+      this.stopProcessing();
+      return;
+    }
+
+    // `VideoFrame` の第一引数に `this.canvas` を直接渡したり、
+    // `this.canvas.transferToImageBitmap()` を使って `ImageBitmap` を取得することも可能だが、
+    // この方法だと環境によっては、透過時の背景色やぼかしの境界部分処理が変になる現象が確認できているため、
+    // ワークアラウンドとして、一度 `ImageData` を経由する方法を採用している
+    //
+    // `ImageData` を経由しない場合の問題としては https://bugs.chromium.org/p/chromium/issues/detail?id=961777 で
+    // 報告されているものが近そう
+    const imageData = this.canvasCtx.getImageData(0, 0, this.canvas.width, this.canvas.height);
+    const imageBitmap = await createImageBitmap(imageData);
+    controller.enqueue(new VideoFrame(imageBitmap, { timestamp, duration } as VideoFrameInit));
+  }
+}
+
+class TrackProcessorWithRequestVideoFrameCallback extends TrackProcessor {
+  private video: HTMLVideoElement;
+  private processedCanvas: HTMLCanvasElement;
+  private processedCanvasCtx: CanvasRenderingContext2D;
+  private requestVideoFrameCallbackHandle?: number;
+
+  constructor(
+    track: MediaStreamVideoTrack,
+    segmentation: SelfieSegmentation,
+    options: VirtualBackgroundProcessorOptions
+  ) {
+    super(track, segmentation, options);
+
+    // requestVideoFrameCallbackHandle()` はトラックではなくビデオ単位のメソッドなので
+    // 内部的に HTMLVideoElement を生成する
+    this.video = document.createElement("video");
+    this.video.srcObject = new MediaStream([track]);
+
+    // 処理後の映像フレームを書き込むための canvas を生成する
+    //
+    // captureStream() メソッドは OffscreenCanvas にはないようなので、
+    // ここでは常に HTMLCanvasElement を使用する
+    this.processedCanvas = document.createElement("canvas");
+    this.processedCanvas.width = this.canvas.width;
+    this.processedCanvas.height = this.canvas.height;
+    const processedCanvasCtx = this.processedCanvas.getContext("2d");
+    if (!processedCanvasCtx) {
+      throw Error("Failed to create 2D canvas context");
+    }
+    this.processedCanvasCtx = processedCanvasCtx;
+  }
+
+  static isSupported(): boolean {
+    return "requestVideoFrameCallback" in HTMLVideoElement.prototype;
+  }
+
+  async startProcessing(): Promise<MediaStreamVideoTrack> {
+    await this.segmentation.initialize();
+    this.requestVideoFrameCallbackHandle = this.video.requestVideoFrameCallback(() => {
+      this.onFrame().catch((e) => console.warn("Error: ", e));
+    });
+    await this.video.play();
+
+    const stream = this.processedCanvas.captureStream();
+    return Promise.resolve(stream.getVideoTracks()[0]);
+  }
+
+  stopProcessing() {
+    if (this.requestVideoFrameCallbackHandle !== undefined) {
+      this.video.pause();
+      this.video.cancelVideoFrameCallback(this.requestVideoFrameCallbackHandle);
+      this.requestVideoFrameCallbackHandle = undefined;
+      this.segmentation.onResults(() => {});
+    }
+  }
+
+  private async onFrame() {
+    this.canvasCtx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    this.canvasCtx.drawImage(this.video, 0, 0, this.canvas.width, this.canvas.height);
+    let imageData = this.canvasCtx.getImageData(0, 0, this.canvas.width, this.canvas.height);
+
+    // @ts-ignore
+    await this.segmentation.send({ image: imageData });
+
+    imageData = this.canvasCtx.getImageData(0, 0, this.canvas.width, this.canvas.height);
+
+    this.processedCanvasCtx.putImageData(imageData, 0, 0);
+
+    // @ts-ignore
+    // eslint-disable-next-line
+    this.requestVideoFrameCallbackHandle = this.video.requestVideoFrameCallback(() => {
+      this.onFrame().catch((e) => console.warn("Error: ", e));
+    });
   }
 }
 
@@ -446,6 +477,18 @@ function trimLastSlash(s: string): string {
     return s.slice(0, -1);
   }
   return s;
+}
+
+function createOffscreenCanvas(width: number, height: number): OffscreenCanvas | HTMLCanvasElement {
+  if (typeof OffscreenCanvas === "undefined") {
+    // OffscreenCanvas が使えない場合には通常の canvas で代替する
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    return canvas;
+  } else {
+    return new OffscreenCanvas(width, height);
+  }
 }
 
 export {
