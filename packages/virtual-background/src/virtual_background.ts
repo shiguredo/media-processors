@@ -3,6 +3,7 @@ import {
   SelfieSegmentationConfig,
   Results as SelfieSegmentationResults,
 } from "@mediapipe/selfie_segmentation";
+import * as StackBlur from "stackblur-canvas";
 
 /**
  * {@link VirtualBackgroundProcessor.startProcessing} メソッドに指定可能なオプション
@@ -129,7 +130,7 @@ class VirtualBackgroundProcessor {
    * @returns サポートされているかどうか
    */
   static isSupported(): boolean {
-    return !(typeof MediaStreamTrackProcessor === "undefined" || typeof MediaStreamTrackGenerator === "undefined");
+    return TrackProcessorWithBreakoutBox.isSupported() || TrackProcessorWithRequestVideoFrameCallback.isSupported();
   }
 
   /**
@@ -153,7 +154,13 @@ class VirtualBackgroundProcessor {
       throw Error("Virtual background processing has already started.");
     }
 
-    this.trackProcessor = new TrackProcessor(track, this.segmentation, options);
+    if (TrackProcessorWithBreakoutBox.isSupported()) {
+      this.trackProcessor = new TrackProcessorWithBreakoutBox(track, this.segmentation, options);
+    } else if (TrackProcessorWithRequestVideoFrameCallback.isSupported()) {
+      this.trackProcessor = new TrackProcessorWithRequestVideoFrameCallback(track, this.segmentation, options);
+    } else {
+      throw Error("Unsupported browser");
+    }
     this.originalTrack = track;
     this.processedTrack = await this.trackProcessor.startProcessing();
     return this.processedTrack;
@@ -213,15 +220,14 @@ class VirtualBackgroundProcessor {
   }
 }
 
-class TrackProcessor {
-  private options: VirtualBackgroundProcessorOptions;
-  private track: MediaStreamVideoTrack;
-  private canvas: OffscreenCanvas;
-  private canvasCtx: OffscreenCanvasRenderingContext2D;
-  private segmentation: SelfieSegmentation;
-  private abortController: AbortController;
-  private generator: MediaStreamVideoTrackGenerator;
-  private processor: MediaStreamTrackProcessor<VideoFrame>;
+abstract class TrackProcessor {
+  protected options: VirtualBackgroundProcessorOptions;
+  protected track: MediaStreamVideoTrack;
+  protected canvas: OffscreenCanvas | HTMLCanvasElement;
+  protected canvasCtx: OffscreenCanvasRenderingContext2D | CanvasRenderingContext2D;
+  protected blurCanvas?: OffscreenCanvas | HTMLCanvasElement;
+  protected blurCanvasCtx?: OffscreenCanvasRenderingContext2D | CanvasRenderingContext2D;
+  protected segmentation: SelfieSegmentation;
 
   constructor(
     track: MediaStreamVideoTrack,
@@ -237,12 +243,25 @@ class TrackProcessor {
     if (width === undefined || height === undefined) {
       throw Error(`Could not retrieve the resolution of the video track: {track}`);
     }
-    this.canvas = new OffscreenCanvas(width, height);
+
+    this.canvas = createOffscreenCanvas(width, height);
     const canvasCtx = this.canvas.getContext("2d", { desynchronized: true });
     if (!canvasCtx) {
       throw Error("Failed to get the 2D context of an OffscreenCanvas");
     }
     this.canvasCtx = canvasCtx;
+
+    if (!this.isCanvasContextFilterSupported()) {
+      // Safari での背景ぼかし用に一時作業用の canvas を作っておく
+      //
+      // TODO: Safari が filter に対応したらこの分岐は削除する
+      this.blurCanvas = createOffscreenCanvas(width, height);
+      const blurCanvasCtx = this.blurCanvas.getContext("2d", { desynchronized: true });
+      if (!blurCanvasCtx) {
+        throw Error("Failed to get the 2D context of an OffscreenCanvas");
+      }
+      this.blurCanvasCtx = blurCanvasCtx;
+    }
 
     // セグメンテーションモデルの設定更新
     let modelSelection = 1; // `1` means "selfie-landscape".
@@ -256,6 +275,78 @@ class TrackProcessor {
       this.updateOffscreenCanvas(results);
     });
     this.segmentation = segmentation;
+  }
+
+  abstract startProcessing(): Promise<MediaStreamVideoTrack>;
+
+  abstract stopProcessing(): void;
+
+  abstract isCanvasContextFilterSupported(): boolean;
+
+  protected updateOffscreenCanvas(segmentationResults: SelfieSegmentationResults) {
+    this.canvasCtx.save();
+    this.canvasCtx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    this.canvasCtx.drawImage(segmentationResults.segmentationMask, 0, 0, this.canvas.width, this.canvas.height);
+
+    this.canvasCtx.globalCompositeOperation = "source-in";
+    this.canvasCtx.drawImage(segmentationResults.image, 0, 0, this.canvas.width, this.canvas.height);
+
+    // NOTE: mediapipeの例 (https://google.github.io/mediapipe/solutions/selfie_segmentation.html) では、
+    //       "destination-atop"が使われているけれど、背景画像にアルファチャンネルが含まれている場合には、
+    //       "destination-atop"だと透過部分と人物が重なる領域が除去されてしまうので、
+    //       "destination-over"にしている。
+    this.canvasCtx.globalCompositeOperation = "destination-over";
+
+    let tmpCanvas = this.canvas;
+    let tmpCanvasCtx = this.canvasCtx;
+    if (this.options.blurRadius !== undefined) {
+      if (this.blurCanvas !== undefined && this.blurCanvasCtx !== undefined) {
+        tmpCanvas = this.blurCanvas;
+        tmpCanvasCtx = this.blurCanvasCtx;
+      } else {
+        tmpCanvasCtx.filter = `blur(${this.options.blurRadius}px)`;
+      }
+    }
+
+    if (this.options.backgroundImage !== undefined) {
+      const decideRegion = this.options.backgroundImageRegion || cropBackgroundImageCenter;
+      const region = decideRegion(this.canvas, this.options.backgroundImage);
+      tmpCanvasCtx.drawImage(
+        this.options.backgroundImage,
+        region.x,
+        region.y,
+        region.width,
+        region.height,
+        0,
+        0,
+        this.canvas.width,
+        this.canvas.height
+      );
+    } else {
+      tmpCanvasCtx.drawImage(segmentationResults.image, 0, 0);
+    }
+
+    if (this.options.blurRadius !== undefined && this.canvas !== tmpCanvas) {
+      // @ts-ignore
+      StackBlur.canvasRGB(tmpCanvas, 0, 0, this.canvas.width, this.canvas.height, this.options.blurRadius);
+      this.canvasCtx.drawImage(tmpCanvas, 0, 0, this.canvas.width, this.canvas.height);
+    }
+
+    this.canvasCtx.restore();
+  }
+}
+
+class TrackProcessorWithBreakoutBox extends TrackProcessor {
+  private abortController: AbortController;
+  private generator: MediaStreamVideoTrackGenerator;
+  private processor: MediaStreamTrackProcessor<VideoFrame>;
+
+  constructor(
+    track: MediaStreamVideoTrack,
+    segmentation: SelfieSegmentation,
+    options: VirtualBackgroundProcessorOptions
+  ) {
+    super(track, segmentation, options);
 
     // 処理を停止するための AbortController を初期化
     this.abortController = new AbortController();
@@ -263,6 +354,10 @@ class TrackProcessor {
     // generator / processor インスタンスを生成（まだ処理は開始しない）
     this.generator = new MediaStreamTrackGenerator({ kind: "video" });
     this.processor = new MediaStreamTrackProcessor({ track: this.track });
+  }
+
+  static isSupported(): boolean {
+    return !(typeof MediaStreamTrackProcessor === "undefined" || typeof MediaStreamTrackGenerator === "undefined");
   }
 
   async startProcessing(): Promise<MediaStreamVideoTrack> {
@@ -301,6 +396,10 @@ class TrackProcessor {
     this.segmentation.onResults(() => {});
   }
 
+  isCanvasContextFilterSupported(): boolean {
+    return true;
+  }
+
   private async transform(frame: VideoFrame, controller: TransformStreamDefaultController<VideoFrame>): Promise<void> {
     const timestamp = frame.timestamp;
     const duration = frame.duration;
@@ -335,43 +434,85 @@ class TrackProcessor {
     const imageBitmap = await createImageBitmap(imageData);
     controller.enqueue(new VideoFrame(imageBitmap, { timestamp, duration } as VideoFrameInit));
   }
+}
 
-  private updateOffscreenCanvas(segmentationResults: SelfieSegmentationResults) {
-    this.canvasCtx.save();
+class TrackProcessorWithRequestVideoFrameCallback extends TrackProcessor {
+  private video: HTMLVideoElement;
+  private processedCanvas: HTMLCanvasElement;
+  private processedCanvasCtx: CanvasRenderingContext2D;
+  private requestVideoFrameCallbackHandle?: number;
+
+  constructor(
+    track: MediaStreamVideoTrack,
+    segmentation: SelfieSegmentation,
+    options: VirtualBackgroundProcessorOptions
+  ) {
+    super(track, segmentation, options);
+
+    // requestVideoFrameCallbackHandle()` はトラックではなくビデオ単位のメソッドなので
+    // 内部的に HTMLVideoElement を生成する
+    this.video = document.createElement("video");
+    this.video.srcObject = new MediaStream([track]);
+
+    // 処理後の映像フレームを書き込むための canvas を生成する
+    //
+    // captureStream() メソッドは OffscreenCanvas にはないようなので、
+    // ここでは常に HTMLCanvasElement を使用する
+    this.processedCanvas = document.createElement("canvas");
+    this.processedCanvas.width = this.canvas.width;
+    this.processedCanvas.height = this.canvas.height;
+    const processedCanvasCtx = this.processedCanvas.getContext("2d");
+    if (!processedCanvasCtx) {
+      throw Error("Failed to create 2D canvas context");
+    }
+    this.processedCanvasCtx = processedCanvasCtx;
+  }
+
+  static isSupported(): boolean {
+    return "requestVideoFrameCallback" in HTMLVideoElement.prototype;
+  }
+
+  async startProcessing(): Promise<MediaStreamVideoTrack> {
+    await this.segmentation.initialize();
+    this.requestVideoFrameCallbackHandle = this.video.requestVideoFrameCallback(() => {
+      this.onFrame().catch((e) => console.warn("Error: ", e));
+    });
+    await this.video.play();
+
+    const stream = this.processedCanvas.captureStream();
+    return Promise.resolve(stream.getVideoTracks()[0]);
+  }
+
+  stopProcessing() {
+    if (this.requestVideoFrameCallbackHandle !== undefined) {
+      this.video.pause();
+      this.video.cancelVideoFrameCallback(this.requestVideoFrameCallbackHandle);
+      this.requestVideoFrameCallbackHandle = undefined;
+      this.segmentation.onResults(() => {});
+    }
+  }
+
+  isCanvasContextFilterSupported(): boolean {
+    return false;
+  }
+
+  private async onFrame() {
     this.canvasCtx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-    this.canvasCtx.drawImage(segmentationResults.segmentationMask, 0, 0, this.canvas.width, this.canvas.height);
+    this.canvasCtx.drawImage(this.video, 0, 0, this.canvas.width, this.canvas.height);
+    let imageData = this.canvasCtx.getImageData(0, 0, this.canvas.width, this.canvas.height);
 
-    this.canvasCtx.globalCompositeOperation = "source-in";
-    this.canvasCtx.drawImage(segmentationResults.image, 0, 0, this.canvas.width, this.canvas.height);
+    // @ts-ignore
+    await this.segmentation.send({ image: imageData });
 
-    if (this.options.blurRadius !== undefined) {
-      this.canvasCtx.filter = `blur(${this.options.blurRadius}px)`;
-    }
+    imageData = this.canvasCtx.getImageData(0, 0, this.canvas.width, this.canvas.height);
 
-    // NOTE: mediapipeの例 (https://google.github.io/mediapipe/solutions/selfie_segmentation.html) では、
-    //       "destination-atop"が使われているけれど、背景画像にアルファチャンネルが含まれている場合には、
-    //       "destination-atop"だと透過部分と人物が重なる領域が除去されてしまうので、
-    //       "destination-over"にしている。
-    this.canvasCtx.globalCompositeOperation = "destination-over";
-    if (this.options.backgroundImage !== undefined) {
-      const decideRegion = this.options.backgroundImageRegion || cropBackgroundImageCenter;
-      const region = decideRegion(this.canvas, this.options.backgroundImage);
-      this.canvasCtx.drawImage(
-        this.options.backgroundImage,
-        region.x,
-        region.y,
-        region.width,
-        region.height,
-        0,
-        0,
-        this.canvas.width,
-        this.canvas.height
-      );
-    } else {
-      this.canvasCtx.drawImage(segmentationResults.image, 0, 0);
-    }
+    this.processedCanvasCtx.putImageData(imageData, 0, 0);
 
-    this.canvasCtx.restore();
+    // @ts-ignore
+    // eslint-disable-next-line
+    this.requestVideoFrameCallbackHandle = this.video.requestVideoFrameCallback(() => {
+      this.onFrame().catch((e) => console.warn("Error: ", e));
+    });
   }
 }
 
@@ -380,6 +521,18 @@ function trimLastSlash(s: string): string {
     return s.slice(0, -1);
   }
   return s;
+}
+
+function createOffscreenCanvas(width: number, height: number): OffscreenCanvas | HTMLCanvasElement {
+  if (typeof OffscreenCanvas === "undefined") {
+    // OffscreenCanvas が使えない場合には通常の canvas で代替する
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    return canvas;
+  } else {
+    return new OffscreenCanvas(width, height);
+  }
 }
 
 export {
