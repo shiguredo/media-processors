@@ -86,8 +86,10 @@ processor.stopProcessing();
 
 ## サポートブラウザ
 
-本ライブラリは MediaStreamTrack Insertable Streams (aka Breakout Box) というブラウザの機能を利用しています。
-そのため2022年1月現在では、ChromeやEdge等のChromiumベースのブラウザでのみ動作します。
+本ライブラリは Chrome や Edge 等の Chromium ベースのブラウザか Safari (15.4 以降）で動作します。
+それぞれのブラウザでは、映像処理を効率的に行うために以下の機能を利用しています:
+- **Chromium ベースブラウザ**: MediaStreamTrack Insertable Streams (aka Breakout Box)
+- **Safari**: HTMLVideoElement.requestVideoFrameCallback メソッド
 
 ## ライセンス
 
