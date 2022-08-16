@@ -225,6 +225,8 @@ abstract class TrackProcessor {
   protected track: MediaStreamVideoTrack;
   protected canvas: OffscreenCanvas | HTMLCanvasElement;
   protected canvasCtx: OffscreenCanvasRenderingContext2D | CanvasRenderingContext2D;
+  protected blurCanvas?: OffscreenCanvas | HTMLCanvasElement;
+  protected blurCanvasCtx?: OffscreenCanvasRenderingContext2D | CanvasRenderingContext2D;
   protected segmentation: SelfieSegmentation;
 
   constructor(
@@ -249,6 +251,18 @@ abstract class TrackProcessor {
     }
     this.canvasCtx = canvasCtx;
 
+    if (!this.isCanvasContextFilterSupported()) {
+      // Safari での背景ぼかし用に一時作業用の canvas を作っておく
+      //
+      // TODO: Safari が filter に対応したらこの分岐は削除する
+      this.blurCanvas = createOffscreenCanvas(width, height);
+      const blurCanvasCtx = this.blurCanvas.getContext("2d", { desynchronized: true });
+      if (!blurCanvasCtx) {
+        throw Error("Failed to get the 2D context of an OffscreenCanvas");
+      }
+      this.blurCanvasCtx = blurCanvasCtx;
+    }
+
     // セグメンテーションモデルの設定更新
     let modelSelection = 1; // `1` means "selfie-landscape".
     if (options.segmentationModel && options.segmentationModel === "selfie-general") {
@@ -267,6 +281,8 @@ abstract class TrackProcessor {
 
   abstract stopProcessing(): void;
 
+  abstract isCanvasContextFilterSupported(): boolean;
+
   protected updateOffscreenCanvas(segmentationResults: SelfieSegmentationResults) {
     this.canvasCtx.save();
     this.canvasCtx.clearRect(0, 0, this.canvas.width, this.canvas.height);
@@ -275,23 +291,27 @@ abstract class TrackProcessor {
     this.canvasCtx.globalCompositeOperation = "source-in";
     this.canvasCtx.drawImage(segmentationResults.image, 0, 0, this.canvas.width, this.canvas.height);
 
-    if (this.options.blurRadius !== undefined) {
-      // this.canvasCtx.filter = `blur(${this.options.blurRadius}px)`;
-      //this.canvasCtx.filter = `blur(${this.options.blurRadius}px)`;
-
-      // @ts-ignore
-      StackBlur.canvasRGBA(this.canvas, 0, 0, this.canvas.width, this.canvas.height, this.options.blurRadius);
-    }
-
     // NOTE: mediapipeの例 (https://google.github.io/mediapipe/solutions/selfie_segmentation.html) では、
     //       "destination-atop"が使われているけれど、背景画像にアルファチャンネルが含まれている場合には、
     //       "destination-atop"だと透過部分と人物が重なる領域が除去されてしまうので、
     //       "destination-over"にしている。
     this.canvasCtx.globalCompositeOperation = "destination-over";
+
+    let tmpCanvas = this.canvas;
+    let tmpCanvasCtx = this.canvasCtx;
+    if (this.options.blurRadius !== undefined) {
+      if (this.blurCanvas !== undefined && this.blurCanvasCtx !== undefined) {
+        tmpCanvas = this.blurCanvas;
+        tmpCanvasCtx = this.blurCanvasCtx;
+      } else {
+        tmpCanvasCtx.filter = `blur(${this.options.blurRadius}px)`;
+      }
+    }
+
     if (this.options.backgroundImage !== undefined) {
       const decideRegion = this.options.backgroundImageRegion || cropBackgroundImageCenter;
       const region = decideRegion(this.canvas, this.options.backgroundImage);
-      this.canvasCtx.drawImage(
+      tmpCanvasCtx.drawImage(
         this.options.backgroundImage,
         region.x,
         region.y,
@@ -303,7 +323,12 @@ abstract class TrackProcessor {
         this.canvas.height
       );
     } else {
-      this.canvasCtx.drawImage(segmentationResults.image, 0, 0);
+      tmpCanvasCtx.drawImage(segmentationResults.image, 0, 0);
+    }
+
+    if (this.options.blurRadius !== undefined && this.canvas !== tmpCanvas) {
+      StackBlur.canvasRGB(tmpCanvas, 0, 0, this.canvas.width, this.canvas.height, this.options.blurRadius);
+      this.canvasCtx.drawImage(tmpCanvas, 0, 0, this.canvas.width, this.canvas.height);
     }
 
     this.canvasCtx.restore();
@@ -368,6 +393,10 @@ class TrackProcessorWithBreakoutBox extends TrackProcessor {
   stopProcessing() {
     this.abortController.abort();
     this.segmentation.onResults(() => {});
+  }
+
+  isCanvasContextFilterSupported(): boolean {
+    return true;
   }
 
   private async transform(frame: VideoFrame, controller: TransformStreamDefaultController<VideoFrame>): Promise<void> {
@@ -460,6 +489,10 @@ class TrackProcessorWithRequestVideoFrameCallback extends TrackProcessor {
       this.requestVideoFrameCallbackHandle = undefined;
       this.segmentation.onResults(() => {});
     }
+  }
+
+  isCanvasContextFilterSupported(): boolean {
+    return false;
   }
 
   private async onFrame() {
