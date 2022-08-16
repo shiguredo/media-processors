@@ -11,20 +11,24 @@
 
 ## develop
 
+## virtual-background-2022.6.0
+- [ADD] Safari での仮想背景処理に対応
+    - Safari の 15.4 で `requestVideoFrameCallback()` が正式に対応されたため、それを用いて Safari での仮想背景処理に対応
+    - Safari はキャンバスのフィルターによるぼかし機能に対応していないため、背景ぼかしは [StackBlur](https://github.com/flozz/StackBlur) を用いて実現している
+    - https://github.com/shiguredo/media-processors/pull/160
+    - @sile
+
 ## virtual-background-2022.5.0
 - [CHANGE] 背景画像と処理対象映像のアスペクト比が異なる場合のデフォルト挙動を「引き伸ばし」から「中央部分のクロップ」に変更
-
     - https://github.com/shiguredo/media-processors/pull/129
     - @sile
 - [ADD] 背景画像と処理対象映像のアスペクト比が異なる場合の処理方法を決定するための `backgroundImageRegion` オプションを追加
     - https://github.com/shiguredo/media-processors/pull/129
     - 合わせて、このオプションに指定可能な組み込みの関数を二つ提供:
-
       - `cropBackgroundImageCenter`: アスペクト比を維持したまま、背景画像の中央部分をクロップする（デフォルト）
       - `fillBackgroundImage`: アスペクト比を崩して、背景画像を処理対象映像に合わせて引き伸ばす（従来の挙動）
     - @sile
 - [UPDATE] TypeScript のバージョンを 4.6.x から 4.7.x に更新
-
     - それに伴い `@types/dom-webcodecs` が不要となったので `dependencies` から削除
     - @sile
 

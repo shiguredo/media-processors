@@ -9,7 +9,7 @@
     "start": "npx serve -S -l 8080 ."
   },
   "devDependencies": {
-    "serve": "^13.0.2"
+    "serve": "^14.0.1"
   },
   "workspaces": [
     "packages/virtual-background",
