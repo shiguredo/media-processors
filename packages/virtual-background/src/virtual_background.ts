@@ -327,6 +327,7 @@ abstract class TrackProcessor {
     }
 
     if (this.options.blurRadius !== undefined && this.canvas !== tmpCanvas) {
+      // @ts-ignore
       StackBlur.canvasRGB(tmpCanvas, 0, 0, this.canvas.width, this.canvas.height, this.options.blurRadius);
       this.canvasCtx.drawImage(tmpCanvas, 0, 0, this.canvas.width, this.canvas.height);
     }
