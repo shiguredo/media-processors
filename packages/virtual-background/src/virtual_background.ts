@@ -452,6 +452,8 @@ class TrackProcessorWithRequestVideoFrameCallback extends TrackProcessor {
     // requestVideoFrameCallbackHandle()` はトラックではなくビデオ単位のメソッドなので
     // 内部的に HTMLVideoElement を生成する
     this.video = document.createElement("video");
+    this.video.muted = true;
+    this.video.playsInline = true;
     this.video.srcObject = new MediaStream([track]);
 
     // 処理後の映像フレームを書き込むための canvas を生成する
