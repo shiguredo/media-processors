@@ -11,6 +11,14 @@
 
 ## develop
 
+## virtual-background-2022.6.1
+- [FIX] 仮想背景処理中の入力映像トラックの解像度変更に出力映像トラックが追従できていなかった問題を修正
+    - https://github.com/shiguredo/media-processors/pull/170
+    - @sile
+- [FIX] iPhone で仮想背景処理が権限エラーで失敗する問題を修正
+    - https://github.com/shiguredo/media-processors/pull/169
+    - @sile
+
 ## virtual-background-2022.6.0
 - [ADD] Safari での仮想背景処理に対応
     - Safari の 15.4 で `requestVideoFrameCallback()` が正式に対応されたため、それを用いて Safari での仮想背景処理に対応
