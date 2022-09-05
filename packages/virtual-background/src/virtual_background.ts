@@ -334,6 +334,20 @@ abstract class TrackProcessor {
 
     this.canvasCtx.restore();
   }
+
+  protected updateCanvasSizeIfNeed(width: number, height: number): boolean {
+    const changed = this.canvas.width !== width || this.canvas.height !== height;
+    if (changed) {
+      this.canvas.width = width;
+      this.canvas.height = height;
+
+      if (this.blurCanvas !== undefined) {
+        this.blurCanvas.width = width;
+        this.blurCanvas.height = height;
+      }
+    }
+    return changed;
+  }
 }
 
 class TrackProcessorWithBreakoutBox extends TrackProcessor {
@@ -401,6 +415,8 @@ class TrackProcessorWithBreakoutBox extends TrackProcessor {
   }
 
   private async transform(frame: VideoFrame, controller: TransformStreamDefaultController<VideoFrame>): Promise<void> {
+    this.updateCanvasSizeIfNeed(frame.displayWidth, frame.displayHeight);
+
     const timestamp = frame.timestamp;
     const duration = frame.duration;
     const image = await createImageBitmap(frame);
@@ -452,6 +468,8 @@ class TrackProcessorWithRequestVideoFrameCallback extends TrackProcessor {
     // requestVideoFrameCallbackHandle()` はトラックではなくビデオ単位のメソッドなので
     // 内部的に HTMLVideoElement を生成する
     this.video = document.createElement("video");
+    this.video.muted = true;
+    this.video.playsInline = true;
     this.video.srcObject = new MediaStream([track]);
 
     // 処理後の映像フレームを書き込むための canvas を生成する
@@ -497,6 +515,16 @@ class TrackProcessorWithRequestVideoFrameCallback extends TrackProcessor {
   }
 
   private async onFrame() {
+    const width = this.track.getSettings().width;
+    const height = this.track.getSettings().height;
+
+    if (width !== undefined && height !== undefined) {
+      if (this.updateCanvasSizeIfNeed(width, height)) {
+        this.processedCanvas.width = this.canvas.width;
+        this.processedCanvas.height = this.canvas.height;
+      }
+    }
+
     this.canvasCtx.clearRect(0, 0, this.canvas.width, this.canvas.height);
     this.canvasCtx.drawImage(this.video, 0, 0, this.canvas.width, this.canvas.height);
     let imageData = this.canvasCtx.getImageData(0, 0, this.canvas.width, this.canvas.height);
