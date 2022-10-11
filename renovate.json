@@ -5,21 +5,16 @@
   ],
   "packageRules": [
     {
-      // `major` 以外の PR は自動マージとする
       "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
       "automerge": true
     },
     {
-      // `major` 以外の PR は自動マージとする
-      // 加えて `eslint` という文字列にマッチした場合はグループ化する
       "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
       "matchPackagePatterns": ["eslint"],
       "groupName": "eslint",
       "automerge": true
     },
     {
-      // `major` 以外の PR は自動マージとする
-      // 加えて `eslint` という文字列にマッチした場合はグループ化する
       "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
       "matchPackagePatterns": ["rollup"],
       "groupName": "rollup",
