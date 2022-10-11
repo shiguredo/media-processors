@@ -34,7 +34,7 @@
     "@mediapipe/selfie_segmentation": "^0.1.1632777926",
     "@rollup/plugin-commonjs": "^22.0.2",
     "@rollup/plugin-node-resolve": "^15.0.0",
-    "@rollup/plugin-typescript": "^8.5.0",
+    "@rollup/plugin-typescript": "^9.0.0",
     "@types/offscreencanvas": "^2019.7.0",
     "@typescript-eslint/eslint-plugin": "^5.39.0",
     "@typescript-eslint/parser": "^5.40.0",
