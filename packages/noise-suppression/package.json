@@ -36,7 +36,7 @@
     "@rollup/plugin-typescript": "^8.5.0",
     "@shiguredo/rnnoise-wasm": "^2022.2.0",
     "@typescript-eslint/eslint-plugin": "^5.39.0",
-    "@typescript-eslint/parser": "^5.39.0",
+    "@typescript-eslint/parser": "^5.40.0",
     "eslint": "^8.25.0",
     "eslint-config-prettier": "^8.5.0",
     "eslint-plugin-prettier": "^4.2.1",
