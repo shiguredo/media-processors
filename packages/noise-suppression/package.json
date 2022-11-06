@@ -37,7 +37,7 @@
     "@shiguredo/rnnoise-wasm": "2022.2.0",
     "@typescript-eslint/eslint-plugin": "5.42.0",
     "@typescript-eslint/parser": "5.42.0",
-    "eslint": "8.26.0",
+    "eslint": "8.27.0",
     "eslint-config-prettier": "8.5.0",
     "eslint-plugin-prettier": "4.2.1",
     "rollup": "3.2.5",
