@@ -249,7 +249,7 @@ abstract class TrackProcessor {
     if (!canvasCtx) {
       throw Error("Failed to get the 2D context of an OffscreenCanvas");
     }
-    this.canvasCtx = canvasCtx;
+    this.canvasCtx = canvasCtx as OffscreenCanvasRenderingContext2D;
 
     if (!this.isCanvasContextFilterSupported()) {
       // Safari での背景ぼかし用に一時作業用の canvas を作っておく
@@ -260,7 +260,7 @@ abstract class TrackProcessor {
       if (!blurCanvasCtx) {
         throw Error("Failed to get the 2D context of an OffscreenCanvas");
       }
-      this.blurCanvasCtx = blurCanvasCtx;
+      this.blurCanvasCtx = blurCanvasCtx as OffscreenCanvasRenderingContext2D;
     }
 
     // セグメンテーションモデルの設定更新
