@@ -32,7 +32,7 @@
   },
   "devDependencies": {
     "@mediapipe/selfie_segmentation": "0.1.1632777926",
-    "@rollup/plugin-commonjs": "23.0.3",
+    "@rollup/plugin-commonjs": "23.0.4",
     "@rollup/plugin-node-resolve": "15.0.1",
     "@rollup/plugin-typescript": "10.0.1",
     "@types/offscreencanvas": "2019.7.0",
