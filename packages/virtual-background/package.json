@@ -41,7 +41,7 @@
     "eslint": "8.32.0",
     "eslint-config-prettier": "8.6.0",
     "eslint-plugin-prettier": "4.2.1",
-    "rollup": "3.10.0",
+    "rollup": "3.10.1",
     "rollup-plugin-copy": "3.4.0",
     "stackblur-canvas": "2.5.0",
     "typedoc": "0.23.24",
