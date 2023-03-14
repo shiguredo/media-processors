@@ -85,10 +85,10 @@ pub const Agcwd = struct {
         // (実際には RGB <-> HSV 変換による誤差の影響によって微妙に変化する）
         var mapping_curve: [256]u8 = undefined;
         for (0..mapping_curve.len) |i| {
-            mapping_curve[i] = i;
+            mapping_curve[i] = @truncate(u8, i);
         }
 
-        return .{ options, mapping_curve };
+        return .{ .options = options, .mapping_curve = mapping_curve };
     }
 
     pub fn isStateObsolete(self: Self, image: Image) bool {
@@ -131,7 +131,7 @@ const Pdf = struct {
     }
 
     fn fromImageAndMask(image: Image, mask: Image) Self {
-        var histogram = [_]usize{0} * 256;
+        var histogram = [_]usize{0} ** 256;
         var total_count: usize = 0;
         {
             var i: usize = 0;
@@ -143,19 +143,23 @@ const Pdf = struct {
             }
         }
 
-        var table = [_]f32{0.0} * 256;
-        const n = @floatCast(f32, total_count);
+        var table: [256]f32 = undefined;
+        const n = @intToFloat(f32, total_count);
+
+        // TODO: 0.. が不要
         for (histogram, 0..) |i, count| {
-            table[i] = @floatCast(f32, count) / n;
+            table[i] = @intToFloat(f32, count) / n;
         }
 
-        return .{table};
+        return .{ .table = table };
     }
 
     fn entropy(self: *const Self) f32 {
         var sum: f32 = 0;
         for (self.table) |intensity| {
-            sum += intensity * @log(intensity);
+            if (intensity > 0.0) {
+                sum += intensity * @log(intensity);
+            }
         }
         return -sum;
     }
@@ -170,11 +174,13 @@ const Pdf = struct {
 
         var table: [256]f32 = undefined;
         const range = max_intensity - min_intensity + math.floatEps;
+
+        // TODO: 0.. が不要
         for (self.table, 0..) |i, x| {
             table[i] = max_intensity * math.pow(((x - min_intensity) / range), alpha);
         }
 
-        return .{table};
+        return .{ .table = table };
     }
 };
 
