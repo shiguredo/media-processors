@@ -31,7 +31,7 @@ pub const Image = struct {
     }
 
     fn isMasked(self: Self, offset: usize) bool {
-        return self.data[offset + 3] == 0;
+        return self.data[offset + 3] == 255;
     }
 
     fn getMaskRatio(self: Self) f32 {
@@ -57,7 +57,7 @@ pub const AgcwdOptions = struct {
     alpha: f32 = 0.5,
     //fusion: f32,
     //bottom_intensity: f32,
-    //mask_ratio_threshold: f32
+    mask_ratio_threshold: f32 = 0.05,
     entropy_threshold: f32 = 0.05,
 };
 
@@ -92,16 +92,17 @@ pub const Agcwd = struct {
         return @fabs(self.entropy - entropy) > self.options.entropy_threshold;
     }
 
-    pub fn updateState(self: *Self, image: Image, mask: ?Image) void {
-        // const maskedCount = mask.maskedCount();
-        // if (image.data.len / 10 < maskedCount) {
-        //     //
-        //     return Self.fromImage(image);
-        // }
+    pub fn updateState(self: *Self, image: Image, mask: Image) void {
+        var pdf = Pdf.fromImage(image);
+        self.entropy = pdf.entropy();
 
-        _ = self;
-        _ = image;
-        _ = mask;
+        if (self.options.mask_ratio_threshold < mask.getMaskRatio()) {
+            // マスク領域が十分に大きい場合には、マスク領域だけを使って PDF を計算する
+            pdf = Pdf.fromImageAndMask(image, mask);
+        }
+
+        const pdf_w = pdf.toWeightingDistribution(self.options.alpha);
+        _ = pdf_w;
     }
 
     pub fn enhanceImage(self: Self, image: *Image) void {
@@ -130,7 +131,7 @@ const Pdf = struct {
         {
             var i: usize = 0;
             while (i < image.data.len) : (i += 4) {
-                if (!mask.isMasked(i)) {
+                if (mask.isMasked(i)) {
                     histogram[image.getRgb(i).intensity()] += 1;
                     total_count += 1;
                 }
@@ -146,12 +147,29 @@ const Pdf = struct {
         return .{table};
     }
 
-    fn entropy(self: Self) f32 {
+    fn entropy(self: *const Self) f32 {
         var sum: f32 = 0;
-        for (self.table) |density| {
-            sum += density * @log(density);
+        for (self.table) |intensity| {
+            sum += intensity * @log(intensity);
         }
         return -sum;
+    }
+
+    fn toWeightingDistribution(self: *const Self, alpha: f32) Self {
+        var max_intensity = self.table[0];
+        var min_intensity = self.table[0];
+        for (self.table) |intensity| {
+            max_intensity = @max(max_intensity, intensity);
+            min_intensity = @min(min_intensity, intensity);
+        }
+
+        var table: [256]f32 = undefined;
+        const range = max_intensity - min_intensity + math.floatEps;
+        for (self.table, 0..) |i, x| {
+            table[i] = max_intensity * math.pow(((x - min_intensity) / range), alpha);
+        }
+
+        return .{table};
     }
 };
 
