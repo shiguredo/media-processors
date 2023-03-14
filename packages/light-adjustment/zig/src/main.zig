@@ -1,25 +1,30 @@
 const std = @import("std");
 const math = std.math;
 const ArrayList = std.ArrayList;
+const Allocator = std.mem.Allocator;
 // var GBA = std.heap.GeneralPurposeAllocator(.{}){};
 // const ALLOCATOR = GBA.allocator();
 const expect = std.testing.expect;
+const test_allocator = std.testing.allocator;
 
 // RGBA
 pub const Image = struct {
-    data: ArrayList(u8),
+    data: []u8,
+    allocator: ?Allocator = null,
 
     const Self = @This();
 
-    pub fn init(data: ArrayList(u8)) !Self {
+    pub fn fromSlice(data: []u8) !Self {
         if (data.len % 4 != 0) {
             return error.NotRgbaImageData;
         }
-        return .{data};
+        return .{ .data = data };
     }
 
     pub fn deinit(self: Self) void {
-        self.data.deinit();
+        if (self.allocator) |allocator| {
+            allocator.free(self.data);
+        }
     }
 
     fn getRgb(self: Self, offset: usize) Rgb {
@@ -55,8 +60,8 @@ pub const Image = struct {
 pub const AgcwdOptions = struct {
     /// 論文中に出てくる α パラメータ
     alpha: f32 = 0.5,
-    //fusion: f32,
-    //bottom_intensity: f32,
+    fusion: f32 = 0.5,
+    bottom_intensity: u8 = 10, // TODO
     mask_ratio_threshold: f32 = 0.05,
     entropy_threshold: f32 = 0.05,
 };
@@ -102,7 +107,7 @@ pub const Agcwd = struct {
         }
 
         const cdf = Cdf.fromPdf(pdf.toWeightingDistribution(self.options.alpha));
-        _ = cdf;
+        self.mapping_curve = cdf.toIntensityMappingCurve(self.options.fusion, self.options.bottom_intensity);
     }
 
     pub fn enhanceImage(self: Self, image: *Image) void {
@@ -192,6 +197,20 @@ const Cdf = struct {
         }
 
         return .{table};
+    }
+
+    fn toIntensityMappingCurve(self: *const Self, fusion: f32, bottom_intensity: u8) [256]u8 {
+        var curve: [256]u8 = undefined;
+        const bottom: f32 = bottom_intensity;
+        const range: f32 = 255.0 - bottom;
+
+        for (self.table, 0..) |i, gamma| {
+            const v0: f32 = i;
+            const v1: f32 = range * math.pow(v0 / range, 1.0 - gamma) + bottom;
+            curve[i] = @truncate(u8, math.round(v0 * gamma * fusion + v1 * (1.0 - gamma * fusion)));
+            // TODO: curve[i] = @truncate(u8, math.round(v0 * fusion + v1 * (1.0 - fusion)));
+        }
+        return curve;
     }
 };
 
@@ -304,4 +323,14 @@ test "RGB to HSV to RGB" {
         try expect(try math.absInt(@intCast(i9, rgb.g) - @intCast(i9, original_rgb.g)) <= 2);
         try expect(try math.absInt(@intCast(i9, rgb.b) - @intCast(i9, original_rgb.b)) <= 2);
     }
+}
+
+test "Enhance image" {
+    var data = [_]u8{ 1, 2, 3, 255, 4, 5, 6, 255 };
+    const image = try Image.fromSlice(&data);
+    defer image.deinit();
+
+    var agcwd = Agcwd.init(.{});
+
+    try expect(agcwd.isStateObsolete(image));
 }
