@@ -30,6 +30,21 @@ pub const Image = struct {
         };
     }
 
+    fn isMasked(self: Self, offset: usize) bool {
+        return self.data[offset + 3] == 0;
+    }
+
+    fn getMaskRatio(self: Self) f32 {
+        var count: usize = 0;
+        var i: usize = 0;
+        while (i < self.data.len) : (i += 4) {
+            if (self.isMasked(i)) {
+                count += 1;
+            }
+        }
+        return @floatCast(f32, count) / @floatCast(f32, self.data.len);
+    }
+
     fn setRgb(self: Self, offset: usize, rgb: Rgb) void {
         self.data[offset] = rgb.r;
         self.data[offset + 1] = rgb.g;
@@ -42,7 +57,8 @@ pub const AgcwdOptions = struct {
     alpha: f32 = 0.5,
     //fusion: f32,
     //bottom_intensity: f32,
-    //entropy_threshold: f32 = 0.05,
+    //mask_ratio_threshold: f32
+    entropy_threshold: f32 = 0.05,
 };
 
 /// 画像の明るさ調整処理を行うための構造体
@@ -54,7 +70,7 @@ pub const AgcwdOptions = struct {
 // - fusion
 pub const Agcwd = struct {
     options: AgcwdOptions,
-    //entropy: f32,
+    entropy: f32 = -1.0,
     mapping_curve: [256]u8,
 
     const Self = @This();
@@ -71,12 +87,18 @@ pub const Agcwd = struct {
     }
 
     pub fn isStateObsolete(self: Self, image: Image) bool {
-        _ = self;
-        _ = image;
-        return true;
+        const pdf = Pdf.fromImage(image);
+        const entropy = pdf.entropy();
+        return @fabs(self.entropy - entropy) > self.options.entropy_threshold;
     }
 
     pub fn updateState(self: *Self, image: Image, mask: ?Image) void {
+        // const maskedCount = mask.maskedCount();
+        // if (image.data.len / 10 < maskedCount) {
+        //     //
+        //     return Self.fromImage(image);
+        // }
+
         _ = self;
         _ = image;
         _ = mask;
@@ -93,6 +115,46 @@ pub const Agcwd = struct {
     }
 };
 
+const Pdf = struct {
+    table: [256]f32,
+
+    const Self = @This();
+
+    fn fromImage(image: Image) Self {
+        return Self.fromImageAndMask(image, image);
+    }
+
+    fn fromImageAndMask(image: Image, mask: Image) Self {
+        var histogram = [_]usize{0} * 256;
+        var total_count: usize = 0;
+        {
+            var i: usize = 0;
+            while (i < image.data.len) : (i += 4) {
+                if (!mask.isMasked(i)) {
+                    histogram[image.getRgb(i).intensity()] += 1;
+                    total_count += 1;
+                }
+            }
+        }
+
+        var table = [_]f32{0.0} * 256;
+        const n = @floatCast(f32, total_count);
+        for (histogram, 0..) |i, count| {
+            table[i] = @floatCast(f32, count) / n;
+        }
+
+        return .{table};
+    }
+
+    fn entropy(self: Self) f32 {
+        var sum: f32 = 0;
+        for (self.table) |density| {
+            sum += density * @log(density);
+        }
+        return -sum;
+    }
+};
+
 // TODO: Sharpen
 
 const Rgb = struct {
@@ -101,6 +163,10 @@ const Rgb = struct {
     b: u8,
 
     const Self = @This();
+
+    fn intensity(self: Self) u8 {
+        return @max(self.r, @max(self.g, self.b));
+    }
 
     // TODO: optimize
     fn toHsv(self: Self) Hsv {
