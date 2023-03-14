@@ -146,8 +146,7 @@ const Pdf = struct {
         var table: [256]f32 = undefined;
         const n = @intToFloat(f32, total_count);
 
-        // TODO: 0.. が不要
-        for (histogram, 0..) |i, count| {
+        for (histogram, 0..) |count, i| {
             table[i] = @intToFloat(f32, count) / n;
         }
 
@@ -175,8 +174,7 @@ const Pdf = struct {
         var table: [256]f32 = undefined;
         const range = max_intensity - min_intensity + math.floatEps;
 
-        // TODO: 0.. が不要
-        for (self.table, 0..) |i, x| {
+        for (self.table, 0..) |x, i| {
             table[i] = max_intensity * math.pow(((x - min_intensity) / range), alpha);
         }
 
@@ -197,7 +195,7 @@ const Cdf = struct {
 
         var table: [256]f32 = undefined;
         var acc: f32 = 0.0;
-        for (pdf.table, 0..) |i, intensity| {
+        for (pdf.table, 0..) |intensity, i| {
             acc += intensity;
             table[i] = acc / sum;
         }
@@ -210,7 +208,7 @@ const Cdf = struct {
         const bottom: f32 = bottom_intensity;
         const range: f32 = 255.0 - bottom;
 
-        for (self.table, 0..) |i, gamma| {
+        for (self.table, 0..) |gamma, i| {
             const v0: f32 = i;
             const v1: f32 = range * math.pow(v0 / range, 1.0 - gamma) + bottom;
             curve[i] = @truncate(u8, math.round(v0 * gamma * fusion + v1 * (1.0 - gamma * fusion)));
