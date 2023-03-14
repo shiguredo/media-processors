@@ -101,8 +101,8 @@ pub const Agcwd = struct {
             pdf = Pdf.fromImageAndMask(image, mask);
         }
 
-        const pdf_w = pdf.toWeightingDistribution(self.options.alpha);
-        _ = pdf_w;
+        const cdf = Cdf.fromPdf(pdf.toWeightingDistribution(self.options.alpha));
+        _ = cdf;
     }
 
     pub fn enhanceImage(self: Self, image: *Image) void {
@@ -167,6 +167,28 @@ const Pdf = struct {
         const range = max_intensity - min_intensity + math.floatEps;
         for (self.table, 0..) |i, x| {
             table[i] = max_intensity * math.pow(((x - min_intensity) / range), alpha);
+        }
+
+        return .{table};
+    }
+};
+
+const Cdf = struct {
+    const Self = @This();
+
+    table: [256]f32,
+
+    fn fromPdf(pdf: *const Pdf) Self {
+        var sum: f32 = 0.0;
+        for (pdf.table) |intensity| {
+            sum += intensity;
+        }
+
+        var table: [256]f32 = undefined;
+        var acc: f32 = 0.0;
+        for (pdf.table, 0..) |i, intensity| {
+            acc += intensity;
+            table[i] = acc / sum;
         }
 
         return .{table};
