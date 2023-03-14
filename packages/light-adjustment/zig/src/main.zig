@@ -47,7 +47,7 @@ pub const Image = struct {
                 count += 1;
             }
         }
-        return @floatCast(f32, count) / @floatCast(f32, self.data.len);
+        return @intToFloat(f32, count) / @intToFloat(f32, self.data.len);
     }
 
     fn setRgb(self: Self, offset: usize, rgb: Rgb) void {
@@ -106,7 +106,7 @@ pub const Agcwd = struct {
             pdf = Pdf.fromImageAndMask(image, mask);
         }
 
-        const cdf = Cdf.fromPdf(pdf.toWeightingDistribution(self.options.alpha));
+        const cdf = Cdf.fromPdf(&pdf.toWeightingDistribution(self.options.alpha));
         self.mapping_curve = cdf.toIntensityMappingCurve(self.options.fusion, self.options.bottom_intensity);
     }
 
@@ -172,10 +172,10 @@ const Pdf = struct {
         }
 
         var table: [256]f32 = undefined;
-        const range = max_intensity - min_intensity + math.floatEps;
+        const range = max_intensity - min_intensity + math.floatEps(f32);
 
         for (self.table, 0..) |x, i| {
-            table[i] = max_intensity * math.pow(((x - min_intensity) / range), alpha);
+            table[i] = max_intensity * math.pow(f32, ((x - min_intensity) / range), alpha);
         }
 
         return .{ .table = table };
@@ -200,18 +200,18 @@ const Cdf = struct {
             table[i] = acc / sum;
         }
 
-        return .{table};
+        return .{ .table = table };
     }
 
     fn toIntensityMappingCurve(self: *const Self, fusion: f32, bottom_intensity: u8) [256]u8 {
         var curve: [256]u8 = undefined;
-        const bottom: f32 = bottom_intensity;
+        const bottom: f32 = @intToFloat(f32, bottom_intensity);
         const range: f32 = 255.0 - bottom;
 
         for (self.table, 0..) |gamma, i| {
-            const v0: f32 = i;
-            const v1: f32 = range * math.pow(v0 / range, 1.0 - gamma) + bottom;
-            curve[i] = @truncate(u8, math.round(v0 * gamma * fusion + v1 * (1.0 - gamma * fusion)));
+            const v0: f32 = @intToFloat(f32, i);
+            const v1: f32 = range * math.pow(f32, v0 / range, 1.0 - gamma) + bottom;
+            curve[i] = @floatToInt(u8, math.round(v0 * gamma * fusion + v1 * (1.0 - gamma * fusion)));
             // TODO: curve[i] = @truncate(u8, math.round(v0 * fusion + v1 * (1.0 - fusion)));
         }
         return curve;
@@ -331,10 +331,18 @@ test "RGB to HSV to RGB" {
 
 test "Enhance image" {
     var data = [_]u8{ 1, 2, 3, 255, 4, 5, 6, 255 };
-    const image = try Image.fromSlice(&data);
+    var image = try Image.fromSlice(&data);
     defer image.deinit();
 
     var agcwd = Agcwd.init(.{});
 
+    // 最初は常に状態の更新が必要
     try expect(agcwd.isStateObsolete(image));
+    agcwd.updateState(image, image);
+
+    // すでに更新済み
+    try expect(!agcwd.isStateObsolete(image));
+
+    // 画像を処理
+    agcwd.enhanceImage(&image);
 }
