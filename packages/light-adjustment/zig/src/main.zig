@@ -242,6 +242,7 @@ const Pdf = struct {
         {
             var i: usize = 0;
             while (i < image.data.len) : (i += 4) {
+                // TODO: boolean ではなく重みとして扱う
                 if (mask.isMasked(i)) {
                     histogram[image.getRgb(i).intensity()] += 1;
                     total_count += 1;
