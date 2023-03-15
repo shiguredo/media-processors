@@ -2,83 +2,113 @@ const std = @import("std");
 const math = std.math;
 const ArrayList = std.ArrayList;
 const Allocator = std.mem.Allocator;
-// var GBA = std.heap.GeneralPurposeAllocator(.{}){};
-// const ALLOCATOR = GBA.allocator();
 const expect = std.testing.expect;
 const test_allocator = std.testing.allocator;
 
 // WebAssembly API
-export fn imageNew(pixels: u32) *anyopaque {
-    _ = pixels;
-    unreachable;
+var WASM_GBA = std.heap.GeneralPurposeAllocator(.{}){};
+const WASM_ALLOCATOR = WASM_GBA.allocator(); // TODO: std.heap.page_allocator でも十分かもしれない
+
+pub const std_options = struct {
+    pub const logFn = log;
+};
+
+pub fn log(
+    comptime level: std.log.Level,
+    comptime scope: @TypeOf(.EnumLiteral),
+    comptime format: []const u8,
+    args: anytype,
+) void {
+    // TODO: 標準出力に表示する関数を import して呼び出す
+    _ = level;
+    _ = scope;
+    _ = format;
+    _ = args;
+}
+
+export fn imageNew(pixels: u32) ?*anyopaque {
+    const image = WASM_ALLOCATOR.create(Image) catch return null;
+    errdefer WASM_ALLOCATOR.destroy(image);
+
+    const data = WASM_ALLOCATOR.alloc(u8, pixels) catch return null;
+    errdefer WASM_ALLOCATOR.free(data);
+
+    image.data = data;
+    image.allocator = WASM_ALLOCATOR;
+
+    return image;
+}
+
+fn wasmPtrCast(comptime t: type, ptr: *anyopaque) t {
+    return @ptrCast(t, @alignCast(@typeInfo(t).Pointer.alignment, ptr));
 }
 
 export fn imageFree(image_ptr: *anyopaque) void {
-    _ = image_ptr;
-    unreachable;
+    const image = wasmPtrCast(*const Image, image_ptr);
+    image.deinit();
+    WASM_ALLOCATOR.destroy(image);
 }
 
-export fn imageGetDataOffset(image_ptr: *anyopaque) u32 {
-    _ = image_ptr;
-    unreachable;
+export fn imageGetDataOffset(image_ptr: *anyopaque) *u8 {
+    const image = wasmPtrCast(*const Image, image_ptr);
+    return @ptrCast(*u8, image.data.ptr);
 }
 
-export fn agcwdNew() *anyopaque {
-    unreachable;
+export fn agcwdNew() ?*anyopaque {
+    const agcwd = WASM_ALLOCATOR.create(Agcwd) catch return null;
+    errdefer WASM_ALLOCATOR.destroy(agcwd);
+
+    agcwd.* = Agcwd.init(.{});
+    return agcwd;
 }
 
 export fn agcwdFree(agcwd_ptr: *anyopaque) void {
-    _ = agcwd_ptr;
-    unreachable;
+    const agcwd = wasmPtrCast(*const Agcwd, agcwd_ptr);
+    WASM_ALLOCATOR.destroy(agcwd);
 }
 
 export fn agcwdSetAlpha(agcwd_ptr: *anyopaque, alpha: f32) void {
-    _ = agcwd_ptr;
-    _ = alpha;
-    unreachable;
+    const agcwd = wasmPtrCast(*Agcwd, agcwd_ptr);
+    agcwd.options.alpha = alpha;
 }
 
 export fn agcwdSetFusion(agcwd_ptr: *anyopaque, fusion: f32) void {
-    _ = agcwd_ptr;
-    _ = fusion;
-    unreachable;
+    const agcwd = wasmPtrCast(*Agcwd, agcwd_ptr);
+    agcwd.options.fusion = fusion;
 }
 
 export fn agcwdSetBottomIntensity(agcwd_ptr: *anyopaque, bottom: u8) void {
-    _ = agcwd_ptr;
-    _ = bottom;
-    unreachable;
+    const agcwd = wasmPtrCast(*Agcwd, agcwd_ptr);
+    agcwd.options.bottom_intensity = bottom;
 }
 
 export fn agcwdSetMaskRatioThreshold(agcwd_ptr: *anyopaque, threshold: f32) void {
-    _ = agcwd_ptr;
-    _ = threshold;
-    unreachable;
+    const agcwd = wasmPtrCast(*Agcwd, agcwd_ptr);
+    agcwd.options.mask_ratio_threshold = threshold;
 }
 
 export fn agcwdSetEntropyThreshold(agcwd_ptr: *anyopaque, threshold: f32) void {
-    _ = agcwd_ptr;
-    _ = threshold;
-    unreachable;
+    const agcwd = wasmPtrCast(*Agcwd, agcwd_ptr);
+    agcwd.options.entropy_threshold = threshold;
 }
 
 export fn agcwdIsStateObsolete(agcwd_ptr: *anyopaque, image_ptr: *anyopaque) bool {
-    _ = agcwd_ptr;
-    _ = image_ptr;
-    unreachable;
+    const agcwd = wasmPtrCast(*const Agcwd, agcwd_ptr);
+    const image = wasmPtrCast(*const Image, image_ptr);
+    return agcwd.isStateObsolete(image.*);
 }
 
 export fn agcwdUpdateState(agcwd_ptr: *anyopaque, image_ptr: *anyopaque, mask_ptr: *anyopaque) void {
-    _ = agcwd_ptr;
-    _ = image_ptr;
-    _ = mask_ptr;
-    unreachable;
+    const agcwd = wasmPtrCast(*Agcwd, agcwd_ptr);
+    const image = wasmPtrCast(*const Image, image_ptr);
+    const mask = wasmPtrCast(*const Image, mask_ptr);
+    agcwd.updateState(image.*, mask.*);
 }
 
 export fn agcwdEnhanceImage(agcwd_ptr: *anyopaque, image_ptr: *anyopaque) void {
-    _ = agcwd_ptr;
-    _ = image_ptr;
-    unreachable;
+    const agcwd = wasmPtrCast(*const Agcwd, agcwd_ptr);
+    const image = wasmPtrCast(*Image, image_ptr);
+    agcwd.enhanceImage(image);
 }
 
 // RGBA
