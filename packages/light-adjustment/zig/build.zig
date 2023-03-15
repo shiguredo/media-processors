@@ -21,7 +21,7 @@ pub fn build(b: *std.Build) void {
 
     // wasm をビルドするためには addStaticLibrary() ではなく addSharedLibrary() を使う必要がある
     var lib = b.addSharedLibrary(.{
-        .name = "zig",
+        .name = "light_adjustment",
         // In this case the main source file is merely a path, however, in more
         // complicated build scripts, this could be a generated file.
         .root_source_file = .{ .path = "src/main.zig" },
