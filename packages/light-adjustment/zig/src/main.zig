@@ -7,6 +7,80 @@ const Allocator = std.mem.Allocator;
 const expect = std.testing.expect;
 const test_allocator = std.testing.allocator;
 
+// WebAssembly API
+export fn imageNew(pixels: u32) *anyopaque {
+    _ = pixels;
+    unreachable;
+}
+
+export fn imageFree(image_ptr: *anyopaque) void {
+    _ = image_ptr;
+    unreachable;
+}
+
+export fn imageGetDataOffset(image_ptr: *anyopaque) u32 {
+    _ = image_ptr;
+    unreachable;
+}
+
+export fn agcwdNew() *anyopaque {
+    unreachable;
+}
+
+export fn agcwdFree(agcwd_ptr: *anyopaque) void {
+    _ = agcwd_ptr;
+    unreachable;
+}
+
+export fn agcwdSetAlpha(agcwd_ptr: *anyopaque, alpha: f32) void {
+    _ = agcwd_ptr;
+    _ = alpha;
+    unreachable;
+}
+
+export fn agcwdSetFusion(agcwd_ptr: *anyopaque, fusion: f32) void {
+    _ = agcwd_ptr;
+    _ = fusion;
+    unreachable;
+}
+
+export fn agcwdSetBottomIntensity(agcwd_ptr: *anyopaque, bottom: u8) void {
+    _ = agcwd_ptr;
+    _ = bottom;
+    unreachable;
+}
+
+export fn agcwdSetMaskRatioThreshold(agcwd_ptr: *anyopaque, threshold: f32) void {
+    _ = agcwd_ptr;
+    _ = threshold;
+    unreachable;
+}
+
+export fn agcwdSetEntropyThreshold(agcwd_ptr: *anyopaque, threshold: f32) void {
+    _ = agcwd_ptr;
+    _ = threshold;
+    unreachable;
+}
+
+export fn agcwdIsStateObsolete(agcwd_ptr: *anyopaque, image_ptr: *anyopaque) bool {
+    _ = agcwd_ptr;
+    _ = image_ptr;
+    unreachable;
+}
+
+export fn agcwdUpdateState(agcwd_ptr: *anyopaque, image_ptr: *anyopaque, mask_ptr: *anyopaque) void {
+    _ = agcwd_ptr;
+    _ = image_ptr;
+    _ = mask_ptr;
+    unreachable;
+}
+
+export fn agcwdEnhanceImage(agcwd_ptr: *anyopaque, image_ptr: *anyopaque) void {
+    _ = agcwd_ptr;
+    _ = image_ptr;
+    unreachable;
+}
+
 // RGBA
 pub const Image = struct {
     data: []u8,
