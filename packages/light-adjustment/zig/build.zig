@@ -20,7 +20,7 @@ pub fn build(b: *std.Build) void {
     const optimize = b.standardOptimizeOption(.{});
 
     // wasm をビルドするためには addStaticLibrary() ではなく addSharedLibrary() を使う必要がある
-    const lib = b.addSharedLibrary(.{
+    var lib = b.addSharedLibrary(.{
         .name = "zig",
         // In this case the main source file is merely a path, however, in more
         // complicated build scripts, this could be a generated file.
@@ -28,6 +28,7 @@ pub fn build(b: *std.Build) void {
         .target = target,
         .optimize = optimize,
     });
+    lib.rdynamic = true;
 
     // This declares intent for the library to be installed into the standard
     // location when the user invokes the "install" step (the default step when
