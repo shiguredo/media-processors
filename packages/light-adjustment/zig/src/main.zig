@@ -1,3 +1,4 @@
+const builtin = @import("builtin");
 const std = @import("std");
 const math = std.math;
 const ArrayList = std.ArrayList;
@@ -5,9 +6,10 @@ const Allocator = std.mem.Allocator;
 const expect = std.testing.expect;
 const test_allocator = std.testing.allocator;
 
-// WebAssembly API
-var WASM_GBA = std.heap.GeneralPurposeAllocator(.{}){};
-const WASM_ALLOCATOR = WASM_GBA.allocator(); // TODO: std.heap.page_allocator でも十分かもしれない
+const WASM_ALLOCATOR = if (builtin.target.isWasm())
+    std.heap.wasm_allocator
+else
+    std.heap.page_allocator; // for test
 
 pub const std_options = struct {
     pub const logFn = log;
