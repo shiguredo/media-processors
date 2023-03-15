@@ -24,6 +24,8 @@ jobs:
         run: |
           mkdir _site/
           cp -r examples/ _site/
+          ls -lh _site/
+          ls -lh _site/virtual-background/
       - name: Upload files
         uses: actions/upload-pages-artifact@v1
       - name: Slack Notification
