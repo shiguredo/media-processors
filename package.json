@@ -14,6 +14,7 @@
   "workspaces": [
     "packages/video-track-processor",
     "packages/virtual-background",
+    "packages/light-adjustment",
     "packages/noise-suppression"
   ]
 }
