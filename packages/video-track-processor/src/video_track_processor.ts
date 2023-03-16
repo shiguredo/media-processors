@@ -4,13 +4,22 @@
 // 不正なものになる現象が確認できているので安全のために ImageData にしている
 type ProcessImageDataCallback = (image: ImageData) => Promise<ImageData>;
 
+/**
+ * 映像トラックの各フレームの変換処理を行いやすくするためのユーティリティクラス
+ *
+ * 以下の二つの仕組みを抽象化して共通のインタフェースを提供する:
+ * - MediaStreamTrack Insertable Streams (aka. Breakout Box)
+ * - HTMLVideoElement.requestVideoFrameCallback
+ *
+ * 実際の変換処理は利用側がコールバック関数として指定する
+ */
 class VideoTrackProcessor {
-  private trackProcessor?: TrackProcessor;
+  private trackProcessor?: Processor;
   private processedTrack?: MediaStreamVideoTrack;
   private originalTrack?: MediaStreamVideoTrack;
 
   static isSupported(): boolean {
-    return TrackProcessorWithBreakoutBox.isSupported() || TrackProcessorWithRequestVideoFrameCallback.isSupported();
+    return BreakoutBoxProcessor.isSupported() || RequestVideoFrameCallbackProcessor.isSupported();
   }
 
   async startProcessing(
@@ -21,10 +30,10 @@ class VideoTrackProcessor {
       throw Error("Video track processing has already started.");
     }
 
-    if (TrackProcessorWithBreakoutBox.isSupported()) {
-      this.trackProcessor = new TrackProcessorWithBreakoutBox(track, callback);
-    } else if (TrackProcessorWithRequestVideoFrameCallback.isSupported()) {
-      this.trackProcessor = new TrackProcessorWithRequestVideoFrameCallback(track, callback);
+    if (BreakoutBoxProcessor.isSupported()) {
+      this.trackProcessor = new BreakoutBoxProcessor(track, callback);
+    } else if (RequestVideoFrameCallbackProcessor.isSupported()) {
+      this.trackProcessor = new RequestVideoFrameCallbackProcessor(track, callback);
     } else {
       throw Error("Unsupported browser");
     }
@@ -56,8 +65,7 @@ class VideoTrackProcessor {
   }
 }
 
-// TODO: name
-abstract class TrackProcessor {
+abstract class Processor {
   protected track: MediaStreamVideoTrack;
   protected callback: ProcessImageDataCallback;
 
@@ -71,7 +79,7 @@ abstract class TrackProcessor {
   abstract stopProcessing(): void;
 }
 
-class TrackProcessorWithBreakoutBox extends TrackProcessor {
+class BreakoutBoxProcessor extends Processor {
   private abortController: AbortController;
   private generator: MediaStreamVideoTrackGenerator;
   private processor: MediaStreamTrackProcessor<VideoFrame>;
@@ -160,7 +168,7 @@ class TrackProcessorWithBreakoutBox extends TrackProcessor {
   }
 }
 
-class TrackProcessorWithRequestVideoFrameCallback extends TrackProcessor {
+class RequestVideoFrameCallbackProcessor extends Processor {
   private video: HTMLVideoElement;
   private canvas: HTMLCanvasElement;
   private canvasCtx: CanvasRenderingContext2D;
