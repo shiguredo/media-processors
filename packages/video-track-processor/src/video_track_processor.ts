@@ -1,3 +1,4 @@
+// TODO: ImageData にする必要がある（ブラウザのバグ対策）
 type ProcessImageBitmapCallback = (frame: ImageBitmap) => Promise<ImageBitmap>;
 
 // TODO: Name
@@ -14,6 +15,10 @@ class VideoTrackProcessor {
     track: MediaStreamVideoTrack,
     callback: ProcessImageBitmapCallback
   ): Promise<MediaStreamVideoTrack> {
+    if (this.isProcessing()) {
+      throw Error("Video track processing has already started.");
+    }
+
     if (TrackProcessorWithBreakoutBox.isSupported()) {
       this.trackProcessor = new TrackProcessorWithBreakoutBox(track, callback);
     } else if (TrackProcessorWithRequestVideoFrameCallback.isSupported()) {
@@ -109,6 +114,18 @@ class TrackProcessorWithBreakoutBox extends TrackProcessor {
               return;
             }
 
+            // `VideoFrame` の第一引数に ImageBitmap を直接渡すことは可能だが、
+            // この方法だと環境によっては、透過時の背景色やぼかしの境界部分処理が変になる現象が確認できているため、
+            // ワークアラウンドとして、一度 `ImageData` を経由する方法を採用している
+            //
+            // `ImageData` を経由しない場合の問題としては https://bugs.chromium.org/p/chromium/issues/detail?id=961777 で
+            // 報告されているものが近そう
+
+            // TODO
+            // const imageData = this.canvasCtx.getImageData(0, 0, this.canvas.width, this.canvas.height);
+            // const imageBitmap = await createImageBitmap(imageData);
+            // controller.enqueue(new VideoFrame(imageBitmap, { timestamp, duration } as VideoFrameInit));
+
             const processedFrame = new VideoFrame(processedImage, { timestamp, duration } as VideoFrameInit);
             controller.enqueue(processedFrame);
           },
@@ -194,6 +211,8 @@ class TrackProcessorWithRequestVideoFrameCallback extends TrackProcessor {
   }
 
   private async onFrame() {
+    // TODO: resize check
+
     const image = await createImageBitmap(this.video);
     const processedImage = await this.callback(image);
     this.canvasCtx.drawImage(processedImage, 0, 0);
