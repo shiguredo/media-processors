@@ -11,6 +11,12 @@
 
 ## develop
 
+- [UPDATE] 映像処理用の共通部分を @shiguredo/virtual-background から @shiguredo/video-track-processor として切り出す
+
+    - Breakout Box と Safari の requestVideoFrameCallback を抽象化した汎用的な部分を切り出して、他の映像処理パッケージからも使えるようにする
+    - npm には公開せず、このリポジトリの内部からのみ参照される想定
+    - @sile
+
 ## virtual-background-2022.6.1
 - [FIX] 仮想背景処理中の入力映像トラックの解像度変更に出力映像トラックが追従できていなかった問題を修正
     - https://github.com/shiguredo/media-processors/pull/170
