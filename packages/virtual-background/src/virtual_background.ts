@@ -169,7 +169,7 @@ class VirtualBackgroundProcessor {
 
     // Safari での背景ぼかし用に一時作業用の canvas を作っておく
     //
-    // TODO: Safari が filter に対応したらこの分岐は削除する
+    // TODO(sile): Safari が filter に対応したらこの分岐は削除する
     let blurCanvasCtx: OffscreenCanvasRenderingContext2D | undefined;
     if (options.blurRadius !== undefined && browser() === "safari") {
       const ctx = createOffscreenCanvas(width, height).getContext("2d", {
