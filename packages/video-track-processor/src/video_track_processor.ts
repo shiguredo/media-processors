@@ -1,7 +1,9 @@
-// TODO: ImageData にする必要がある（ブラウザのバグ対策）
-type ProcessImageBitmapCallback = (frame: ImageBitmap) => Promise<ImageBitmap>;
+// [NOTE]
+// ImageData ではなく ImageBitmap の方が効率的な可能性はあるが
+// https://bugs.chromium.org/p/chromium/issues/detail?id=961777 のように特定条件下で処理後の結果が
+// 不正なものになる現象が確認できているので安全のために ImageData にしている
+type ProcessImageDataCallback = (image: ImageData) => Promise<ImageData>;
 
-// TODO: Name
 class VideoTrackProcessor {
   private trackProcessor?: TrackProcessor;
   private processedTrack?: MediaStreamVideoTrack;
@@ -13,7 +15,7 @@ class VideoTrackProcessor {
 
   async startProcessing(
     track: MediaStreamVideoTrack,
-    callback: ProcessImageBitmapCallback
+    callback: ProcessImageDataCallback
   ): Promise<MediaStreamVideoTrack> {
     if (this.isProcessing()) {
       throw Error("Video track processing has already started.");
@@ -57,9 +59,9 @@ class VideoTrackProcessor {
 // TODO: name
 abstract class TrackProcessor {
   protected track: MediaStreamVideoTrack;
-  protected callback: ProcessImageBitmapCallback;
+  protected callback: ProcessImageDataCallback;
 
-  constructor(track: MediaStreamVideoTrack, callback: ProcessImageBitmapCallback) {
+  constructor(track: MediaStreamVideoTrack, callback: ProcessImageDataCallback) {
     this.track = track;
     this.callback = callback;
   }
@@ -73,8 +75,10 @@ class TrackProcessorWithBreakoutBox extends TrackProcessor {
   private abortController: AbortController;
   private generator: MediaStreamVideoTrackGenerator;
   private processor: MediaStreamTrackProcessor<VideoFrame>;
+  private canvas: OffscreenCanvas;
+  private canvasCtx: OffscreenCanvasRenderingContext2D;
 
-  constructor(track: MediaStreamVideoTrack, callback: ProcessImageBitmapCallback) {
+  constructor(track: MediaStreamVideoTrack, callback: ProcessImageDataCallback) {
     super(track, callback);
 
     // 処理を停止するための AbortController を初期化
@@ -83,6 +87,19 @@ class TrackProcessorWithBreakoutBox extends TrackProcessor {
     // generator / processor インスタンスを生成（まだ処理は開始しない）
     this.generator = new MediaStreamTrackGenerator({ kind: "video" });
     this.processor = new MediaStreamTrackProcessor({ track: this.track });
+
+    // 作業用キャンバスを作成
+    const { width, height } = track.getSettings();
+    if (width === undefined || height === undefined) {
+      throw Error(`Could not retrieve the resolution of the video track: {track}`);
+    }
+
+    this.canvas = new OffscreenCanvas(width, height);
+    const canvasCtx = this.canvas.getContext("2d", { desynchronized: true, willReadFrequently: true });
+    if (canvasCtx === null) {
+      throw Error("Failed to get the 2D context of an offscreen canvas");
+    }
+    this.canvasCtx = canvasCtx;
   }
 
   static isSupported(): boolean {
@@ -95,13 +112,14 @@ class TrackProcessorWithBreakoutBox extends TrackProcessor {
       .pipeThrough(
         new TransformStream({
           transform: async (frame, controller) => {
-            const timestamp = frame.timestamp;
-            const duration = frame.duration;
-            const image = await createImageBitmap(frame);
+            const { displayWidth: width, displayHeight: height, timestamp, duration } = frame;
+            resizeCanvasIfNeed(width, height, this.canvas);
 
-            // eslint-disable-next-line  @typescript-eslint/no-unsafe-argument
-            const processedImage = await this.callback(image);
+            this.canvasCtx.drawImage(frame, 0, 0);
             frame.close();
+            const image = this.canvasCtx.getImageData(0, 0, width, height);
+
+            const processedImage = await this.callback(image);
 
             if (this.generator.readyState === "ended") {
               // ジェネレータ（ユーザに渡している処理結果トラック）がクローズ済み。
@@ -114,20 +132,8 @@ class TrackProcessorWithBreakoutBox extends TrackProcessor {
               return;
             }
 
-            // `VideoFrame` の第一引数に ImageBitmap を直接渡すことは可能だが、
-            // この方法だと環境によっては、透過時の背景色やぼかしの境界部分処理が変になる現象が確認できているため、
-            // ワークアラウンドとして、一度 `ImageData` を経由する方法を採用している
-            //
-            // `ImageData` を経由しない場合の問題としては https://bugs.chromium.org/p/chromium/issues/detail?id=961777 で
-            // 報告されているものが近そう
-
-            // TODO
-            // const imageData = this.canvasCtx.getImageData(0, 0, this.canvas.width, this.canvas.height);
-            // const imageBitmap = await createImageBitmap(imageData);
-            // controller.enqueue(new VideoFrame(imageBitmap, { timestamp, duration } as VideoFrameInit));
-
-            const processedFrame = new VideoFrame(processedImage, { timestamp, duration } as VideoFrameInit);
-            controller.enqueue(processedFrame);
+            const bitmap = await createImageBitmap(processedImage);
+            controller.enqueue(new VideoFrame(bitmap, { timestamp, duration } as VideoFrameInit));
           },
         }),
         { signal }
@@ -160,7 +166,7 @@ class TrackProcessorWithRequestVideoFrameCallback extends TrackProcessor {
   private canvasCtx: CanvasRenderingContext2D;
   private requestVideoFrameCallbackHandle?: number;
 
-  constructor(track: MediaStreamVideoTrack, callback: ProcessImageBitmapCallback) {
+  constructor(track: MediaStreamVideoTrack, callback: ProcessImageDataCallback) {
     super(track, callback);
 
     // requestVideoFrameCallbackHandle()` はトラックではなくビデオ単位のメソッドなので
@@ -182,7 +188,7 @@ class TrackProcessorWithRequestVideoFrameCallback extends TrackProcessor {
     this.canvas.width = width;
     this.canvas.height = height;
     const canvasCtx = this.canvas.getContext("2d");
-    if (!canvasCtx) {
+    if (canvasCtx === null) {
       throw Error("Failed to create 2D canvas context");
     }
     this.canvasCtx = canvasCtx;
@@ -211,11 +217,13 @@ class TrackProcessorWithRequestVideoFrameCallback extends TrackProcessor {
   }
 
   private async onFrame() {
-    // TODO: resize check
+    const { videoWidth: width, videoHeight: height } = this.video;
+    resizeCanvasIfNeed(width, height, this.canvas);
 
-    const image = await createImageBitmap(this.video);
+    this.canvasCtx.drawImage(this.video, 0, 0);
+    const image = this.canvasCtx.getImageData(0, 0, width, height);
     const processedImage = await this.callback(image);
-    this.canvasCtx.drawImage(processedImage, 0, 0);
+    this.canvasCtx.putImageData(processedImage, 0, 0);
 
     // @ts-ignore
     // eslint-disable-next-line
@@ -225,4 +233,11 @@ class TrackProcessorWithRequestVideoFrameCallback extends TrackProcessor {
   }
 }
 
-export { VideoTrackProcessor, ProcessImageBitmapCallback };
+function resizeCanvasIfNeed(width: number, height: number, canvas: OffscreenCanvas | HTMLCanvasElement) {
+  if (canvas.width !== width || canvas.height !== height) {
+    canvas.width = width;
+    canvas.height = height;
+  }
+}
+
+export { VideoTrackProcessor, ProcessImageDataCallback };

@@ -159,13 +159,27 @@ class VirtualBackgroundProcessor {
       throw Error(`Could not retrieve the resolution of the video track: {track}`);
     }
     const canvas = createOffscreenCanvas(width, height);
+    const canvasCtx = canvas.getContext("2d", {
+      desynchronized: true,
+      willReadFrequently: true,
+    }) as OffscreenCanvasRenderingContext2D | null;
+    if (canvasCtx === null) {
+      throw Error("Failed to create 2D canvas context");
+    }
 
     // Safari での背景ぼかし用に一時作業用の canvas を作っておく
     //
     // TODO: Safari が filter に対応したらこの分岐は削除する
-    let blurCanvas: OffscreenCanvas | HTMLCanvasElement | undefined;
+    let blurCanvasCtx: OffscreenCanvasRenderingContext2D | undefined;
     if (options.blurRadius !== undefined && browser() === "safari") {
-      blurCanvas = createOffscreenCanvas(width, height);
+      const ctx = createOffscreenCanvas(width, height).getContext("2d", {
+        desynchronized: true,
+        willReadFrequently: true,
+      });
+      if (ctx === null) {
+        throw Error("Failed to create 2D canvas context");
+      }
+      blurCanvasCtx = ctx as OffscreenCanvasRenderingContext2D;
     }
 
     // セグメンテーションモデルを準備
@@ -176,17 +190,21 @@ class VirtualBackgroundProcessor {
     }
     this.segmentation.setOptions({ modelSelection });
     this.segmentation.onResults((results) => {
-      this.updateOffscreenCanvas(results, canvas, blurCanvas, options);
+      resizeCanvasIfNeed(width, height, canvas);
+      if (blurCanvasCtx !== undefined) {
+        resizeCanvasIfNeed(width, height, blurCanvasCtx.canvas);
+      }
+      this.updateOffscreenCanvas(results, canvasCtx, blurCanvasCtx, options);
     });
 
     // 仮想背景処理を開始
-    return this.trackProcessor.startProcessing(track, async (image: ImageBitmap) => {
+    return this.trackProcessor.startProcessing(track, async (image: ImageData) => {
+      const { width, height } = image;
+
       // @ts-ignore TS2322: 「`image`の型が合っていない」と怒られるけれど、動作はするので一旦無視
       await this.segmentation.send({ image });
-      image.close();
 
-      const processedImage = await createImageBitmap(canvas);
-      return processedImage;
+      return canvasCtx.getImageData(0, 0, width, height);
     });
   }
 
@@ -240,25 +258,18 @@ class VirtualBackgroundProcessor {
 
   private updateOffscreenCanvas(
     segmentationResults: SelfieSegmentationResults,
-    canvas: OffscreenCanvas | HTMLCanvasElement,
-    blurCanvas: OffscreenCanvas | HTMLCanvasElement | undefined,
+    canvasCtx: OffscreenCanvasRenderingContext2D,
+    blurCanvasCtx: OffscreenCanvasRenderingContext2D | undefined,
     options: VirtualBackgroundProcessorOptions
   ) {
-    const width = segmentationResults.image.width;
-    const height = segmentationResults.image.height;
-    updateCanvasSizeIfNeed(width, height, canvas);
-
-    const canvasCtx = canvas.getContext("2d", { desynchronized: true }) as OffscreenCanvasRenderingContext2D | null;
-    if (!canvasCtx) {
-      throw Error("Failed to get the 2D context of a canvas");
-    }
+    const { width, height } = segmentationResults.image;
 
     canvasCtx.save();
-    canvasCtx.clearRect(0, 0, canvas.width, canvas.height);
-    canvasCtx.drawImage(segmentationResults.segmentationMask, 0, 0, canvas.width, canvas.height);
+    canvasCtx.clearRect(0, 0, width, height);
+    canvasCtx.drawImage(segmentationResults.segmentationMask, 0, 0, width, height);
 
     canvasCtx.globalCompositeOperation = "source-in";
-    canvasCtx.drawImage(segmentationResults.image, 0, 0, canvas.width, canvas.height);
+    canvasCtx.drawImage(segmentationResults.image, 0, 0, width, height);
 
     // NOTE: mediapipeの例 (https://google.github.io/mediapipe/solutions/selfie_segmentation.html) では、
     //       "destination-atop"が使われているけれど、背景画像にアルファチャンネルが含まれている場合には、
@@ -266,20 +277,9 @@ class VirtualBackgroundProcessor {
     //       "destination-over"にしている。
     canvasCtx.globalCompositeOperation = "destination-over";
 
-    let tmpCanvas = canvas;
     let tmpCanvasCtx = canvasCtx;
     if (options.blurRadius !== undefined) {
-      if (blurCanvas !== undefined) {
-        updateCanvasSizeIfNeed(width, height, blurCanvas);
-
-        const blurCanvasCtx = canvas.getContext("2d", {
-          desynchronized: true,
-        }) as OffscreenCanvasRenderingContext2D | null;
-        if (!blurCanvasCtx) {
-          throw Error("Failed to get the 2D context of a canvas");
-        }
-
-        tmpCanvas = blurCanvas;
+      if (blurCanvasCtx !== undefined) {
         tmpCanvasCtx = blurCanvasCtx;
       } else {
         tmpCanvasCtx.filter = `blur(${options.blurRadius}px)`;
@@ -288,7 +288,7 @@ class VirtualBackgroundProcessor {
 
     if (options.backgroundImage !== undefined) {
       const decideRegion = options.backgroundImageRegion || cropBackgroundImageCenter;
-      const region = decideRegion(canvas, options.backgroundImage);
+      const region = decideRegion({ width, height }, options.backgroundImage);
       tmpCanvasCtx.drawImage(
         options.backgroundImage,
         region.x,
@@ -297,26 +297,25 @@ class VirtualBackgroundProcessor {
         region.height,
         0,
         0,
-        canvas.width,
-        canvas.height
+        width,
+        height
       );
     } else {
       tmpCanvasCtx.drawImage(segmentationResults.image, 0, 0);
     }
 
-    if (options.blurRadius !== undefined && canvas !== tmpCanvas) {
+    if (blurCanvasCtx !== undefined) {
       // @ts-ignore
-      StackBlur.canvasRGB(tmpCanvas, 0, 0, width, height, options.blurRadius);
-      canvasCtx.drawImage(tmpCanvas, 0, 0, width, height);
+      StackBlur.canvasRGB(tmpCanvasCtx.canvas, 0, 0, width, height, options.blurRadius);
+      canvasCtx.drawImage(tmpCanvasCtx.canvas, 0, 0, width, height);
     }
 
     canvasCtx.restore();
   }
 }
 
-function updateCanvasSizeIfNeed(width: number, height: number, canvas: OffscreenCanvas | HTMLCanvasElement) {
-  const changed = canvas.width !== width || canvas.height !== height;
-  if (changed) {
+function resizeCanvasIfNeed(width: number, height: number, canvas: OffscreenCanvas | HTMLCanvasElement) {
+  if (canvas.width !== width || canvas.height !== height) {
     canvas.width = width;
     canvas.height = height;
   }
