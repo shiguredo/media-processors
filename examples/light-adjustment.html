@@ -9,7 +9,7 @@
     <video id="video" autoplay playsinline></video>
 
     <script>
-      WebAssembly.instantiateStreaming(fetch("light_adjustment.wasm"),{}).then(async (results) => {
+      WebAssembly.instantiateStreaming(fetch("./light-adjustment/light_adjustment.wasm"),{}).then(async (results) => {
           const wasmInstance = results.instance;
           const wasmMemory = wasmInstance.exports.memory;
           const agcwd = wasmInstance.exports.agcwdNew();
