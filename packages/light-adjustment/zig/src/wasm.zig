@@ -68,9 +68,14 @@ export fn agcwdSetFusion(agcwd_ptr: *anyopaque, fusion: f32) void {
     agcwd.options.fusion = fusion;
 }
 
-export fn agcwdSetBottomIntensity(agcwd_ptr: *anyopaque, bottom: u8) void {
+export fn agcwdSetMinIntensity(agcwd_ptr: *anyopaque, min: u8) void {
     const agcwd = wasmPtrCast(*Agcwd, agcwd_ptr);
-    agcwd.options.bottom_intensity = bottom;
+    agcwd.options.min_intensity = min;
+}
+
+export fn agcwdSetMaxIntensity(agcwd_ptr: *anyopaque, max: u8) void {
+    const agcwd = wasmPtrCast(*Agcwd, agcwd_ptr);
+    agcwd.options.max_intensity = max;
 }
 
 export fn agcwdSetMaskRatioThreshold(agcwd_ptr: *anyopaque, threshold: f32) void {

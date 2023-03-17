@@ -5,7 +5,16 @@ const LIGHT_ADJUSTMENT_WASM = "__LIGHT_ADJUSTMENT_WASM__";
 interface LightAdjustmentProcessorOptions {
   alpha?: number;
   fusion?: number;
+  minIntensity?: number;
+  maxIntensity?: number;
 }
+
+const DEFAULT_OPTIONS: LightAdjustmentProcessorOptions = {
+  alpha: 0.5,
+  fusion: 0.5,
+  minIntensity: 10,
+  maxIntensity: 255,
+};
 
 class LightAdjustmentStats {
   numberOfFrames = 0;
@@ -45,6 +54,7 @@ class Agcwd {
       throw new Error("Failed to create WebAssembly agcwd instance.");
     }
     this.agcwdPtr = agcwdPtr;
+    this.setOptions(DEFAULT_OPTIONS);
     this.setOptions(options);
 
     const { width, height } = track.getSettings();
@@ -85,6 +95,20 @@ class Agcwd {
         throw new Error(`Invaild alpha value: ${options.fusion} (must be a number between 0.0 and 1.0)`);
       }
       (this.wasm.exports.agcwdSetFusion as CallableFunction)(this.agcwdPtr, options.fusion);
+    }
+
+    if (options.minIntensity !== undefined) {
+      if (!(0 <= options.minIntensity && options.minIntensity <= 255)) {
+        throw new Error(`Invaild alpha value: ${options.minIntensity} (must be an integer between 0 and 255)`);
+      }
+      (this.wasm.exports.agcwdSetMinIntensity as CallableFunction)(this.agcwdPtr, options.minIntensity);
+    }
+
+    if (options.maxIntensity !== undefined) {
+      if (!(0 <= options.maxIntensity && options.maxIntensity <= 255)) {
+        throw new Error(`Invaild alpha value: ${options.maxIntensity} (must be an integer between 0 and 255)`);
+      }
+      (this.wasm.exports.agcwdSetMaxIntensity as CallableFunction)(this.agcwdPtr, options.maxIntensity);
     }
   }
 

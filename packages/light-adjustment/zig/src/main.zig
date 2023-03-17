@@ -59,9 +59,10 @@ pub const AgcwdOptions = struct {
     /// 論文中に出てくる α パラメータ
     alpha: f32 = 0.5,
     fusion: f32 = 0.5,
-    bottom_intensity: u8 = 10, // TODO: min and max
-    mask_ratio_threshold: f32 = 0.05,
+    min_intensity: u8 = 10,
+    max_intensity: u8 = 245,
     entropy_threshold: f32 = 0.05,
+    mask_ratio_threshold: f32 = 0.05, // TODO: remove(?)
 };
 
 /// 画像の明るさ調整処理を行うための構造体
@@ -105,7 +106,7 @@ pub const Agcwd = struct {
         }
 
         const cdf = Cdf.fromPdf(&pdf.toWeightingDistribution(self.options.alpha));
-        self.mapping_curve = cdf.toIntensityMappingCurve(self.options.fusion, self.options.bottom_intensity);
+        self.mapping_curve = cdf.toIntensityMappingCurve(self.options);
     }
 
     pub fn enhanceImage(self: Self, image: *Image) void {
@@ -202,14 +203,16 @@ const Cdf = struct {
         return .{ .table = table };
     }
 
-    fn toIntensityMappingCurve(self: *const Self, fusion: f32, bottom_intensity: u8) [256]u8 {
+    fn toIntensityMappingCurve(self: *const Self, options: AgcwdOptions) [256]u8 {
         var curve: [256]u8 = undefined;
-        const bottom: f32 = @intToFloat(f32, bottom_intensity);
-        const range: f32 = 255.0 - bottom;
+        const min: f32 = @intToFloat(f32, options.min_intensity);
+        const max: f32 = @intToFloat(f32, options.max_intensity);
+        const range: f32 = @max(0.0, max - min);
+        const fusion = options.fusion;
 
         for (self.table, 0..) |gamma, i| {
             const v0: f32 = @intToFloat(f32, i);
-            const v1: f32 = range * math.pow(f32, v0 / 255.0, 1.0 - gamma) + bottom;
+            const v1: f32 = range * math.pow(f32, v0 / 255.0, 1.0 - gamma) + min;
             curve[i] = @floatToInt(u8, math.round(v0 * (1.0 - fusion) + v1 * fusion));
         }
         return curve;
