@@ -1,13 +1,25 @@
 <html>
   <head>
     <meta charset="utf-8">
-    <title>Light Adjustment Example</title>
+    <title>Media Processors: 明るさ調整サンプル</title>
   </head>
   <body>
-    <h1>Light Adjustment Example</h1>
+    <h1>Media Processors: 明るさ調整サンプル</h1>
+
+    <h3>入力映像設定</h3>
+    解像度: <input id="videoWidth" type="text" value="640">x<input id="videoHeight" type="text" value="360"><br />
+    FPS: <input id="videoFps" type="text" value="15">
+
+    <h3>明るさ調整設定</h3>
+    TODO
+    <br /><br />
+
+    <input type="button" value="明るさ調整ON" onClick="showProcessedVideo()">
+    <input type="button" value="明るさ調整OFF" onClick="showOriginalVideo()">
+    <br /><br />
+
 
     <video id="video" autoplay playsinline></video>
-    <video id="videoOriginal" autoplay playsinline></video>
 
     <script src="./light-adjustment/light_adjustment.js"></script>
     <script>
@@ -16,15 +28,42 @@
           throw Error("Unsupported platform");
       }
 
-      navigator.mediaDevices.getUserMedia({video: true}).then(async (stream) => {
-          const track = stream.getVideoTracks()[0];
-          const processor = new Shiguredo.LightAdjustmentProcessor();
-          const processedTrack = await processor.startProcessing(track);
-          const videoElement = document.getElementById("video");
-          videoElement.srcObject = new MediaStream([processedTrack]);
+      const processor = new Shiguredo.LightAdjustmentProcessor();
 
-          document.getElementById("videoOriginal").srcObject = new MediaStream([track]);
-      });
+      function getUserMedia() {
+          const constraints = {
+              width: document.getElementById("videoWidth").value,
+              height: document.getElementById("videoHeight").value,
+              frameRate: {ideal: document.getElementById("videoFps").value},
+          };
+          return navigator.mediaDevices.getUserMedia({video: constraints});
+      }
+
+      function showOriginalVideo() {
+          processor.stopProcessing();
+
+          const videoElement = document.getElementById('video');
+          getUserMedia().then((stream) => {
+              videoElement.srcObject = stream;
+          });
+      }
+
+
+      function showProcessedVideo() {
+          processor.stopProcessing();
+
+          const videoElement = document.getElementById('video');
+          getUserMedia().then((stream) => {
+              const track = stream.getVideoTracks()[0];
+
+              let options = {};
+              processor.startProcessing(track, options).then((processed_track) => {
+                  videoElement.srcObject = new MediaStream([processed_track]);
+              });
+          });
+      }
+
+      showOriginalVideo();
     </script>
   </body>
 </html>
