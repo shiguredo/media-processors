@@ -65,38 +65,22 @@
           processor.setOptions(options);
       }
 
-      function showOriginalVideo() {
-          processor.stopProcessing();
+      getUserMedia().then((stream) => {
+          document.getElementById('videoOriginal').srcObject = stream;
 
-          const videoElement = document.getElementById('videoOriginal');
-          getUserMedia().then((stream) => {
-              videoElement.srcObject = stream;
+          const track = stream.getVideoTracks()[0];
+
+          let options = {
+              alpha: Number(document.getElementById('alpha').value),
+              fusion: Number(document.getElementById('fusion').value),
+              minIntensity: Number(document.getElementById('minIntensity').value),
+              maxIntensity: Number(document.getElementById('maxIntensity').value),
+              entropyThreshold: Number(document.getElementById('entropyThreshold').value),
+          };
+          processor.startProcessing(track, options).then((processed_track) => {
+              document.getElementById('videoProcessed').srcObject = new MediaStream([processed_track]);
           });
-      }
-
-
-      function showProcessedVideo() {
-          processor.stopProcessing();
-
-          const videoElement = document.getElementById('videoProcessed');
-          getUserMedia().then((stream) => {
-              const track = stream.getVideoTracks()[0];
-
-              let options = {
-                  alpha: Number(document.getElementById('alpha').value),
-                  fusion: Number(document.getElementById('fusion').value),
-                  minIntensity: Number(document.getElementById('minIntensity').value),
-                  maxIntensity: Number(document.getElementById('maxIntensity').value),
-                  entropyThreshold: Number(document.getElementById('entropyThreshold').value),
-              };
-              processor.startProcessing(track, options).then((processed_track) => {
-                  videoElement.srcObject = new MediaStream([processed_track]);
-              });
-          });
-      }
-
-      showOriginalVideo();
-      showProcessedVideo();
+      });
     </script>
   </body>
 </html>
