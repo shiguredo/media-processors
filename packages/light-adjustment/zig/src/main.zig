@@ -62,7 +62,6 @@ pub const AgcwdOptions = struct {
     min_intensity: u8 = 10,
     max_intensity: u8 = 245,
     entropy_threshold: f32 = 0.05,
-    mask_ratio_threshold: f32 = 0.05, // TODO: remove(?)
 };
 
 /// 画像の明るさ調整処理を行うための構造体
@@ -100,11 +99,7 @@ pub const Agcwd = struct {
         var pdf = Pdf.fromImage(image);
         self.entropy = pdf.entropy();
 
-        if (self.options.mask_ratio_threshold < mask.getMaskRatio()) {
-            // マスク領域が十分に大きい場合には、マスク領域だけを使って PDF を計算する
-            pdf = Pdf.fromImageAndMask(image, mask);
-        }
-
+        pdf = Pdf.fromImageAndMask(image, mask);
         const cdf = Cdf.fromPdf(&pdf.toWeightingDistribution(self.options.alpha));
         self.mapping_curve = cdf.toIntensityMappingCurve(self.options);
     }
