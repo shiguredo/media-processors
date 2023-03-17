@@ -167,7 +167,7 @@ pub const AgcwdOptions = struct {
     /// 論文中に出てくる α パラメータ
     alpha: f32 = 0.5,
     fusion: f32 = 0.5,
-    bottom_intensity: u8 = 10, // TODO
+    bottom_intensity: u8 = 10, // TODO: min and max
     mask_ratio_threshold: f32 = 0.05,
     entropy_threshold: f32 = 0.05,
 };
