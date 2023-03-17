@@ -8,16 +8,17 @@
 
     <h3>入力映像設定</h3>
     解像度: <input id="videoWidth" type="text" value="640">x<input id="videoHeight" type="text" value="360"><br />
-    FPS: <input id="videoFps" type="text" value="15">
+    FPS: <input id="videoFps" type="text" value="30">
 
     <h3>明るさ調整設定</h3>
-    TODO
+    AGCWD Alpha: <input id="alpha" type="range" min="0" max="3" value="0.5" step="0.1"
+                        oninput="onAlphaInput()">
+                 <span id="alpha-value">0.5</span><br />
     <br /><br />
 
     <input type="button" value="明るさ調整ON" onClick="showProcessedVideo()">
     <input type="button" value="明るさ調整OFF" onClick="showOriginalVideo()">
     <br /><br />
-
 
     <video id="video" autoplay playsinline></video>
 
@@ -39,6 +40,12 @@
           return navigator.mediaDevices.getUserMedia({video: constraints});
       }
 
+      function onAlphaInput() {
+          const alpha = Number(document.getElementById('alpha').value);
+          document.getElementById('alpha-value').innerText = alpha;
+          processor.setOptions({ alpha });
+      }
+
       function showOriginalVideo() {
           processor.stopProcessing();
 
@@ -56,7 +63,9 @@
           getUserMedia().then((stream) => {
               const track = stream.getVideoTracks()[0];
 
-              let options = {};
+              let options = {
+                  alpha: Number(document.getElementById('alpha').value)
+              };
               processor.startProcessing(track, options).then((processed_track) => {
                   videoElement.srcObject = new MediaStream([processed_track]);
               });

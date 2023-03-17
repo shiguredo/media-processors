@@ -6,8 +6,6 @@ interface LightAdjustmentProcessorOptions {
   alpha?: number;
 }
 
-const DEFAULT_ALPHA = 0.5;
-
 class Agcwd {
   private wasm: WebAssembly.Instance;
   private memory: WebAssembly.Memory;
@@ -15,6 +13,7 @@ class Agcwd {
   private imagePtr = 0;
   private imageDataSize = 0;
   private imageDataPtr = 0;
+  private isStateObsolete = false;
 
   constructor(wasm: WebAssembly.Instance, track: MediaStreamVideoTrack, options: LightAdjustmentProcessorOptions) {
     this.wasm = wasm;
@@ -51,16 +50,20 @@ class Agcwd {
     image.data.set(new Uint8Array(this.memory.buffer, this.imageDataPtr, this.imageDataSize));
   }
 
-  setOptions(optiosn: LightAdjustmentProcessorOptions): void {
-    const alpha = optiosn.alpha || DEFAULT_ALPHA;
-    (this.wasm.exports.agcwdSetAlpha as CallableFunction)(this.agcwdPtr, alpha);
+  setOptions(options: LightAdjustmentProcessorOptions): void {
+    this.isStateObsolete = true;
+
+    if (options.alpha !== undefined) {
+      (this.wasm.exports.agcwdSetAlpha as CallableFunction)(this.agcwdPtr, options.alpha);
+    }
   }
 
   private updateStateIfNeed(): void {
     const isStateObsolete = this.wasm.exports.agcwdIsStateObsolete as CallableFunction;
-    if (isStateObsolete(this.agcwdPtr, this.imagePtr) as boolean) {
+    if (this.isStateObsolete || (isStateObsolete(this.agcwdPtr, this.imagePtr) as boolean)) {
       // TODO: handle mask
       (this.wasm.exports.agcwdUpdateState as CallableFunction)(this.agcwdPtr, this.imagePtr, this.imagePtr);
+      this.isStateObsolete = false;
     }
   }
 
