@@ -24,7 +24,7 @@ pub fn build(b: *std.Build) void {
         .name = "light_adjustment",
         // In this case the main source file is merely a path, however, in more
         // complicated build scripts, this could be a generated file.
-        .root_source_file = .{ .path = "src/main.zig" },
+        .root_source_file = .{ .path = "src/wasm.zig" },
         .target = target,
         .optimize = optimize,
     });
