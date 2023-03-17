@@ -1,6 +1,8 @@
 import { VideoTrackProcessor } from "@shiguredo/video-track-processor";
 
-interface LightAdjustmentProcessorOptions {}
+interface LightAdjustmentProcessorOptions {
+  alpha: f32 = 0.5;
+}
 
 class LightAdjustmentProcessor {
   private trackProcessor: VideoTrackProcessor;
