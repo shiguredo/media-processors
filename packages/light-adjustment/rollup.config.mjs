@@ -4,6 +4,7 @@ import typescript from '@rollup/plugin-typescript';
 import pkg from './package.json';
 import commonjs from '@rollup/plugin-commonjs';
 import resolve from '@rollup/plugin-node-resolve';
+import replace from '@rollup/plugin-replace';
 import copy from 'rollup-plugin-copy';
 
 const banner = `/**
@@ -19,6 +20,10 @@ export default [
   {
     input: 'src/light_adjustment.ts',
     plugins: [
+      replace({
+        __LIGHT_ADJUSTMENT_WASM__: () => fs.readFileSync("dist/light_adjustment.wasm", "base64"),
+        preventAssignment: true
+      }),
       typescript({module: "esnext"}),
       commonjs(),
       resolve(),
@@ -53,6 +58,10 @@ export default [
   {
     input: 'src/light_adjustment.ts',
     plugins: [
+      replace({
+        __LIGHT_ADJUSTMENT_WASM__: () => fs.readFileSync("dist/light_adjustment.wasm", "base64"),
+        preventAssignment: true
+      }),
       typescript({module: "esnext"}),
       commonjs(),
       resolve(),

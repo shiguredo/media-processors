@@ -1,5 +1,7 @@
 import { VideoTrackProcessor } from "@shiguredo/video-track-processor";
 
+const LIGHT_ADJUSTMENT_WASM = "__LIGHT_ADJUSTMENT_WASM__";
+
 interface LightAdjustmentProcessorOptions {
   alpha?: number;
 }
@@ -13,6 +15,17 @@ class LightAdjustmentProcessor {
 
   static isSupported(): boolean {
     return VideoTrackProcessor.isSupported();
+  }
+
+  async startProcessing(
+    track: MediaStreamVideoTrack,
+    options: LightAdjustmentProcessorOptions = {}
+  ): Promise<MediaStreamVideoTrack> {
+    const wasmResults = await WebAssembly.instantiateStreaming(
+      fetch("data:application/wasm;base64," + LIGHT_ADJUSTMENT_WASM),
+      {}
+    );
+    return this.trackProcessor.startProcessing(track, async (image) => image);
   }
 
   stopProcessing() {
