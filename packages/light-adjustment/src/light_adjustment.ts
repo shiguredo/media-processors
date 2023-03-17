@@ -22,12 +22,7 @@ class LightAdjustmentStats {
   numberOfFrames = 0;
   totalElapsedSeconds = 0;
   lastElapsedSeconds = 0;
-
-  reset(): void {
-    this.numberOfFrames = 0;
-    this.totalElapsedSeconds = 0;
-    this.lastElapsedSeconds = 0;
-  }
+  totalUpdateStateCount = 0;
 
   getAverageElapsedSeconds(): number {
     if (this.numberOfFrames === 0) {
@@ -35,6 +30,13 @@ class LightAdjustmentStats {
     } else {
       return this.totalElapsedSeconds / this.numberOfFrames;
     }
+  }
+
+  reset(): void {
+    this.numberOfFrames = 0;
+    this.totalElapsedSeconds = 0;
+    this.lastElapsedSeconds = 0;
+    this.totalUpdateStateCount = 0;
   }
 }
 
@@ -46,10 +48,17 @@ class Agcwd {
   private imageDataSize = 0;
   private imageDataPtr = 0;
   private isStateObsolete = false;
+  private stats: LightAdjustmentStats;
 
-  constructor(wasm: WebAssembly.Instance, track: MediaStreamVideoTrack, options: LightAdjustmentProcessorOptions) {
+  constructor(
+    wasm: WebAssembly.Instance,
+    track: MediaStreamVideoTrack,
+    stats: LightAdjustmentStats,
+    options: LightAdjustmentProcessorOptions
+  ) {
     this.wasm = wasm;
     this.memory = wasm.exports.memory as WebAssembly.Memory;
+    this.stats = stats;
 
     const agcwdPtr = (wasm.exports.agcwdNew as CallableFunction)() as number;
     if (agcwdPtr === 0) {
@@ -129,6 +138,7 @@ class Agcwd {
       // TODO: handle mask
       (this.wasm.exports.agcwdUpdateState as CallableFunction)(this.agcwdPtr, this.imagePtr, this.imagePtr);
       this.isStateObsolete = false;
+      this.stats.totalUpdateStateCount += 1;
     }
   }
 
@@ -173,7 +183,7 @@ class LightAdjustmentProcessor {
       {}
     );
 
-    this.agcwd = new Agcwd(wasmResults.instance, track, options);
+    this.agcwd = new Agcwd(wasmResults.instance, track, this.stats, options);
 
     return this.trackProcessor.startProcessing(track, (image: ImageData) => {
       if (this.agcwd !== undefined) {
@@ -193,6 +203,7 @@ class LightAdjustmentProcessor {
       this.agcwd.destroy();
       this.agcwd = undefined;
     }
+    this.resetStats();
   }
 
   isProcessing(): boolean {
@@ -215,6 +226,10 @@ class LightAdjustmentProcessor {
 
   getStats(): LightAdjustmentStats {
     return this.stats;
+  }
+
+  resetStats(): void {
+    this.stats.reset();
   }
 }
 
