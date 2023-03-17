@@ -6,6 +6,26 @@ interface LightAdjustmentProcessorOptions {
   alpha?: number;
 }
 
+class LightAdjustmentStats {
+  numberOfFrames = 0;
+  totalElapsedSeconds = 0;
+  lastElapsedSeconds = 0;
+
+  reset(): void {
+    this.numberOfFrames = 0;
+    this.totalElapsedSeconds = 0;
+    this.lastElapsedSeconds = 0;
+  }
+
+  getAverageElapsedSeconds(): number {
+    if (this.numberOfFrames === 0) {
+      return 0;
+    } else {
+      return this.totalElapsedSeconds / this.numberOfFrames;
+    }
+  }
+}
+
 class Agcwd {
   private wasm: WebAssembly.Instance;
   private memory: WebAssembly.Memory;
@@ -87,10 +107,12 @@ class Agcwd {
 
 class LightAdjustmentProcessor {
   private trackProcessor: VideoTrackProcessor;
+  private stats: LightAdjustmentStats;
   private agcwd?: Agcwd;
 
   constructor() {
     this.trackProcessor = new VideoTrackProcessor();
+    this.stats = new LightAdjustmentStats();
   }
 
   static isSupported(): boolean {
@@ -110,7 +132,11 @@ class LightAdjustmentProcessor {
 
     return this.trackProcessor.startProcessing(track, (image: ImageData) => {
       if (this.agcwd !== undefined) {
+        this.stats.numberOfFrames += 1;
+        const start = performance.now() / 1000;
         this.agcwd.processImage(image);
+        this.stats.lastElapsedSeconds = performance.now() / 1000 - start;
+        this.stats.totalElapsedSeconds += this.stats.lastElapsedSeconds;
       }
       return Promise.resolve(image);
     });
@@ -141,6 +167,10 @@ class LightAdjustmentProcessor {
       this.agcwd.setOptions(options);
     }
   }
+
+  getStats(): LightAdjustmentStats {
+    return this.stats;
+  }
 }
 
-export { LightAdjustmentProcessor, LightAdjustmentProcessorOptions };
+export { LightAdjustmentProcessor, LightAdjustmentProcessorOptions, LightAdjustmentStats };

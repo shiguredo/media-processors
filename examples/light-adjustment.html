@@ -20,7 +20,8 @@
     <input type="button" value="明るさ調整OFF" onClick="showOriginalVideo()">
     <br /><br />
 
-    <video id="video" autoplay playsinline></video>
+    <video id="video" autoplay playsinline></video><br />
+    平均フレーム処理時間: <span id="elapsed">0.0</span> 秒<br />
 
     <script src="./light-adjustment/light_adjustment.js"></script>
     <script>
@@ -30,6 +31,10 @@
       }
 
       const processor = new Shiguredo.LightAdjustmentProcessor();
+      setInterval(() => {
+          const stats = processor.getStats();
+          document.getElementById('elapsed').innerText = stats.getAverageElapsedSeconds();
+      }, 100);
 
       function getUserMedia() {
           const constraints = {
@@ -48,6 +53,7 @@
 
       function showOriginalVideo() {
           processor.stopProcessing();
+          processor.getStats().reset();
 
           const videoElement = document.getElementById('video');
           getUserMedia().then((stream) => {
@@ -58,6 +64,7 @@
 
       function showProcessedVideo() {
           processor.stopProcessing();
+          processor.getStats().reset();
 
           const videoElement = document.getElementById('video');
           getUserMedia().then((stream) => {
