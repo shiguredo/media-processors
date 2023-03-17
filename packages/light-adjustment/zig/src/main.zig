@@ -1,4 +1,3 @@
-const builtin = @import("builtin");
 const std = @import("std");
 const math = std.math;
 const ArrayList = std.ArrayList;
@@ -231,7 +230,6 @@ const Rgb = struct {
         return @max(self.r, @max(self.g, self.b));
     }
 
-    // TODO: optimize
     fn toHsv(self: Self) Hsv {
         const r: usize = self.r;
         const g: usize = self.g;
@@ -269,7 +267,6 @@ const Hsv = struct {
 
     const Self = @This();
 
-    // TODO: optimize
     fn toRgb(self: Self) Rgb {
         if (self.s == 0) {
             return .{ .r = self.v, .g = self.v, .b = self.v };

@@ -73,6 +73,7 @@ class Agcwd {
     this.isStateObsolete = true;
 
     if (options.alpha !== undefined) {
+      // TODO: validation
       (this.wasm.exports.agcwdSetAlpha as CallableFunction)(this.agcwdPtr, options.alpha);
     }
   }

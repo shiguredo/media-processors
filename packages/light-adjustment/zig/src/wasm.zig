@@ -34,10 +34,6 @@ export fn imageNew(pixels: u32) ?*anyopaque {
     return image;
 }
 
-fn wasmPtrCast(comptime t: type, ptr: *anyopaque) t {
-    return @ptrCast(t, @alignCast(@typeInfo(t).Pointer.alignment, ptr));
-}
-
 export fn imageFree(image_ptr: *anyopaque) void {
     const image = wasmPtrCast(*const Image, image_ptr);
     image.deinit();
@@ -104,4 +100,8 @@ export fn agcwdEnhanceImage(agcwd_ptr: *anyopaque, image_ptr: *anyopaque) void {
     const agcwd = wasmPtrCast(*const Agcwd, agcwd_ptr);
     const image = wasmPtrCast(*Image, image_ptr);
     agcwd.enhanceImage(image);
+}
+
+fn wasmPtrCast(comptime t: type, ptr: *anyopaque) t {
+    return @ptrCast(t, @alignCast(@typeInfo(t).Pointer.alignment, ptr));
 }
