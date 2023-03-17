@@ -39,9 +39,8 @@ class Agcwd {
     this.wasm = wasm;
     this.memory = wasm.exports.memory as WebAssembly.Memory;
 
-    const agcwdPtr = (wasm.exports.agcwdNew as CallableFunction)() as number | undefined;
-    if (agcwdPtr === undefined) {
-      // TODO: zig で null ptr を返した時の挙動を確認する
+    const agcwdPtr = (wasm.exports.agcwdNew as CallableFunction)() as number;
+    if (agcwdPtr === 0) {
       throw new Error("Failed to create WebAssembly agcwd instance.");
     }
     this.agcwdPtr = agcwdPtr;
@@ -96,8 +95,8 @@ class Agcwd {
     }
 
     this.imageDataSize = imageDataSize;
-    const imagePtr = (this.wasm.exports.imageNew as CallableFunction)(this.imageDataSize) as number | undefined;
-    if (imagePtr === undefined) {
+    const imagePtr = (this.wasm.exports.imageNew as CallableFunction)(this.imageDataSize) as number;
+    if (imagePtr === 0) {
       throw new Error("Failed to create WebAssembly image instance.");
     }
     this.imagePtr = imagePtr;
