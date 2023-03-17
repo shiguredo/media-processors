@@ -13,6 +13,7 @@ jobs:
     strategy:
       matrix:
         node: ['16', '18']
+        zig: ['linux-x86_64-0.11.0-dev.1930+a097779b6']
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
@@ -20,6 +21,11 @@ jobs:
           node-version: ${{ matrix.node }}
           cache: npm
       - run: npm --version
+
+      - run: curl https://ziglang.org/builds/zig-${{ matrix.zig }}.tar.xz --output - | tar Jxvf -
+      - run: echo "$PWD/zig-${{ matrix.zig }}/" >> $GITHUB_PATH
+      - run: zig version
+
       - run: npm install
       - run: npm run build
       - run: npm run lint
