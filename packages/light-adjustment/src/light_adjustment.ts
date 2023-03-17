@@ -136,7 +136,7 @@ class Agcwd {
     const isStateObsolete = this.wasm.exports.agcwdIsStateObsolete as CallableFunction;
     if (this.isStateObsolete || (isStateObsolete(this.agcwdPtr, this.imagePtr) as boolean)) {
       // TODO: handle mask
-      (this.wasm.exports.agcwdUpdateState as CallableFunction)(this.agcwdPtr, this.imagePtr, this.imagePtr);
+      (this.wasm.exports.agcwdUpdateState as CallableFunction)(this.agcwdPtr, this.imagePtr, 0);
       this.isStateObsolete = false;
       this.stats.totalUpdateStateCount += 1;
     }

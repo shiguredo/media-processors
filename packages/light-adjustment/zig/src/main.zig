@@ -5,6 +5,24 @@ const Allocator = std.mem.Allocator;
 const expect = std.testing.expect;
 const test_allocator = std.testing.allocator;
 
+pub const Mask = struct {
+    data: []u8,
+
+    allocator: ?Allocator = null,
+
+    const Self = @This();
+
+    pub fn fromSlice(data: []u8) !Self {
+        return .{ .data = data };
+    }
+
+    pub fn deinit(self: Self) void {
+        if (self.allocator) |allocator| {
+            allocator.free(self.data);
+        }
+    }
+};
+
 // RGBA
 pub const Image = struct {
     data: []u8,
@@ -31,21 +49,6 @@ pub const Image = struct {
             .g = self.data[offset + 1],
             .b = self.data[offset + 2],
         };
-    }
-
-    fn isMasked(self: Self, offset: usize) bool {
-        return self.data[offset + 3] == 255;
-    }
-
-    fn getMaskRatio(self: Self) f32 {
-        var count: usize = 0;
-        var i: usize = 0;
-        while (i < self.data.len) : (i += 4) {
-            if (self.isMasked(i)) {
-                count += 1;
-            }
-        }
-        return @intToFloat(f32, count) / @intToFloat(f32, self.data.len);
     }
 
     fn setRgb(self: Self, offset: usize, rgb: Rgb) void {
@@ -95,7 +98,7 @@ pub const Agcwd = struct {
         return @fabs(self.entropy - entropy) > self.options.entropy_threshold;
     }
 
-    pub fn updateState(self: *Self, image: Image, mask: Image) void {
+    pub fn updateState(self: *Self, image: Image, mask: ?Mask) void {
         var pdf = Pdf.fromImage(image);
         self.entropy = pdf.entropy();
 
@@ -121,28 +124,26 @@ const Pdf = struct {
     const Self = @This();
 
     fn fromImage(image: Image) Self {
-        return Self.fromImageAndMask(image, image);
+        return Self.fromImageAndMask(image, null);
     }
 
-    fn fromImageAndMask(image: Image, mask: Image) Self {
+    fn fromImageAndMask(image: Image, mask: ?Mask) Self {
         var histogram = [_]usize{0} ** 256;
-        var total_count: usize = 0;
+        var total: usize = 0;
         {
             var i: usize = 0;
             while (i < image.data.len) : (i += 4) {
-                // TODO: boolean ではなく重みとして扱う
-                if (mask.isMasked(i)) {
-                    histogram[image.getRgb(i).intensity()] += 1;
-                    total_count += 1;
-                }
+                const weight = if (mask) |non_null_mask| non_null_mask.data[i] else 255;
+                histogram[image.getRgb(i).intensity()] += weight;
+                total += 255;
             }
         }
 
         var table: [256]f32 = undefined;
-        const n = @intToFloat(f32, total_count);
+        const n = @intToFloat(f32, total);
 
-        for (histogram, 0..) |count, i| {
-            table[i] = @intToFloat(f32, count) / n;
+        for (histogram, 0..) |weight, i| {
+            table[i] = @intToFloat(f32, weight) / n;
         }
 
         return .{ .table = table };
@@ -332,7 +333,7 @@ test "Enhance image" {
 
     // 最初は常に状態の更新が必要
     try expect(agcwd.isStateObsolete(image));
-    agcwd.updateState(image, image);
+    agcwd.updateState(image, null);
 
     // すでに更新済み
     try expect(!agcwd.isStateObsolete(image));
