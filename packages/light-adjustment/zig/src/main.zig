@@ -210,8 +210,7 @@ const Cdf = struct {
         for (self.table, 0..) |gamma, i| {
             const v0: f32 = @intToFloat(f32, i);
             const v1: f32 = range * math.pow(f32, v0 / 255.0, 1.0 - gamma) + bottom;
-            curve[i] = @floatToInt(u8, math.round(v0 * gamma * fusion + v1 * (1.0 - gamma * fusion)));
-            // TODO: curve[i] = @truncate(u8, math.round(v0 * fusion + v1 * (1.0 - fusion)));
+            curve[i] = @floatToInt(u8, math.round(v0 * (1.0 - fusion) + v1 * fusion));
         }
         return curve;
     }

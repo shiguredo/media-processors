@@ -11,9 +11,12 @@
     FPS: <input id="videoFps" type="text" value="30">
 
     <h3>明るさ調整設定</h3>
-    AGCWD Alpha: <input id="alpha" type="range" min="0" max="3" value="0.5" step="0.1"
-                        oninput="onAlphaInput()">
-                 <span id="alpha-value">0.5</span><br />
+    Alpha: <input id="alpha" type="range" min="0" max="3" value="0.5" step="0.1"
+                  oninput="updateOption('alpha')">
+           <span id="alpha-value">0.5</span><br />
+    Fusion: <input id="fusion" type="range" min="0" max="1" value="0.5" step="0.1"
+                   oninput="updateOption('fusion')">
+            <span id="fusion-value">0.5</span><br />
     <br /><br />
 
     <input type="button" value="明るさ調整ON" onClick="showProcessedVideo()">
@@ -45,10 +48,12 @@
           return navigator.mediaDevices.getUserMedia({video: constraints});
       }
 
-      function onAlphaInput() {
-          const alpha = Number(document.getElementById('alpha').value);
-          document.getElementById('alpha-value').innerText = alpha;
-          processor.setOptions({ alpha });
+      function updateOption(name) {
+          const value = Number(document.getElementById(name).value);
+          document.getElementById(`${name}-value`).innerText = value;
+          var options = {};
+          options[name] = value;
+          processor.setOptions(options);
       }
 
       function showOriginalVideo() {
@@ -71,7 +76,8 @@
               const track = stream.getVideoTracks()[0];
 
               let options = {
-                  alpha: Number(document.getElementById('alpha').value)
+                  alpha: Number(document.getElementById('alpha').value),
+                  fusion: Number(document.getElementById('fusion').value),
               };
               processor.startProcessing(track, options).then((processed_track) => {
                   videoElement.srcObject = new MediaStream([processed_track]);

@@ -4,6 +4,7 @@ const LIGHT_ADJUSTMENT_WASM = "__LIGHT_ADJUSTMENT_WASM__";
 
 interface LightAdjustmentProcessorOptions {
   alpha?: number;
+  fusion?: number;
 }
 
 class LightAdjustmentStats {
@@ -73,8 +74,17 @@ class Agcwd {
     this.isStateObsolete = true;
 
     if (options.alpha !== undefined) {
-      // TODO: validation
+      if (options.alpha <= 0.0 || !isFinite(options.alpha)) {
+        throw new Error(`Invaild alpha value: ${options.alpha} (must be a positive number)`);
+      }
       (this.wasm.exports.agcwdSetAlpha as CallableFunction)(this.agcwdPtr, options.alpha);
+    }
+
+    if (options.fusion !== undefined) {
+      if (!(0.0 <= options.fusion && options.fusion <= 1.0)) {
+        throw new Error(`Invaild alpha value: ${options.fusion} (must be a number between 0.0 and 1.0)`);
+      }
+      (this.wasm.exports.agcwdSetFusion as CallableFunction)(this.agcwdPtr, options.fusion);
     }
   }
 
