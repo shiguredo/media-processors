@@ -1,7 +1,7 @@
 import { VideoTrackProcessor } from "@shiguredo/video-track-processor";
 
 interface LightAdjustmentProcessorOptions {
-  alpha: f32 = 0.5;
+  alpha?: number;
 }
 
 class LightAdjustmentProcessor {
