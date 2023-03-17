@@ -23,6 +23,9 @@
     MaxIntensity: <input id="maxIntensity" type="range" min="0" max="255" value="255" step="1"
                          oninput="updateOption('maxIntensity')">
                   <span id="maxIntensity-value">245</span><br />
+    EntropyThreshold: <input id="entropyThreshold" type="range" min="0" max="0.2" value="0.05" step="0.01"
+                             oninput="updateOption('entropyThreshold')">
+                      <span id="entropyThreshold-value">0.5</span><br />
     <br /><br />
 
     <input type="button" value="明るさ調整ON" onClick="showProcessedVideo()">
@@ -84,6 +87,9 @@
               let options = {
                   alpha: Number(document.getElementById('alpha').value),
                   fusion: Number(document.getElementById('fusion').value),
+                  minIntensity: Number(document.getElementById('minIntensity').value),
+                  maxIntensity: Number(document.getElementById('maxIntensity').value),
+                  entropyThreshold: Number(document.getElementById('entropyThreshold').value),
               };
               processor.startProcessing(track, options).then((processed_track) => {
                   videoElement.srcObject = new MediaStream([processed_track]);
