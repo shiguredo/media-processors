@@ -31,6 +31,8 @@ jobs:
           cp -r examples/ _site/
           rm _site/examples/virtual-background
           cp -r node_modules/@shiguredo/virtual-background/dist/ _site/examples/virtual-background
+          rm _site/examples/light-adjustment
+          cp -r node_modules/@shiguredo/light-adjustment/dist/ _site/examples/light-adjustment
           rm _site/examples/noise-suppression
           cp -r node_modules/@shiguredo/noise-suppression/dist/ _site/examples/noise-suppression
       - name: Upload files
