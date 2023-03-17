@@ -1,117 +1,9 @@
-const builtin = @import("builtin");
 const std = @import("std");
 const math = std.math;
 const ArrayList = std.ArrayList;
 const Allocator = std.mem.Allocator;
 const expect = std.testing.expect;
 const test_allocator = std.testing.allocator;
-
-const WASM_ALLOCATOR = if (builtin.target.isWasm())
-    std.heap.wasm_allocator
-else
-    std.heap.page_allocator; // for test
-
-pub const std_options = struct {
-    pub const logFn = log;
-};
-
-pub fn log(
-    comptime level: std.log.Level,
-    comptime scope: @TypeOf(.EnumLiteral),
-    comptime format: []const u8,
-    args: anytype,
-) void {
-    // TODO: 標準出力に表示する関数を import して呼び出す
-    _ = level;
-    _ = scope;
-    _ = format;
-    _ = args;
-}
-
-export fn imageNew(pixels: u32) ?*anyopaque {
-    const image = WASM_ALLOCATOR.create(Image) catch return null;
-    errdefer WASM_ALLOCATOR.destroy(image);
-
-    const data = WASM_ALLOCATOR.alloc(u8, pixels) catch return null;
-    errdefer WASM_ALLOCATOR.free(data);
-
-    image.data = data;
-    image.allocator = WASM_ALLOCATOR;
-
-    return image;
-}
-
-fn wasmPtrCast(comptime t: type, ptr: *anyopaque) t {
-    return @ptrCast(t, @alignCast(@typeInfo(t).Pointer.alignment, ptr));
-}
-
-export fn imageFree(image_ptr: *anyopaque) void {
-    const image = wasmPtrCast(*const Image, image_ptr);
-    image.deinit();
-    WASM_ALLOCATOR.destroy(image);
-}
-
-export fn imageGetDataOffset(image_ptr: *anyopaque) *u8 {
-    const image = wasmPtrCast(*const Image, image_ptr);
-    return @ptrCast(*u8, image.data.ptr);
-}
-
-export fn agcwdNew() ?*anyopaque {
-    const agcwd = WASM_ALLOCATOR.create(Agcwd) catch return null;
-    errdefer WASM_ALLOCATOR.destroy(agcwd);
-
-    agcwd.* = Agcwd.init(.{});
-    return agcwd;
-}
-
-export fn agcwdFree(agcwd_ptr: *anyopaque) void {
-    const agcwd = wasmPtrCast(*const Agcwd, agcwd_ptr);
-    WASM_ALLOCATOR.destroy(agcwd);
-}
-
-export fn agcwdSetAlpha(agcwd_ptr: *anyopaque, alpha: f32) void {
-    const agcwd = wasmPtrCast(*Agcwd, agcwd_ptr);
-    agcwd.options.alpha = alpha;
-}
-
-export fn agcwdSetFusion(agcwd_ptr: *anyopaque, fusion: f32) void {
-    const agcwd = wasmPtrCast(*Agcwd, agcwd_ptr);
-    agcwd.options.fusion = fusion;
-}
-
-export fn agcwdSetBottomIntensity(agcwd_ptr: *anyopaque, bottom: u8) void {
-    const agcwd = wasmPtrCast(*Agcwd, agcwd_ptr);
-    agcwd.options.bottom_intensity = bottom;
-}
-
-export fn agcwdSetMaskRatioThreshold(agcwd_ptr: *anyopaque, threshold: f32) void {
-    const agcwd = wasmPtrCast(*Agcwd, agcwd_ptr);
-    agcwd.options.mask_ratio_threshold = threshold;
-}
-
-export fn agcwdSetEntropyThreshold(agcwd_ptr: *anyopaque, threshold: f32) void {
-    const agcwd = wasmPtrCast(*Agcwd, agcwd_ptr);
-    agcwd.options.entropy_threshold = threshold;
-}
-
-export fn agcwdIsStateObsolete(agcwd_ptr: *anyopaque, image_ptr: *anyopaque) bool {
-    const agcwd = wasmPtrCast(*const Agcwd, agcwd_ptr);
-    const image = wasmPtrCast(*const Image, image_ptr);
-    return agcwd.isStateObsolete(image.*);
-}
-
-export fn agcwdUpdateState(agcwd_ptr: *anyopaque, image_ptr: *anyopaque, mask_ptr: *anyopaque) void {
-    const agcwd = wasmPtrCast(*Agcwd, agcwd_ptr);
-    const image = wasmPtrCast(*const Image, image_ptr);
-    const mask = wasmPtrCast(*const Image, mask_ptr);
-    agcwd.updateState(image.*, mask.*);
-}
-
-export fn agcwdEnhanceImage(agcwd_ptr: *anyopaque, image_ptr: *anyopaque) void {
-    const agcwd = wasmPtrCast(*const Agcwd, agcwd_ptr);
-    const image = wasmPtrCast(*Image, image_ptr);
-    agcwd.enhanceImage(image);
-}
 
 // RGBA
 pub const Image = struct {
@@ -167,9 +59,10 @@ pub const AgcwdOptions = struct {
     /// 論文中に出てくる α パラメータ
     alpha: f32 = 0.5,
     fusion: f32 = 0.5,
-    bottom_intensity: u8 = 10, // TODO: min and max
-    mask_ratio_threshold: f32 = 0.05,
+    min_intensity: u8 = 10,
+    max_intensity: u8 = 245,
     entropy_threshold: f32 = 0.05,
+    mask_ratio_threshold: f32 = 0.05, // TODO: remove(?)
 };
 
 /// 画像の明るさ調整処理を行うための構造体
@@ -213,7 +106,7 @@ pub const Agcwd = struct {
         }
 
         const cdf = Cdf.fromPdf(&pdf.toWeightingDistribution(self.options.alpha));
-        self.mapping_curve = cdf.toIntensityMappingCurve(self.options.fusion, self.options.bottom_intensity);
+        self.mapping_curve = cdf.toIntensityMappingCurve(self.options);
     }
 
     pub fn enhanceImage(self: Self, image: *Image) void {
@@ -310,16 +203,17 @@ const Cdf = struct {
         return .{ .table = table };
     }
 
-    fn toIntensityMappingCurve(self: *const Self, fusion: f32, bottom_intensity: u8) [256]u8 {
+    fn toIntensityMappingCurve(self: *const Self, options: AgcwdOptions) [256]u8 {
         var curve: [256]u8 = undefined;
-        const bottom: f32 = @intToFloat(f32, bottom_intensity);
-        const range: f32 = 255.0 - bottom;
+        const min: f32 = @intToFloat(f32, options.min_intensity);
+        const max: f32 = @intToFloat(f32, options.max_intensity);
+        const range: f32 = @max(0.0, max - min);
+        const fusion = options.fusion;
 
         for (self.table, 0..) |gamma, i| {
             const v0: f32 = @intToFloat(f32, i);
-            const v1: f32 = range * math.pow(f32, v0 / range, 1.0 - gamma) + bottom;
-            curve[i] = @floatToInt(u8, math.round(v0 * gamma * fusion + v1 * (1.0 - gamma * fusion)));
-            // TODO: curve[i] = @truncate(u8, math.round(v0 * fusion + v1 * (1.0 - fusion)));
+            const v1: f32 = range * math.pow(f32, v0 / 255.0, 1.0 - gamma) + min;
+            curve[i] = @floatToInt(u8, math.round(v0 * (1.0 - fusion) + v1 * fusion));
         }
         return curve;
     }
@@ -338,7 +232,6 @@ const Rgb = struct {
         return @max(self.r, @max(self.g, self.b));
     }
 
-    // TODO: optimize
     fn toHsv(self: Self) Hsv {
         const r: usize = self.r;
         const g: usize = self.g;
@@ -376,7 +269,6 @@ const Hsv = struct {
 
     const Self = @This();
 
-    // TODO: optimize
     fn toRgb(self: Self) Rgb {
         if (self.s == 0) {
             return .{ .r = self.v, .g = self.v, .b = self.v };

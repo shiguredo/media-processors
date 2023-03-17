@@ -26,6 +26,7 @@ jobs:
       - run: npm run build
       - run: npm run lint
       - run: npm run doc
+      - run: cd packages/light-adjustment/zig/ && zig build test
       - name: Slack Notification
         if: failure()
         uses: rtCamp/action-slack-notify@v2

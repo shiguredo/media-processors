@@ -7,20 +7,32 @@
     <h1>Media Processors: 明るさ調整サンプル</h1>
 
     <h3>入力映像設定</h3>
-    解像度: <input id="videoWidth" type="text" value="640">x<input id="videoHeight" type="text" value="360"><br />
+    解像度: <input id="videoWidth" type="text" value="320">x<input id="videoHeight" type="text" value="320"><br />
     FPS: <input id="videoFps" type="text" value="30">
 
     <h3>明るさ調整設定</h3>
-    AGCWD Alpha: <input id="alpha" type="range" min="0" max="3" value="0.5" step="0.1"
-                        oninput="onAlphaInput()">
-                 <span id="alpha-value">0.5</span><br />
-    <br /><br />
+    Alpha: <input id="alpha" type="range" min="0" max="3" value="0.5" step="0.1"
+                  oninput="updateOption('alpha')">
+           <span id="alpha-value">0.5</span><br />
+    Fusion: <input id="fusion" type="range" min="0" max="1" value="0.5" step="0.1"
+                   oninput="updateOption('fusion')">
+            <span id="fusion-value">0.5</span><br />
+    MinIntensity: <input id="minIntensity" type="range" min="0" max="255" value="10" step="1"
+                         oninput="updateOption('minIntensity')">
+                  <span id="minIntensity-value">10</span><br />
+    MaxIntensity: <input id="maxIntensity" type="range" min="0" max="255" value="255" step="1"
+                         oninput="updateOption('maxIntensity')">
+                  <span id="maxIntensity-value">255</span><br />
+    EntropyThreshold: <input id="entropyThreshold" type="range" min="0" max="0.2" value="0.05" step="0.01"
+                             oninput="updateOption('entropyThreshold')">
+                      <span id="entropyThreshold-value">0.5</span><br />
+    <br />
 
-    <input type="button" value="明るさ調整ON" onClick="showProcessedVideo()">
-    <input type="button" value="明るさ調整OFF" onClick="showOriginalVideo()">
-    <br /><br />
+    <h3>左: 処理映像、右: オリジナル映像</h3>
 
-    <video id="video" autoplay playsinline></video>
+    フレーム処理時間: <span id="elapsed">0.0</span> 秒<br />
+    <video id="videoProcessed" autoplay playsinline></video>
+    <video id="videoOriginal" autoplay playsinline></video><br />
 
     <script src="./light-adjustment/light_adjustment.js"></script>
     <script>
@@ -30,6 +42,11 @@
       }
 
       const processor = new Shiguredo.LightAdjustmentProcessor();
+      setInterval(() => {
+          const stats = processor.getStats();
+          document.getElementById('elapsed').innerText = stats.getAverageElapsedSeconds().toFixed(4).padStart(4, '0');
+          processor.resetStats();
+      }, 300);
 
       function getUserMedia() {
           const constraints = {
@@ -40,16 +57,18 @@
           return navigator.mediaDevices.getUserMedia({video: constraints});
       }
 
-      function onAlphaInput() {
-          const alpha = Number(document.getElementById('alpha').value);
-          document.getElementById('alpha-value').innerText = alpha;
-          processor.setOptions({ alpha });
+      function updateOption(name) {
+          const value = Number(document.getElementById(name).value);
+          document.getElementById(`${name}-value`).innerText = value;
+          var options = {};
+          options[name] = value;
+          processor.setOptions(options);
       }
 
       function showOriginalVideo() {
           processor.stopProcessing();
 
-          const videoElement = document.getElementById('video');
+          const videoElement = document.getElementById('videoOriginal');
           getUserMedia().then((stream) => {
               videoElement.srcObject = stream;
           });
@@ -59,12 +78,16 @@
       function showProcessedVideo() {
           processor.stopProcessing();
 
-          const videoElement = document.getElementById('video');
+          const videoElement = document.getElementById('videoProcessed');
           getUserMedia().then((stream) => {
               const track = stream.getVideoTracks()[0];
 
               let options = {
-                  alpha: Number(document.getElementById('alpha').value)
+                  alpha: Number(document.getElementById('alpha').value),
+                  fusion: Number(document.getElementById('fusion').value),
+                  minIntensity: Number(document.getElementById('minIntensity').value),
+                  maxIntensity: Number(document.getElementById('maxIntensity').value),
+                  entropyThreshold: Number(document.getElementById('entropyThreshold').value),
               };
               processor.startProcessing(track, options).then((processed_track) => {
                   videoElement.srcObject = new MediaStream([processed_track]);
@@ -73,6 +96,7 @@
       }
 
       showOriginalVideo();
+      showProcessedVideo();
     </script>
   </body>
 </html>
