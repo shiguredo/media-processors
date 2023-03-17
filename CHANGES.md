@@ -11,6 +11,9 @@
 
 ## develop
 
+- [ADD] @shiguredo/light-adjustment パッケージを追加
+
+    - @sile
 - [UPDATE] 映像処理用の共通部分を @shiguredo/virtual-background から @shiguredo/video-track-processor として切り出す
 
     - Breakout Box と Safari の requestVideoFrameCallback を抽象化した汎用的な部分を切り出して、他の映像処理パッケージからも使えるようにする
