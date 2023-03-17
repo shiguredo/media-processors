@@ -25,7 +25,41 @@ class LightAdjustmentProcessor {
       fetch("data:application/wasm;base64," + LIGHT_ADJUSTMENT_WASM),
       {}
     );
-    return this.trackProcessor.startProcessing(track, async (image) => image);
+    const wasmInstance = wasmResults.instance;
+    const wasmMemory = wasmInstance.exports.memory;
+
+    // @ts-ignore
+    const agcwd = wasmInstance.exports.agcwdNew();
+    let wasmImage = 0;
+
+    return this.trackProcessor.startProcessing(track, async (imageData: ImageData) => {
+      const imageDataSize = imageData.width * imageData.height * 4;
+      if (wasmImage === 0) {
+        // TODO: handle resize
+
+        // @ts-ignore
+        wasmImage = wasmInstance.exports.imageNew(imageDataSize);
+      }
+
+      // @ts-ignore
+      const offset = wasmInstance.exports.imageGetDataOffset(wasmImage);
+
+      // @ts-ignore
+      new Uint8Array(wasmMemory.buffer, offset, imageDataSize).set(imageData.data);
+
+      // @ts-ignore
+      if (wasmInstance.exports.agcwdIsStateObsolete(agcwd, wasmImage)) {
+        // @ts-ignore
+        wasmInstance.exports.agcwdUpdateState(agcwd, wasmImage, wasmImage);
+      }
+      // @ts-ignore
+      wasmInstance.exports.agcwdEnhanceImage(agcwd, wasmImage);
+
+      // @ts-ignore
+      imageData.data.set(new Uint8Array(wasmMemory.buffer, offset, imageDataSize));
+
+      return imageData;
+    });
   }
 
   stopProcessing() {

@@ -7,67 +7,23 @@
     <h1>Light Adjustment Example</h1>
 
     <video id="video" autoplay playsinline></video>
+    <video id="videoOriginal" autoplay playsinline></video>
 
+    <script src="./light-adjustment/light_adjustment.js"></script>
     <script>
-      WebAssembly.instantiateStreaming(fetch("./light-adjustment/light_adjustment.wasm"),{}).then(async (results) => {
-          const wasmInstance = results.instance;
-          const wasmMemory = wasmInstance.exports.memory;
-          const agcwd = wasmInstance.exports.agcwdNew();
+      if (!Shiguredo.LightAdjustmentProcessor.isSupported()) {
+          alert("Unsupported platform");
+          throw Error("Unsupported platform");
+      }
 
-          const stream = await navigator.mediaDevices.getUserMedia({video: true});
+      navigator.mediaDevices.getUserMedia({video: true}).then(async (stream) => {
           const track = stream.getVideoTracks()[0];
-
-          const canvas = new OffscreenCanvas(track.getSettings().width, track.getSettings().height);
-          const canvasCtx = canvas.getContext("2d", { desynchronized: true, willReadFrequently: true });
-
-          const imageDataSize = canvas.width * canvas.height * 4;
-          const wasmImage = wasmInstance.exports.imageNew(imageDataSize);
-
-          const generator = new MediaStreamTrackGenerator({ kind: "video" });
-          const processor = new MediaStreamTrackProcessor({ track });
-
-          const start = performance.now();
-          const interleave = 1000;
-          var latencySum = 0;
-          processor.readable
-              .pipeThrough(
-                  new TransformStream({
-                      transform: async (frame, controller) => {
-                          const timestamp = frame.timestamp;
-                          const duration = frame.duration;
-                          canvasCtx.drawImage(frame, 0, 0, canvas.width, canvas.height);
-                          frame.close();
-
-                          const imageData = canvasCtx.getImageData(0, 0, canvas.width, canvas.height);
-
-                          if ((performance.now() - start) % (interleave * 2) > interleave) {
-                               const now = performance.now();
-
-                               const offset = wasmInstance.exports.imageGetDataOffset(wasmImage);
-                               new Uint8Array(wasmMemory.buffer, offset, imageDataSize).set(imageData.data);
-
-                              if (wasmInstance.exports.agcwdIsStateObsolete(agcwd, wasmImage)) {
-                                  console.log("update state");
-                                  wasmInstance.exports.agcwdUpdateState(agcwd, wasmImage, wasmImage);
-                              }
-                              wasmInstance.exports.agcwdEnhanceImage(agcwd, wasmImage);
-                              imageData.data.set(new Uint8Array(wasmMemory.buffer, offset, imageDataSize));
-
-                              const elapsed = performance.now() - now;
-                              latencySum += elapsed;
-                          }
-
-                          canvasCtx.putImageData(imageData, 0, 0);
-                          controller.enqueue(new VideoFrame(canvas, { timestamp, duration }));
-                      }
-                  })
-              )
-              .pipeTo(generator.writable)
-              .catch((e) => {
-                  console.log("Error: ", e);
-              });
+          const processor = new Shiguredo.LightAdjustmentProcessor();
+          const processedTrack = await processor.startProcessing(track);
           const videoElement = document.getElementById("video");
-          videoElement.srcObject = new MediaStream([generator]);
+          videoElement.srcObject = new MediaStream([processedTrack]);
+
+          document.getElementById("videoOriginal").srcObject = new MediaStream([track]);
       });
     </script>
   </body>
