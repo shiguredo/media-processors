@@ -18,11 +18,8 @@ jobs:
         with:
           node-version: '18'
           cache: npm
-
-      - run: curl https://ziglang.org/builds/zig-linux-x86_64-0.11.0-dev.1930+a097779b6.tar.xz --output - | tar Jxvf -
-      - run: echo "$PWD/zig-linux-x86_64-0.11.0-dev.1930+a097779b6/" >> $GITHUB_PATH
+      - uses: goto-bus-stop/setup-zig@v2
       - run: zig version
-
       - run: npm install
       - run: npm run build
       - name: Prepare static files
