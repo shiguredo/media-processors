@@ -27,8 +27,11 @@
     EntropyThreshold: <input id="entropyThreshold" type="range" min="0" max="0.2" value="0.05" step="0.01"
                              oninput="updateOption('entropyThreshold')">
                       <span id="entropyThreshold-value">0.5</span><br />
-    SelfieSegmentation: <input id="selfieSegmentation" type='checkbox'
-                               oninput="updateOption('selfieSegmentation')" /><br />
+    Focus: <select id="focusMask" size="3" oninput="updateOption('focusMask')">
+              <option value="uniform" selected>Uniform</option>
+              <option value="center">Center</option>
+              <option value="selfieSegmentation">SelfieSegmentation</option>
+           </select>
     <br />
 
     <h3>左: 処理映像、右: オリジナル映像</h3>
@@ -63,12 +66,17 @@
       function updateOption(name) {
           var options = {};
 
-          if (name == 'selfieSegmentation') {
-              const checked = document.getElementById(name).checked;
-              if (checked) {
-                  options['focusMask'] = new Shiguredo.SelfieSegmentationFocusMask("./light-adjustment/");
-              } else {
-                  options['focusMask'] = new Shiguredo.UniformFocusMask();
+          if (name == 'focusMask') {
+              switch (document.getElementById(name).value) {
+              case "uniform":
+                  options[name] = new Shiguredo.UniformFocusMask();
+                  break;
+              case "center":
+                  options[name] = new Shiguredo.CenterFocusMask();
+                  break;
+              case "selfieSegmentation":
+                  options[name] = new Shiguredo.SelfieSegmentationFocusMask("./light-adjustment/");
+                  break;
               }
           }  else {
               const value = Number(document.getElementById(name).value);

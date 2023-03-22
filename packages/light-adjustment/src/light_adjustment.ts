@@ -24,6 +24,27 @@ class UniformFocusMask implements FocusMask {
   }
 }
 
+class CenterFocusMask implements FocusMask {
+  private mask: Uint8Array = new Uint8Array();
+
+  getFocusMask(image: ImageData): Promise<Uint8Array> {
+    const { width, height } = image;
+    if (this.mask.byteLength !== width * height) {
+      this.mask = new Uint8Array(width * height);
+      this.mask.fill(0);
+
+      const y_start = Math.floor(height / 3);
+      const y_end = y_start * 2;
+      let x_start = y_start * width + Math.floor(width / 3);
+      let x_end = y_start * width + Math.floor(width / 3) * 2;
+      for (let y = y_start; y < y_end; y++, x_start += width, x_end += width) {
+        this.mask.fill(255, x_start, x_end);
+      }
+    }
+    return Promise.resolve(this.mask);
+  }
+}
+
 class SelfieSegmentationFocusMask implements FocusMask {
   private segmentation: SelfieSegmentation;
   private mask: Uint8Array;
@@ -61,11 +82,8 @@ class SelfieSegmentationFocusMask implements FocusMask {
       this.canvasCtx.drawImage(results.segmentationMask, 0, 0);
       const image = this.canvasCtx.getImageData(0, 0, width, height);
 
-      // TODO: 最低値を 0 ではなく 1 にするのを試してみる (or option)
-      let i = 0;
-      while (i < image.data.byteLength) {
+      for (let i = 0; i < image.data.byteLength; i += 4) {
         this.mask[i / 4] = image.data[i];
-        i += 4;
       }
     });
   }
@@ -353,5 +371,6 @@ export {
   LightAdjustmentStats,
   FocusMask,
   UniformFocusMask,
+  CenterFocusMask,
   SelfieSegmentationFocusMask,
 };
