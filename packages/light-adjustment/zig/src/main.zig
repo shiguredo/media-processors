@@ -25,22 +25,37 @@ pub const Mask = struct {
 
 // RGBA
 pub const Image = struct {
+    width: u32,
+    height: u32,
     data: []u8,
     allocator: ?Allocator = null,
 
     const Self = @This();
 
-    pub fn fromSlice(data: []u8) !Self {
-        if (data.len % 4 != 0) {
+    pub fn fromSlice(width: u32, height: u32, data: []u8) !Self {
+        if (width * height * 4 != data.len) {
             return error.NotRgbaImageData;
         }
-        return .{ .data = data };
+        return .{ .width = width, .height = height, .data = data };
     }
 
     pub fn deinit(self: Self) void {
         if (self.allocator) |allocator| {
             allocator.free(self.data);
         }
+    }
+
+    pub fn clone(self: Self) !Self {
+        const allocator = self.allocator orelse return error.MissingAllocator;
+        const data = try allocator.alloc(u8, self.data.len);
+        errdefer allocator.free(data);
+        std.mem.copy(u8, data, self.data);
+        return .{
+            .width = self.width,
+            .height = self.height,
+            .data = data,
+            .allocator = allocator,
+        };
     }
 
     fn getRgb(self: Self, offset: usize) Rgb {
@@ -115,6 +130,9 @@ pub const Agcwd = struct {
             hsv.v = self.mapping_curve[hsv.v];
             image.setRgb(i, hsv.toRgb());
         }
+
+        // TODO: error handling (or make it always success by pre-allocating necasary memory)
+        sharpen(image) catch unreachable;
     }
 };
 
@@ -217,7 +235,48 @@ const Cdf = struct {
     }
 };
 
-// TODO: Sharpen
+// TODO: optimize
+fn sharpen(image: *Image) !void {
+    const filter = [_]i8{ 0, -1, 0, -1, 5, -1, 0, -1, 0 };
+
+    const original_image = try image.clone();
+    defer original_image.deinit();
+
+    const original_data = original_image.data;
+    const processed_data = image.data;
+
+    for (0..image.height) |y| {
+        for (0..image.width) |x| {
+            const i = (y * image.width + x) * 4;
+            var r: isize = 0;
+            var g: isize = 0;
+            var b: isize = 0;
+
+            for (0..3) |fy| {
+                if ((fy == 0 and y == 0) or (fy == 2 and y + 1 == image.height)) {
+                    continue;
+                }
+
+                for (0..3) |fx| {
+                    if ((fx == 0 and x == 0) or (fx == 2 and x + 1 == image.width)) {
+                        continue;
+                    }
+
+                    const fi = fy * 3 + fx;
+                    const f = filter[fi];
+                    const j = ((y + fy - 1) * image.width + (x + fx - 1)) * 4;
+                    r += @intCast(isize, original_data[j + 0]) * f;
+                    g += @intCast(isize, original_data[j + 1]) * f;
+                    b += @intCast(isize, original_data[j + 2]) * f;
+                }
+            }
+
+            processed_data[i + 0] = @intCast(u8, (@intCast(usize, r) + @intCast(usize, original_data[i + 0])) / 2);
+            processed_data[i + 1] = @intCast(u8, (@intCast(usize, g) + @intCast(usize, original_data[i + 1])) / 2);
+            processed_data[i + 2] = @intCast(u8, (@intCast(usize, b) + @intCast(usize, original_data[i + 2])) / 2);
+        }
+    }
+}
 
 const Rgb = struct {
     r: u8,
@@ -328,7 +387,7 @@ test "RGB to HSV to RGB" {
 
 test "Enhance image" {
     var data = [_]u8{ 1, 2, 3, 255, 4, 5, 6, 255 };
-    var image = try Image.fromSlice(&data);
+    var image = try Image.fromSlice(2, 1, &data);
     defer image.deinit();
 
     var agcwd = Agcwd.init(.{});

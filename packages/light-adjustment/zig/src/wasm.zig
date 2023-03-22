@@ -22,13 +22,15 @@ pub fn log(
     _ = args;
 }
 
-export fn imageNew(size: u32) ?*anyopaque {
+export fn imageNew(width: u32, height: u32) ?*anyopaque {
     const image = allocator.create(Image) catch return null;
     errdefer allocator.destroy(image);
 
-    const data = allocator.alloc(u8, size) catch return null;
+    const data = allocator.alloc(u8, width * height * 4) catch return null;
     errdefer allocator.free(data);
 
+    image.width = width;
+    image.height = height;
     image.data = data;
     image.allocator = allocator;
 
