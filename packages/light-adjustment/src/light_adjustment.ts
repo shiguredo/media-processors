@@ -7,15 +7,14 @@ import {
 
 const LIGHT_ADJUSTMENT_WASM = "__LIGHT_ADJUSTMENT_WASM__";
 
-interface Mask {
-  calculateMask(image: ImageData): Promise<Uint8Array>;
+interface FocusMask {
+  getFocusMask(image: ImageData): Promise<Uint8Array>;
 }
 
-// TODO: rename
-class AllMask implements Mask {
+class UniformFocusMask implements FocusMask {
   private mask: Uint8Array = new Uint8Array();
 
-  calculateMask(image: ImageData): Promise<Uint8Array> {
+  getFocusMask(image: ImageData): Promise<Uint8Array> {
     const { width, height } = image;
     if (this.mask.byteLength !== width * height) {
       this.mask = new Uint8Array(width * height);
@@ -25,7 +24,7 @@ class AllMask implements Mask {
   }
 }
 
-class SelfieSegmentationMask implements Mask {
+class SelfieSegmentationFocusMask implements FocusMask {
   private segmentation: SelfieSegmentation;
   private mask: Uint8Array;
   private canvas: OffscreenCanvas;
@@ -71,7 +70,7 @@ class SelfieSegmentationMask implements Mask {
     });
   }
 
-  async calculateMask(image: ImageData): Promise<Uint8Array> {
+  async getFocusMask(image: ImageData): Promise<Uint8Array> {
     // @ts-ignore TS2322: 「`image`の型が合っていない」と怒られるけれど、動作はするので一旦無視
     await this.segmentation.send({ image });
     return this.mask;
@@ -84,9 +83,7 @@ interface LightAdjustmentProcessorOptions {
   minIntensity?: number;
   maxIntensity?: number;
   entropyThreshold?: number;
-
-  // TOOD: rename
-  mask?: Mask;
+  focusMask?: FocusMask;
 }
 
 const DEFAULT_OPTIONS: LightAdjustmentProcessorOptions = {
@@ -95,7 +92,7 @@ const DEFAULT_OPTIONS: LightAdjustmentProcessorOptions = {
   minIntensity: 10,
   maxIntensity: 255,
   entropyThreshold: 0.05,
-  mask: new AllMask(),
+  focusMask: new UniformFocusMask(),
 };
 
 class LightAdjustmentStats {
@@ -131,7 +128,7 @@ class Agcwd {
   private maskDataPtr = 0;
   private isStateObsolete = false;
   private stats: LightAdjustmentStats;
-  private mask: Mask = new AllMask();
+  private focusMask: FocusMask = new UniformFocusMask();
 
   constructor(
     wasm: WebAssembly.Instance,
@@ -176,8 +173,8 @@ class Agcwd {
   }
 
   setOptions(options: LightAdjustmentProcessorOptions): void {
-    if (options.mask !== undefined) {
-      this.mask = options.mask;
+    if (options.focusMask !== undefined) {
+      this.focusMask = options.focusMask;
     }
 
     this.isStateObsolete = true;
@@ -223,7 +220,7 @@ class Agcwd {
   private async updateStateIfNeed(image: ImageData): Promise<void> {
     const isStateObsolete = this.wasm.exports.agcwdIsStateObsolete as CallableFunction;
     if (this.isStateObsolete || (isStateObsolete(this.agcwdPtr, this.imagePtr) as boolean)) {
-      const mask = await this.mask.calculateMask(image);
+      const mask = await this.focusMask.getFocusMask(image);
       new Uint8Array(this.memory.buffer, this.maskDataPtr, this.imageDataSize / 4).set(mask);
       (this.wasm.exports.agcwdUpdateState as CallableFunction)(this.agcwdPtr, this.imagePtr, this.maskPtr);
 
@@ -354,7 +351,7 @@ export {
   LightAdjustmentProcessor,
   LightAdjustmentProcessorOptions,
   LightAdjustmentStats,
-  Mask,
-  AllMask,
-  SelfieSegmentationMask,
+  FocusMask,
+  UniformFocusMask,
+  SelfieSegmentationFocusMask,
 };
