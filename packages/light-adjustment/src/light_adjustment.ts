@@ -11,6 +11,20 @@ interface Mask {
   calculateMask(image: ImageData): Promise<Uint8Array>;
 }
 
+// TODO: rename
+class AllMask implements Mask {
+  private mask: Uint8Array = new Uint8Array();
+
+  calculateMask(image: ImageData): Promise<Uint8Array> {
+    const { width, height } = image;
+    if (this.mask.byteLength !== width * height) {
+      this.mask = new Uint8Array(width * height);
+      this.mask.fill(255);
+    }
+    return Promise.resolve(this.mask);
+  }
+}
+
 class SelfieSegmentationMask implements Mask {
   private segmentation: SelfieSegmentation;
   private mask: Uint8Array;
@@ -81,6 +95,7 @@ const DEFAULT_OPTIONS: LightAdjustmentProcessorOptions = {
   minIntensity: 10,
   maxIntensity: 255,
   entropyThreshold: 0.05,
+  mask: new AllMask(),
 };
 
 class LightAdjustmentStats {
@@ -116,7 +131,7 @@ class Agcwd {
   private maskDataPtr = 0;
   private isStateObsolete = false;
   private stats: LightAdjustmentStats;
-  private mask?: Mask;
+  private mask: Mask = new AllMask();
 
   constructor(
     wasm: WebAssembly.Instance,
@@ -208,13 +223,10 @@ class Agcwd {
   private async updateStateIfNeed(image: ImageData): Promise<void> {
     const isStateObsolete = this.wasm.exports.agcwdIsStateObsolete as CallableFunction;
     if (this.isStateObsolete || (isStateObsolete(this.agcwdPtr, this.imagePtr) as boolean)) {
-      if (this.mask === undefined) {
-        (this.wasm.exports.agcwdUpdateState as CallableFunction)(this.agcwdPtr, this.imagePtr, 0);
-      } else {
-        const mask = await this.mask.calculateMask(image);
-        new Uint8Array(this.memory.buffer, this.maskDataPtr, this.imageDataSize / 4).set(mask);
-        (this.wasm.exports.agcwdUpdateState as CallableFunction)(this.agcwdPtr, this.imagePtr, this.maskPtr);
-      }
+      const mask = await this.mask.calculateMask(image);
+      new Uint8Array(this.memory.buffer, this.maskDataPtr, this.imageDataSize / 4).set(mask);
+      (this.wasm.exports.agcwdUpdateState as CallableFunction)(this.agcwdPtr, this.imagePtr, this.maskPtr);
+
       this.isStateObsolete = false;
       this.stats.totalUpdateStateCount += 1;
     }
@@ -343,5 +355,6 @@ export {
   LightAdjustmentProcessorOptions,
   LightAdjustmentStats,
   Mask,
+  AllMask,
   SelfieSegmentationMask,
 };

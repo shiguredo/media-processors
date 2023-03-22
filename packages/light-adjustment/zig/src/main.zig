@@ -133,7 +133,7 @@ const Pdf = struct {
         {
             var i: usize = 0;
             while (i < image.data.len) : (i += 4) {
-                const weight = if (mask) |non_null_mask| non_null_mask.data[i] else 255;
+                const weight = if (mask) |non_null_mask| non_null_mask.data[i / 4] else 255;
                 histogram[image.getRgb(i).intensity()] += weight;
                 total += weight;
             }
