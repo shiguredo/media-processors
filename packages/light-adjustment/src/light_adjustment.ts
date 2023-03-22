@@ -1,6 +1,68 @@
 import { VideoTrackProcessor } from "@shiguredo/video-track-processor";
+import {
+  SelfieSegmentation,
+  SelfieSegmentationConfig,
+  Results as SelfieSegmentationResults,
+} from "@mediapipe/selfie_segmentation";
 
 const LIGHT_ADJUSTMENT_WASM = "__LIGHT_ADJUSTMENT_WASM__";
+
+interface Mask {
+  calculateMask(image: ImageData): Promise<Uint8Array>;
+}
+
+class SelfieSegmentationMask implements Mask {
+  private segmentation: SelfieSegmentation;
+  private mask: Uint8Array;
+  private canvas: OffscreenCanvas;
+  private canvasCtx: OffscreenCanvasRenderingContext2D;
+
+  constructor(assetsPath: string) {
+    this.mask = new Uint8Array();
+    this.canvas = createOffscreenCanvas(0, 0) as OffscreenCanvas;
+    const canvasCtx = this.canvas.getContext("2d");
+    if (canvasCtx === null) {
+      throw Error("Failed to create 2D canvas context");
+    }
+    this.canvasCtx = canvasCtx;
+
+    const config: SelfieSegmentationConfig = {};
+    assetsPath = trimLastSlash(assetsPath);
+    config.locateFile = (file: string) => {
+      return `${assetsPath}/${file}`;
+    };
+    this.segmentation = new SelfieSegmentation(config);
+
+    const modelSelection = 1; // `1` means "landscape" mode.
+    this.segmentation.setOptions({ modelSelection });
+    this.segmentation.onResults((results: SelfieSegmentationResults) => {
+      // TODO: メソッドに分離する
+      const { width, height } = results.segmentationMask;
+
+      if (this.canvas.width !== width || this.canvas.height !== height) {
+        this.canvas.width = width;
+        this.canvas.height = height;
+        this.mask = new Uint8Array(width * height);
+      }
+
+      this.canvasCtx.drawImage(results.segmentationMask, 0, 0);
+      const image = this.canvasCtx.getImageData(0, 0, width, height);
+
+      // TODO: 最低値を 0 ではなく 1 にするのを試してみる (or option)
+      let i = 0;
+      while (i < image.data.byteLength) {
+        this.mask[i / 4] = image.data[i];
+        i += 4;
+      }
+    });
+  }
+
+  async calculateMask(image: ImageData): Promise<Uint8Array> {
+    // @ts-ignore TS2322: 「`image`の型が合っていない」と怒られるけれど、動作はするので一旦無視
+    await this.segmentation.send({ image });
+    return this.mask;
+  }
+}
 
 interface LightAdjustmentProcessorOptions {
   alpha?: number;
@@ -8,6 +70,9 @@ interface LightAdjustmentProcessorOptions {
   minIntensity?: number;
   maxIntensity?: number;
   entropyThreshold?: number;
+
+  // TOOD: rename
+  mask?: Mask;
 }
 
 const DEFAULT_OPTIONS: LightAdjustmentProcessorOptions = {
@@ -47,8 +112,11 @@ class Agcwd {
   private imagePtr = 0;
   private imageDataSize = 0;
   private imageDataPtr = 0;
+  private maskPtr = 0;
+  private maskDataPtr = 0;
   private isStateObsolete = false;
   private stats: LightAdjustmentStats;
+  private mask?: Mask;
 
   constructor(
     wasm: WebAssembly.Instance,
@@ -78,20 +146,25 @@ class Agcwd {
   destroy(): void {
     (this.wasm.exports.agcwdFree as CallableFunction)(this.agcwdPtr);
     (this.wasm.exports.imageFree as CallableFunction)(this.imagePtr);
+    (this.wasm.exports.imageFree as CallableFunction)(this.maskPtr);
   }
 
-  processImage(image: ImageData) {
+  async processImage(image: ImageData): Promise<void> {
     const { width, height } = image;
     const imageDataSize = width * height * 4;
     this.resizeImageIfNeed(imageDataSize);
     new Uint8Array(this.memory.buffer, this.imageDataPtr, this.imageDataSize).set(image.data);
 
-    this.updateStateIfNeed();
+    await this.updateStateIfNeed(image);
     (this.wasm.exports.agcwdEnhanceImage as CallableFunction)(this.agcwdPtr, this.imagePtr);
     image.data.set(new Uint8Array(this.memory.buffer, this.imageDataPtr, this.imageDataSize));
   }
 
   setOptions(options: LightAdjustmentProcessorOptions): void {
+    if (options.mask !== undefined) {
+      this.mask = options.mask;
+    }
+
     this.isStateObsolete = true;
 
     if (options.alpha !== undefined) {
@@ -132,11 +205,16 @@ class Agcwd {
     }
   }
 
-  private updateStateIfNeed(): void {
+  private async updateStateIfNeed(image: ImageData): Promise<void> {
     const isStateObsolete = this.wasm.exports.agcwdIsStateObsolete as CallableFunction;
     if (this.isStateObsolete || (isStateObsolete(this.agcwdPtr, this.imagePtr) as boolean)) {
-      // TODO: handle mask
-      (this.wasm.exports.agcwdUpdateState as CallableFunction)(this.agcwdPtr, this.imagePtr, 0);
+      if (this.mask === undefined) {
+        (this.wasm.exports.agcwdUpdateState as CallableFunction)(this.agcwdPtr, this.imagePtr, 0);
+      } else {
+        const mask = await this.mask.calculateMask(image);
+        new Uint8Array(this.memory.buffer, this.maskDataPtr, this.imageDataSize / 4).set(mask);
+        (this.wasm.exports.agcwdUpdateState as CallableFunction)(this.agcwdPtr, this.imagePtr, this.maskPtr);
+      }
       this.isStateObsolete = false;
       this.stats.totalUpdateStateCount += 1;
     }
@@ -148,6 +226,7 @@ class Agcwd {
     }
     if (this.imagePtr !== 0) {
       (this.wasm.exports.imageFree as CallableFunction)(this.imagePtr);
+      (this.wasm.exports.imageFree as CallableFunction)(this.maskPtr);
     }
 
     this.imageDataSize = imageDataSize;
@@ -157,6 +236,13 @@ class Agcwd {
     }
     this.imagePtr = imagePtr;
     this.imageDataPtr = (this.wasm.exports.imageGetDataOffset as CallableFunction)(imagePtr) as number;
+
+    const maskPtr = (this.wasm.exports.imageNew as CallableFunction)(this.imageDataSize / 4) as number;
+    if (maskPtr === 0) {
+      throw new Error("Failed to create WebAssembly mask instance.");
+    }
+    this.maskPtr = maskPtr;
+    this.maskDataPtr = (this.wasm.exports.maskGetDataOffset as CallableFunction)(maskPtr) as number;
   }
 }
 
@@ -185,11 +271,11 @@ class LightAdjustmentProcessor {
 
     this.agcwd = new Agcwd(wasmResults.instance, track, this.stats, options);
 
-    return this.trackProcessor.startProcessing(track, (image: ImageData) => {
+    return this.trackProcessor.startProcessing(track, async (image: ImageData) => {
       if (this.agcwd !== undefined) {
         this.stats.numberOfFrames += 1;
         const start = performance.now() / 1000;
-        this.agcwd.processImage(image);
+        await this.agcwd.processImage(image);
         this.stats.lastElapsedSeconds = performance.now() / 1000 - start;
         this.stats.totalElapsedSeconds += this.stats.lastElapsedSeconds;
       }
@@ -233,4 +319,29 @@ class LightAdjustmentProcessor {
   }
 }
 
-export { LightAdjustmentProcessor, LightAdjustmentProcessorOptions, LightAdjustmentStats };
+function createOffscreenCanvas(width: number, height: number): OffscreenCanvas | HTMLCanvasElement {
+  if (typeof OffscreenCanvas === "undefined") {
+    // OffscreenCanvas が使えない場合には通常の canvas で代替する
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    return canvas;
+  } else {
+    return new OffscreenCanvas(width, height);
+  }
+}
+
+function trimLastSlash(s: string): string {
+  if (s.slice(-1) === "/") {
+    return s.slice(0, -1);
+  }
+  return s;
+}
+
+export {
+  LightAdjustmentProcessor,
+  LightAdjustmentProcessorOptions,
+  LightAdjustmentStats,
+  Mask,
+  SelfieSegmentationMask,
+};
