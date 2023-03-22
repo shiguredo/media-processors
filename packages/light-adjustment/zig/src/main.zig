@@ -80,6 +80,9 @@ pub const AgcwdOptions = struct {
     min_intensity: u8 = 10,
     max_intensity: u8 = 245,
     entropy_threshold: f32 = 0.05,
+
+    // TODO: AGCWD とは無関係なのでこのオプションからは外す (or struct 名を LightAdjuster とかに変更する）
+    sharpen_level: u8 = 2, // 0~10
 };
 
 /// 画像の明るさ調整処理を行うための構造体
@@ -131,8 +134,10 @@ pub const Agcwd = struct {
             image.setRgb(i, hsv.toRgb());
         }
 
-        // TODO: error handling (or make it always success by pre-allocating necasary memory)
-        sharpen(image) catch unreachable;
+        if (self.options.sharpen_level > 0) {
+            // TODO: error handling (or make it always success by pre-allocating necasary memory)
+            sharpen(image, self.options.sharpen_level) catch unreachable;
+        }
     }
 };
 
@@ -236,7 +241,7 @@ const Cdf = struct {
 };
 
 // TODO: optimize
-fn sharpen(image: *Image) !void {
+fn sharpen(image: *Image, level: u8) !void {
     const filter = [_]i8{ 0, -1, 0, -1, 5, -1, 0, -1, 0 };
 
     const original_image = try image.clone();
@@ -274,9 +279,9 @@ fn sharpen(image: *Image) !void {
             r = @max(0, @min(r, 255));
             g = @max(0, @min(g, 255));
             b = @max(0, @min(b, 255));
-            processed_data[i + 0] = @intCast(u8, (@intCast(usize, r) * 2 + @intCast(usize, original_data[i + 0]) * 8) / 10);
-            processed_data[i + 1] = @intCast(u8, (@intCast(usize, g) * 2 + @intCast(usize, original_data[i + 1]) * 8) / 10);
-            processed_data[i + 2] = @intCast(u8, (@intCast(usize, b) * 2 + @intCast(usize, original_data[i + 2]) * 8) / 10);
+            processed_data[i + 0] = @intCast(u8, (@intCast(usize, r) * level + @intCast(usize, original_data[i + 0]) * (10 - level)) / 10);
+            processed_data[i + 1] = @intCast(u8, (@intCast(usize, g) * level + @intCast(usize, original_data[i + 1]) * (10 - level)) / 10);
+            processed_data[i + 2] = @intCast(u8, (@intCast(usize, b) * level + @intCast(usize, original_data[i + 2]) * (10 - level)) / 10);
         }
     }
 }

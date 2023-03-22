@@ -95,6 +95,11 @@ export fn agcwdSetFusion(agcwd_ptr: *anyopaque, fusion: f32) void {
     agcwd.options.fusion = fusion;
 }
 
+export fn agcwdSetSharpenLevel(agcwd_ptr: *anyopaque, level: u8) void {
+    const agcwd = wasmPtrCast(*Agcwd, agcwd_ptr);
+    agcwd.options.sharpen_level = level;
+}
+
 export fn agcwdSetMinIntensity(agcwd_ptr: *anyopaque, min: u8) void {
     const agcwd = wasmPtrCast(*Agcwd, agcwd_ptr);
     agcwd.options.min_intensity = min;

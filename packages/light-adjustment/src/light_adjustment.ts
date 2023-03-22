@@ -101,6 +101,7 @@ interface LightAdjustmentProcessorOptions {
   minIntensity?: number;
   maxIntensity?: number;
   entropyThreshold?: number;
+  sharpenLevel?: number;
   focusMask?: FocusMask;
 }
 
@@ -110,6 +111,7 @@ const DEFAULT_OPTIONS: LightAdjustmentProcessorOptions = {
   minIntensity: 10,
   maxIntensity: 255,
   entropyThreshold: 0.05,
+  sharpenLevel: 2,
   focusMask: new UniformFocusMask(),
 };
 
@@ -209,6 +211,13 @@ class Agcwd {
         throw new Error(`Invaild fusion value: ${options.fusion} (must be a number between 0.0 and 1.0)`);
       }
       (this.wasm.exports.agcwdSetFusion as CallableFunction)(this.agcwdPtr, options.fusion);
+    }
+
+    if (options.sharpenLevel !== undefined) {
+      if (!(0 <= options.sharpenLevel && options.sharpenLevel <= 10)) {
+        throw new Error(`Invaild sharpen level value: ${options.sharpenLevel} (must be an integer between 0 and 10)`);
+      }
+      (this.wasm.exports.agcwdSetSharpenLevel as CallableFunction)(this.agcwdPtr, options.sharpenLevel);
     }
 
     if (options.entropyThreshold !== undefined) {
