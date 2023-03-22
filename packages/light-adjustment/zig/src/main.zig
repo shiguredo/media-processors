@@ -46,7 +46,7 @@ pub const Image = struct {
     }
 
     pub fn clone(self: Self) !Self {
-        const allocator = self.allocator orelse return error.MissingAllocator;
+        const allocator = self.allocator orelse std.heap.page_allocator;
         const data = try allocator.alloc(u8, self.data.len);
         errdefer allocator.free(data);
         std.mem.copy(u8, data, self.data);
@@ -271,9 +271,12 @@ fn sharpen(image: *Image) !void {
                 }
             }
 
-            processed_data[i + 0] = @intCast(u8, (@intCast(usize, r) + @intCast(usize, original_data[i + 0])) / 2);
-            processed_data[i + 1] = @intCast(u8, (@intCast(usize, g) + @intCast(usize, original_data[i + 1])) / 2);
-            processed_data[i + 2] = @intCast(u8, (@intCast(usize, b) + @intCast(usize, original_data[i + 2])) / 2);
+            r = @max(0, @min(r, 255));
+            g = @max(0, @min(g, 255));
+            b = @max(0, @min(b, 255));
+            processed_data[i + 0] = @intCast(u8, (@intCast(usize, r) * 2 + @intCast(usize, original_data[i + 0]) * 8) / 10);
+            processed_data[i + 1] = @intCast(u8, (@intCast(usize, g) * 2 + @intCast(usize, original_data[i + 1]) * 8) / 10);
+            processed_data[i + 2] = @intCast(u8, (@intCast(usize, b) * 2 + @intCast(usize, original_data[i + 2]) * 8) / 10);
         }
     }
 }
