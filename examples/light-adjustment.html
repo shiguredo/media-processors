@@ -66,9 +66,9 @@
           if (name == 'selfieSegmentation') {
               const checked = document.getElementById(name).checked;
               if (checked) {
-                  options['mask'] = new Shiguredo.SelfieSegmentationFocusMask("./light-adjustment/");
+                  options['focusMask'] = new Shiguredo.SelfieSegmentationFocusMask("./light-adjustment/");
               } else {
-                  options['mask'] = new Shiguredo.UniformFocusMask();
+                  options['focusMask'] = new Shiguredo.UniformFocusMask();
               }
           }  else {
               const value = Number(document.getElementById(name).value);
