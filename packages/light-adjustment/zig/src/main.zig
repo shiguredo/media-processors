@@ -140,10 +140,12 @@ const Pdf = struct {
         }
 
         var table: [256]f32 = undefined;
-        const n = @intToFloat(f32, total);
+        if (total > 0) {
+            const n = @intToFloat(f32, total);
 
-        for (histogram, 0..) |weight, i| {
-            table[i] = @intToFloat(f32, weight) / n;
+            for (histogram, 0..) |weight, i| {
+                table[i] = @intToFloat(f32, weight) / n;
+            }
         }
 
         return .{ .table = table };
