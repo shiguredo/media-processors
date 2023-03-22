@@ -265,7 +265,7 @@ class Agcwd {
     this.imagePtr = imagePtr;
     this.imageDataPtr = (this.wasm.exports.imageGetDataOffset as CallableFunction)(imagePtr) as number;
 
-    const maskPtr = (this.wasm.exports.imageNew as CallableFunction)(this.imageWidth * this.imageHeight) as number;
+    const maskPtr = (this.wasm.exports.maskNew as CallableFunction)(this.imageWidth * this.imageHeight) as number;
     if (maskPtr === 0) {
       throw new Error("Failed to create WebAssembly mask instance.");
     }
