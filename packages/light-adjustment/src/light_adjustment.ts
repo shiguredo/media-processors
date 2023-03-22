@@ -101,6 +101,7 @@ interface LightAdjustmentProcessorOptions {
   minIntensity?: number;
   maxIntensity?: number;
   entropyThreshold?: number;
+  sharpenLevel?: number;
   focusMask?: FocusMask;
 }
 
@@ -110,6 +111,7 @@ const DEFAULT_OPTIONS: LightAdjustmentProcessorOptions = {
   minIntensity: 10,
   maxIntensity: 255,
   entropyThreshold: 0.05,
+  sharpenLevel: 2,
   focusMask: new UniformFocusMask(),
 };
 
@@ -140,7 +142,8 @@ class Agcwd {
   private memory: WebAssembly.Memory;
   private agcwdPtr = 0;
   private imagePtr = 0;
-  private imageDataSize = 0;
+  private imageWidth = 0;
+  private imageHeight = 0;
   private imageDataPtr = 0;
   private maskPtr = 0;
   private maskDataPtr = 0;
@@ -170,7 +173,7 @@ class Agcwd {
     if (width === undefined || height === undefined) {
       throw new Error("Failed to get video track resolution");
     }
-    this.resizeImageIfNeed(width * height * 4);
+    this.resizeImageIfNeed(width, height);
   }
 
   destroy(): void {
@@ -181,13 +184,12 @@ class Agcwd {
 
   async processImage(image: ImageData): Promise<void> {
     const { width, height } = image;
-    const imageDataSize = width * height * 4;
-    this.resizeImageIfNeed(imageDataSize);
-    new Uint8Array(this.memory.buffer, this.imageDataPtr, this.imageDataSize).set(image.data);
+    this.resizeImageIfNeed(width, height);
+    new Uint8Array(this.memory.buffer, this.imageDataPtr, this.imageWidth * this.imageHeight * 4).set(image.data);
 
     await this.updateStateIfNeed(image);
     (this.wasm.exports.agcwdEnhanceImage as CallableFunction)(this.agcwdPtr, this.imagePtr);
-    image.data.set(new Uint8Array(this.memory.buffer, this.imageDataPtr, this.imageDataSize));
+    image.data.set(new Uint8Array(this.memory.buffer, this.imageDataPtr, this.imageWidth * this.imageHeight * 4));
   }
 
   setOptions(options: LightAdjustmentProcessorOptions): void {
@@ -209,6 +211,13 @@ class Agcwd {
         throw new Error(`Invaild fusion value: ${options.fusion} (must be a number between 0.0 and 1.0)`);
       }
       (this.wasm.exports.agcwdSetFusion as CallableFunction)(this.agcwdPtr, options.fusion);
+    }
+
+    if (options.sharpenLevel !== undefined) {
+      if (!(0 <= options.sharpenLevel && options.sharpenLevel <= 10)) {
+        throw new Error(`Invaild sharpen level value: ${options.sharpenLevel} (must be an integer between 0 and 10)`);
+      }
+      (this.wasm.exports.agcwdSetSharpenLevel as CallableFunction)(this.agcwdPtr, options.sharpenLevel);
     }
 
     if (options.entropyThreshold !== undefined) {
@@ -239,7 +248,7 @@ class Agcwd {
     const isStateObsolete = this.wasm.exports.agcwdIsStateObsolete as CallableFunction;
     if (this.isStateObsolete || (isStateObsolete(this.agcwdPtr, this.imagePtr) as boolean)) {
       const mask = await this.focusMask.getFocusMask(image);
-      new Uint8Array(this.memory.buffer, this.maskDataPtr, this.imageDataSize / 4).set(mask);
+      new Uint8Array(this.memory.buffer, this.maskDataPtr, this.imageWidth * this.imageHeight).set(mask);
       (this.wasm.exports.agcwdUpdateState as CallableFunction)(this.agcwdPtr, this.imagePtr, this.maskPtr);
 
       this.isStateObsolete = false;
@@ -247,8 +256,8 @@ class Agcwd {
     }
   }
 
-  private resizeImageIfNeed(imageDataSize: number): void {
-    if (this.imageDataSize == imageDataSize) {
+  private resizeImageIfNeed(width: number, height: number): void {
+    if (this.imageWidth === width && this.imageHeight === height) {
       return;
     }
     if (this.imagePtr !== 0) {
@@ -256,15 +265,16 @@ class Agcwd {
       (this.wasm.exports.imageFree as CallableFunction)(this.maskPtr);
     }
 
-    this.imageDataSize = imageDataSize;
-    const imagePtr = (this.wasm.exports.imageNew as CallableFunction)(this.imageDataSize) as number;
+    this.imageWidth = width;
+    this.imageHeight = height;
+    const imagePtr = (this.wasm.exports.imageNew as CallableFunction)(width, height) as number;
     if (imagePtr === 0) {
       throw new Error("Failed to create WebAssembly image instance.");
     }
     this.imagePtr = imagePtr;
     this.imageDataPtr = (this.wasm.exports.imageGetDataOffset as CallableFunction)(imagePtr) as number;
 
-    const maskPtr = (this.wasm.exports.imageNew as CallableFunction)(this.imageDataSize / 4) as number;
+    const maskPtr = (this.wasm.exports.maskNew as CallableFunction)(this.imageWidth * this.imageHeight) as number;
     if (maskPtr === 0) {
       throw new Error("Failed to create WebAssembly mask instance.");
     }

@@ -22,13 +22,15 @@ pub fn log(
     _ = args;
 }
 
-export fn imageNew(size: u32) ?*anyopaque {
+export fn imageNew(width: u32, height: u32) ?*anyopaque {
     const image = allocator.create(Image) catch return null;
     errdefer allocator.destroy(image);
 
-    const data = allocator.alloc(u8, size) catch return null;
+    const data = allocator.alloc(u8, width * height * 4) catch return null;
     errdefer allocator.free(data);
 
+    image.width = width;
+    image.height = height;
     image.data = data;
     image.allocator = allocator;
 
@@ -91,6 +93,11 @@ export fn agcwdSetAlpha(agcwd_ptr: *anyopaque, alpha: f32) void {
 export fn agcwdSetFusion(agcwd_ptr: *anyopaque, fusion: f32) void {
     const agcwd = wasmPtrCast(*Agcwd, agcwd_ptr);
     agcwd.options.fusion = fusion;
+}
+
+export fn agcwdSetSharpenLevel(agcwd_ptr: *anyopaque, level: u8) void {
+    const agcwd = wasmPtrCast(*Agcwd, agcwd_ptr);
+    agcwd.options.sharpen_level = level;
 }
 
 export fn agcwdSetMinIntensity(agcwd_ptr: *anyopaque, min: u8) void {

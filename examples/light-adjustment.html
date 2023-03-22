@@ -7,17 +7,20 @@
     <h1>Media Processors: 明るさ調整サンプル</h1>
 
     <h3>入力映像設定</h3>
-    <!-- TODO: 更新可能にする or 固定値にする -->
     解像度: <input id="videoWidth" type="text" value="480">x<input id="videoHeight" type="text" value="480"><br />
-    FPS: <input id="videoFps" type="text" value="30">
+    FPS: <input id="videoFps" type="text" value="30"><br />
+    <input type="button" value="設定反映" onclick="start()">
 
     <h3>明るさ調整設定</h3>
-    Alpha: <input id="alpha" type="range" min="0" max="3" value="0.5" step="0.1"
+    Alpha: <input id="alpha" type="range" min="0" max="2" value="0.5" step="0.1"
                   oninput="updateOption('alpha')">
            <span id="alpha-value">0.5</span><br />
     Fusion: <input id="fusion" type="range" min="0" max="1" value="0.5" step="0.1"
                    oninput="updateOption('fusion')">
             <span id="fusion-value">0.5</span><br />
+    SharpenLevel: <input id="sharpenLevel" type="range" min="0" max="10" value="2" step="1"
+                   oninput="updateOption('sharpenLevel')">
+            <span id="sharpenLevel-value">2</span><br />
     MinIntensity: <input id="minIntensity" type="range" min="0" max="255" value="10" step="1"
                          oninput="updateOption('minIntensity')">
                   <span id="minIntensity-value">10</span><br />
@@ -87,7 +90,10 @@
           processor.setOptions(options);
       }
 
-      getUserMedia().then((stream) => {
+      function start() {
+        processor.stopProcessing();
+
+        getUserMedia().then((stream) => {
           document.getElementById('videoOriginal').srcObject = stream;
 
           const track = stream.getVideoTracks()[0];
@@ -102,7 +108,9 @@
           processor.startProcessing(track, options).then((processed_track) => {
               document.getElementById('videoProcessed').srcObject = new MediaStream([processed_track]);
           });
-      });
+        });
+      }
+      start();
     </script>
   </body>
 </html>
