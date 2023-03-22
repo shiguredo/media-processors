@@ -33,12 +33,12 @@ class CenterFocusMask implements FocusMask {
       this.mask = new Uint8Array(width * height);
       this.mask.fill(0);
 
-      const y_start = Math.floor(height / 3);
-      const y_end = y_start * 2;
-      let x_start = y_start * width + Math.floor(width / 3);
-      let x_end = y_start * width + Math.floor(width / 3) * 2;
-      for (let y = y_start; y < y_end; y++, x_start += width, x_end += width) {
-        this.mask.fill(255, x_start, x_end);
+      const yStart = Math.floor(height / 3);
+      const yEnd = yStart * 2;
+      let xStart = yStart * width + Math.floor(width / 3);
+      let xEnd = yStart * width + Math.floor(width / 3) * 2;
+      for (let y = yStart; y < yEnd; y++, xStart += width, xEnd += width) {
+        this.mask.fill(255, xStart, xEnd);
       }
     }
     return Promise.resolve(this.mask);
