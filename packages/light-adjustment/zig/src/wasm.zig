@@ -2,6 +2,7 @@ const std = @import("std");
 const allocator = std.heap.wasm_allocator;
 
 const light_adjustment = @import("./main.zig");
+const Mask = light_adjustment.Mask;
 const Image = light_adjustment.Image;
 const Agcwd = light_adjustment.Agcwd;
 
@@ -21,11 +22,11 @@ pub fn log(
     _ = args;
 }
 
-export fn imageNew(pixels: u32) ?*anyopaque {
+export fn imageNew(size: u32) ?*anyopaque {
     const image = allocator.create(Image) catch return null;
     errdefer allocator.destroy(image);
 
-    const data = allocator.alloc(u8, pixels) catch return null;
+    const data = allocator.alloc(u8, size) catch return null;
     errdefer allocator.free(data);
 
     image.data = data;
@@ -43,6 +44,30 @@ export fn imageFree(image_ptr: *anyopaque) void {
 export fn imageGetDataOffset(image_ptr: *anyopaque) *u8 {
     const image = wasmPtrCast(*const Image, image_ptr);
     return @ptrCast(*u8, image.data.ptr);
+}
+
+export fn maskNew(size: u32) ?*anyopaque {
+    const mask = allocator.create(Mask) catch return null;
+    errdefer allocator.destroy(mask);
+
+    const data = allocator.alloc(u8, size) catch return null;
+    errdefer allocator.free(data);
+
+    mask.data = data;
+    mask.allocator = allocator;
+
+    return mask;
+}
+
+export fn maskFree(mask_ptr: *anyopaque) void {
+    const mask = wasmPtrCast(*const Mask, mask_ptr);
+    mask.deinit();
+    allocator.destroy(mask);
+}
+
+export fn maskGetDataOffset(mask_ptr: *anyopaque) *u8 {
+    const mask = wasmPtrCast(*const Mask, mask_ptr);
+    return @ptrCast(*u8, mask.data.ptr);
 }
 
 export fn agcwdNew() ?*anyopaque {
@@ -78,11 +103,6 @@ export fn agcwdSetMaxIntensity(agcwd_ptr: *anyopaque, max: u8) void {
     agcwd.options.max_intensity = max;
 }
 
-export fn agcwdSetMaskRatioThreshold(agcwd_ptr: *anyopaque, threshold: f32) void {
-    const agcwd = wasmPtrCast(*Agcwd, agcwd_ptr);
-    agcwd.options.mask_ratio_threshold = threshold;
-}
-
 export fn agcwdSetEntropyThreshold(agcwd_ptr: *anyopaque, threshold: f32) void {
     const agcwd = wasmPtrCast(*Agcwd, agcwd_ptr);
     agcwd.options.entropy_threshold = threshold;
@@ -94,11 +114,15 @@ export fn agcwdIsStateObsolete(agcwd_ptr: *anyopaque, image_ptr: *anyopaque) boo
     return agcwd.isStateObsolete(image.*);
 }
 
-export fn agcwdUpdateState(agcwd_ptr: *anyopaque, image_ptr: *anyopaque, mask_ptr: *anyopaque) void {
+export fn agcwdUpdateState(agcwd_ptr: *anyopaque, image_ptr: *anyopaque, mask_ptr: ?*anyopaque) void {
     const agcwd = wasmPtrCast(*Agcwd, agcwd_ptr);
     const image = wasmPtrCast(*const Image, image_ptr);
-    const mask = wasmPtrCast(*const Image, mask_ptr);
-    agcwd.updateState(image.*, mask.*);
+    if (mask_ptr) |non_null_mask_ptr| {
+        const mask = wasmPtrCast(*const Mask, non_null_mask_ptr);
+        agcwd.updateState(image.*, mask.*);
+    } else {
+        agcwd.updateState(image.*, null);
+    }
 }
 
 export fn agcwdEnhanceImage(agcwd_ptr: *anyopaque, image_ptr: *anyopaque) void {

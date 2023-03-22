@@ -7,7 +7,8 @@
     <h1>Media Processors: 明るさ調整サンプル</h1>
 
     <h3>入力映像設定</h3>
-    解像度: <input id="videoWidth" type="text" value="320">x<input id="videoHeight" type="text" value="320"><br />
+    <!-- TODO: 更新可能にする or 固定値にする -->
+    解像度: <input id="videoWidth" type="text" value="480">x<input id="videoHeight" type="text" value="480"><br />
     FPS: <input id="videoFps" type="text" value="30">
 
     <h3>明るさ調整設定</h3>
@@ -26,6 +27,11 @@
     EntropyThreshold: <input id="entropyThreshold" type="range" min="0" max="0.2" value="0.05" step="0.01"
                              oninput="updateOption('entropyThreshold')">
                       <span id="entropyThreshold-value">0.5</span><br />
+    Focus: <select id="focusMask" size="3" oninput="updateOption('focusMask')">
+              <option value="uniform" selected>Uniform</option>
+              <option value="center">Center</option>
+              <option value="selfieSegmentation">SelfieSegmentation</option>
+           </select>
     <br />
 
     <h3>左: 処理映像、右: オリジナル映像</h3>
@@ -58,45 +64,45 @@
       }
 
       function updateOption(name) {
-          const value = Number(document.getElementById(name).value);
-          document.getElementById(`${name}-value`).innerText = value;
           var options = {};
-          options[name] = value;
+
+          if (name == 'focusMask') {
+              switch (document.getElementById(name).value) {
+              case "uniform":
+                  options[name] = new Shiguredo.UniformFocusMask();
+                  break;
+              case "center":
+                  options[name] = new Shiguredo.CenterFocusMask();
+                  break;
+              case "selfieSegmentation":
+                  options[name] = new Shiguredo.SelfieSegmentationFocusMask("./light-adjustment/");
+                  break;
+              }
+          }  else {
+              const value = Number(document.getElementById(name).value);
+              document.getElementById(`${name}-value`).innerText = value;
+              options[name] = value;
+          }
+
           processor.setOptions(options);
       }
 
-      function showOriginalVideo() {
-          processor.stopProcessing();
+      getUserMedia().then((stream) => {
+          document.getElementById('videoOriginal').srcObject = stream;
 
-          const videoElement = document.getElementById('videoOriginal');
-          getUserMedia().then((stream) => {
-              videoElement.srcObject = stream;
+          const track = stream.getVideoTracks()[0];
+
+          let options = {
+              alpha: Number(document.getElementById('alpha').value),
+              fusion: Number(document.getElementById('fusion').value),
+              minIntensity: Number(document.getElementById('minIntensity').value),
+              maxIntensity: Number(document.getElementById('maxIntensity').value),
+              entropyThreshold: Number(document.getElementById('entropyThreshold').value),
+          };
+          processor.startProcessing(track, options).then((processed_track) => {
+              document.getElementById('videoProcessed').srcObject = new MediaStream([processed_track]);
           });
-      }
-
-
-      function showProcessedVideo() {
-          processor.stopProcessing();
-
-          const videoElement = document.getElementById('videoProcessed');
-          getUserMedia().then((stream) => {
-              const track = stream.getVideoTracks()[0];
-
-              let options = {
-                  alpha: Number(document.getElementById('alpha').value),
-                  fusion: Number(document.getElementById('fusion').value),
-                  minIntensity: Number(document.getElementById('minIntensity').value),
-                  maxIntensity: Number(document.getElementById('maxIntensity').value),
-                  entropyThreshold: Number(document.getElementById('entropyThreshold').value),
-              };
-              processor.startProcessing(track, options).then((processed_track) => {
-                  videoElement.srcObject = new MediaStream([processed_track]);
-              });
-          });
-      }
-
-      showOriginalVideo();
-      showProcessedVideo();
+      });
     </script>
   </body>
 </html>
