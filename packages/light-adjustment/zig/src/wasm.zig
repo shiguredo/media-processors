@@ -4,6 +4,8 @@ const allocator = std.heap.wasm_allocator;
 const light_adjustment = @import("./main.zig");
 const LightAdjustment = light_adjustment.LightAdjustment;
 
+// ログ関数の指定がないと WebAssembly ビルドの際にコンパイルエラーとなる。
+// 今回はログ出力は不要なので何もしない関数を指定している。
 pub const std_options = struct {
     pub const logFn = log;
 };

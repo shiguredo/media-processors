@@ -62,25 +62,35 @@ pub const LightAdjustment = struct {
         const mask = try FocusMask.init(allocator, width, height);
         errdefer mask.deinit();
 
-        unreachable;
+        const sharpener = try Sharpener.init(allocator, width, height);
+        errdefer sharpener.deinit();
+
+        return .{
+            .options = .{},
+            .agcwd = Agcwd.init(),
+            .sharpener = sharpener,
+            .image = image,
+            .mask = mask,
+        };
     }
 
-    pub fn deinit(self: *const Self) void {
+    pub fn deinit(self: Self) void {
         self.image.deinit();
         self.mask.deinit();
+        self.sharpener.deinit();
     }
 
     pub fn isStateObsolete(self: *const Self) bool {
-        _ = self;
-        unreachable;
+        return self.agcwd.isStateObsolete(&self.image, &self.options);
     }
 
     pub fn updateState(self: *Self) void {
-        _ = self;
+        self.agcwd.updateState(&self.image, &self.mask, &self.options);
     }
 
     pub fn processImage(self: *Self) void {
-        _ = self;
+        self.agcwd.processImage(&self.image);
+        self.sharpener.processImage(&self.image, &self.options);
     }
 
     pub fn resize(self: *Self, width: u32, height: u32) !void {
@@ -92,15 +102,8 @@ pub const LightAdjustment = struct {
         const mask = try FocusMask.init(self.mask.allocator, width, height);
         errdefer mask.deinit();
 
-        unreachable;
-    }
-
-    pub fn getImageData(self: *Self) []u8 {
-        return self.image.data;
-    }
-
-    pub fn getMaskData(self: *Self) []u8 {
-        return self.mask.data;
+        self.sharpener.temp_image = try RgbaImage.init(self.image.allocator, width, height);
+        errdefer self.sharpener.temp_image.deinit();
     }
 };
 
@@ -131,6 +134,9 @@ const FocusMask = struct {
 const RgbaImage = struct {
     const Self = @This();
 
+    width: u32,
+    height: u32,
+
     /// RGBA 形式のピクセル列。
     data: []u8,
 
@@ -138,7 +144,7 @@ const RgbaImage = struct {
 
     fn init(allocator: Allocator, width: u32, height: u32) !Self {
         const data = try allocator.alloc(u8, width * height * 4);
-        return .{ .data = data, .allocator = allocator };
+        return .{ .width = width, .height = height, .data = data, .allocator = allocator };
     }
 
     fn deinit(self: Self) void {
@@ -172,6 +178,32 @@ const Rgb = struct {
     }
 };
 
+const RgbI32 = struct {
+    const Self = @This();
+
+    r: i32,
+    g: i32,
+    b: i32,
+
+    fn init() Self {
+        return .{ .r = 0, .g = 0, .b = 0 };
+    }
+
+    fn clamp(self: *Self) void {
+        self.r = @max(0, @min(self.r, 255));
+        self.g = @max(0, @min(self.g, 255));
+        self.b = @max(0, @min(self.b, 255));
+    }
+
+    fn blend(self: Self, original: Rgb, level: u8) Rgb {
+        return .{
+            .r = @truncate(u8, (@intCast(u32, self.r) * level + @intCast(u32, original.r) * (100 - level)) / 100),
+            .g = @truncate(u8, (@intCast(u32, self.g) * level + @intCast(u32, original.g) * (100 - level)) / 100),
+            .b = @truncate(u8, (@intCast(u32, self.b) * level + @intCast(u32, original.b) * (100 - level)) / 100),
+        };
+    }
+};
+
 /// AGCWD アルゴリズムに基づいて画像の明るさ調整処理を行うための構造体。
 ///
 /// 論文: Efficient Contrast Enhancement Using Adaptive Gamma Correction With Weighting Distribution
@@ -196,13 +228,13 @@ const Agcwd = struct {
         return .{ .table = table };
     }
 
-    fn isStateObsolete(self: *const Self, image: *const Image, options: *const LightAdjustmentOptions) bool {
+    fn isStateObsolete(self: *const Self, image: *const RgbaImage, options: *const LightAdjustmentOptions) bool {
         const pdf = Pdf.fromImage(image);
         const entropy = pdf.entropy();
         return @fabs(self.entropy - entropy) > options.entropy_threshold;
     }
 
-    fn updateState(self: *Self, image: *const Image, mask: *const Mask, options: *const LightAdjustmentOptions) void {
+    fn updateState(self: *Self, image: *const RgbaImage, mask: *const FocusMask, options: *const LightAdjustmentOptions) void {
         // エントロピーは画像全体から求める
         var pdf = Pdf.fromImage(image);
         self.entropy = pdf.entropy();
@@ -220,7 +252,7 @@ const Agcwd = struct {
         }
     }
 
-    fn processImage(self: *const Self, image: *Image) void {
+    fn processImage(self: *const Self, image: *RgbaImage) void {
         var i: usize = 0;
         while (i < image.data.len) : (i += 4) {
             var rgb = image.getRgb(i);
@@ -233,81 +265,17 @@ const Agcwd = struct {
     }
 };
 
-pub const Mask = struct {
-    data: []u8,
-
-    allocator: ?Allocator = null,
-
-    const Self = @This();
-
-    pub fn deinit(self: Self) void {
-        if (self.allocator) |allocator| {
-            allocator.free(self.data);
-        }
-    }
-};
-
-// RGBA
-pub const Image = struct {
-    width: u32,
-    height: u32,
-    data: []u8,
-    allocator: ?Allocator = null,
-
-    const Self = @This();
-
-    pub fn fromSlice(width: u32, height: u32, data: []u8) !Self {
-        if (width * height * 4 != data.len) {
-            return error.NotRgbaImageData;
-        }
-        return .{ .width = width, .height = height, .data = data };
-    }
-
-    pub fn deinit(self: Self) void {
-        if (self.allocator) |allocator| {
-            allocator.free(self.data);
-        }
-    }
-
-    pub fn clone(self: Self) !Self {
-        const allocator = self.allocator orelse std.heap.page_allocator;
-        const data = try allocator.alloc(u8, self.data.len);
-        errdefer allocator.free(data);
-        std.mem.copy(u8, data, self.data);
-        return .{
-            .width = self.width,
-            .height = self.height,
-            .data = data,
-            .allocator = allocator,
-        };
-    }
-
-    fn getRgb(self: Self, offset: usize) Rgb {
-        return .{
-            .r = self.data[offset],
-            .g = self.data[offset + 1],
-            .b = self.data[offset + 2],
-        };
-    }
-
-    fn setRgb(self: Self, offset: usize, rgb: Rgb) void {
-        self.data[offset] = rgb.r;
-        self.data[offset + 1] = rgb.g;
-        self.data[offset + 2] = rgb.b;
-    }
-};
-
 /// Probability Density Function.
 const Pdf = struct {
     const Self = @This();
 
     table: [256]f32,
 
-    fn fromImage(image: RgbaImage) Self {
+    fn fromImage(image: *const RgbaImage) Self {
         return Self.fromImageAndMask(image, null);
     }
 
-    fn fromImageAndMask(image: RgbaImage, mask: ?FocusMask) Self {
+    fn fromImageAndMask(image: *const RgbaImage, mask: ?*const FocusMask) Self {
         var histogram = [_]usize{0} ** 256;
         var total: usize = 0;
         {
@@ -382,7 +350,7 @@ const Cdf = struct {
         return .{ .table = table };
     }
 
-    fn toIntensityMappingCurve(self: *const Self, options: LightAdjustmentOptions) [256]u8 {
+    fn toIntensityMappingCurve(self: *const Self, options: *const LightAdjustmentOptions) [256]u8 {
         var curve: [256]u8 = undefined;
         const min: f32 = @intToFloat(f32, options.min_intensity);
         const max: f32 = @intToFloat(f32, options.max_intensity);
@@ -398,70 +366,78 @@ const Cdf = struct {
     }
 };
 
+/// Deconvolution filter によって画像のシャープネス処理を行うための構造体。
 const Sharpener = struct {
-    buf: Image,
+    const Self = @This();
+
+    /// 処理中の一時データを保持するためのフィールド。
+    temp_image: RgbaImage,
+
+    allocator: Allocator,
+
+    fn init(allocator: Allocator, width: u32, height: u32) !Self {
+        const temp_image = try RgbaImage.init(allocator, width, height);
+        return .{ .temp_image = temp_image, .allocator = allocator };
+    }
+
+    fn deinit(self: Self) void {
+        self.temp_image.deinit();
+    }
+
+    // TODO: optimize
+    fn processImage(self: *const Self, image: *RgbaImage, options: *const LightAdjustmentOptions) void {
+        const level = options.sharpness_level;
+        if (level == 0) {
+            return;
+        }
+
+        const filter = [_]i8{ 0, -1, 0, -1, 5, -1, 0, -1, 0 };
+        std.mem.copy(u8, self.temp_image.data, image.data);
+
+        for (0..image.height) |y| {
+            for (0..image.width) |x| {
+                var processed = RgbI32.init();
+                for (0..3) |fy| {
+                    if ((fy == 0 and y == 0) or (fy == 2 and y + 1 == image.height)) {
+                        continue;
+                    }
+
+                    for (0..3) |fx| {
+                        if ((fx == 0 and x == 0) or (fx == 2 and x + 1 == image.width)) {
+                            continue;
+                        }
+
+                        const f = filter[fy * 3 + fx];
+                        const original = self.temp_image.getRgb(((y + fy - 1) * image.width + (x + fx - 1)) * 4);
+                        processed.r += @intCast(i32, original.r) * f;
+                        processed.g += @intCast(i32, original.g) * f;
+                        processed.b += @intCast(i32, original.b) * f;
+                    }
+                }
+                processed.clamp();
+
+                const i = (y * image.width + x) * 4;
+                const original = self.temp_image.getRgb(i);
+                image.setRgb(i, processed.blend(original, level));
+            }
+        }
+    }
 };
 
-// // TODO: optimize
-// fn sharpen(image: *Image, level: u8) !void {
-//     const filter = [_]i8{ 0, -1, 0, -1, 5, -1, 0, -1, 0 };
+test "Process image" {
+    var la = try LightAdjustment.init(test_allocator, 2, 2);
+    defer la.deinit();
 
-//     const original_image = try image.clone();
-//     defer original_image.deinit();
+    std.mem.copy(u8, la.image.data, &[_]u8{ 1, 2, 3, 255, 4, 5, 6, 255, 7, 8, 9, 255, 10, 11, 12, 255 });
+    std.mem.copy(u8, la.mask.data, &[_]u8{ 0, 255, 10, 200 });
 
-//     const original_data = original_image.data;
-//     const processed_data = image.data;
+    // 最初は常に状態の更新が必要
+    try expect(la.isStateObsolete());
+    la.updateState();
 
-//     for (0..image.height) |y| {
-//         for (0..image.width) |x| {
-//             const i = (y * image.width + x) * 4;
-//             var r: isize = 0;
-//             var g: isize = 0;
-//             var b: isize = 0;
+    // すでに更新済み
+    try expect(!la.isStateObsolete());
 
-//             for (0..3) |fy| {
-//                 if ((fy == 0 and y == 0) or (fy == 2 and y + 1 == image.height)) {
-//                     continue;
-//                 }
-
-//                 for (0..3) |fx| {
-//                     if ((fx == 0 and x == 0) or (fx == 2 and x + 1 == image.width)) {
-//                         continue;
-//                     }
-
-//                     const fi = fy * 3 + fx;
-//                     const f = filter[fi];
-//                     const j = ((y + fy - 1) * image.width + (x + fx - 1)) * 4;
-//                     r += @intCast(isize, original_data[j + 0]) * f;
-//                     g += @intCast(isize, original_data[j + 1]) * f;
-//                     b += @intCast(isize, original_data[j + 2]) * f;
-//                 }
-//             }
-
-//             r = @max(0, @min(r, 255));
-//             g = @max(0, @min(g, 255));
-//             b = @max(0, @min(b, 255));
-//             processed_data[i + 0] = @intCast(u8, (@intCast(usize, r) * level + @intCast(usize, original_data[i + 0]) * (10 - level)) / 10);
-//             processed_data[i + 1] = @intCast(u8, (@intCast(usize, g) * level + @intCast(usize, original_data[i + 1]) * (10 - level)) / 10);
-//             processed_data[i + 2] = @intCast(u8, (@intCast(usize, b) * level + @intCast(usize, original_data[i + 2]) * (10 - level)) / 10);
-//         }
-//     }
-// }
-
-// test "Enhance image" {
-//     var data = [_]u8{ 1, 2, 3, 255, 4, 5, 6, 255 };
-//     var image = try Image.fromSlice(2, 1, &data);
-//     defer image.deinit();
-
-//     var agcwd = Agcwd.init(.{});
-
-//     // 最初は常に状態の更新が必要
-//     try expect(agcwd.isStateObsolete(image));
-//     agcwd.updateState(image, null);
-
-//     // すでに更新済み
-//     try expect(!agcwd.isStateObsolete(image));
-
-//     // 画像を処理
-//     agcwd.enhanceImage(&image);
-// }
+    // 画像を処理
+    la.processImage();
+}
