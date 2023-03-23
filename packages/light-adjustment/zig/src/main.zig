@@ -5,6 +5,45 @@ const Allocator = std.mem.Allocator;
 const expect = std.testing.expect;
 const test_allocator = std.testing.allocator;
 
+/// 明るさ調整用のオプション群。
+pub const LightAdjustmentOptions = struct {
+    /// AGCWD の論文中に出てくる α パラメータ。
+    ///
+    /// この値が大きいほどコントラストが強調される傾向がある。
+    alpha: f32 = 0.5,
+
+    /// AGCWD の論文中に出てくる映像のフレーム間の差異を検知する際の閾値。
+    ///
+    /// 新しいフレームが以前のものと差異がある、と判定された場合には、
+    /// 明るさ調整用のテーブルが更新されることになる。
+    ///
+    /// 値が小さくなるほど、微細な変化でテーブル更新が行われるようになり、
+    /// 特に 0 以下の場合には毎フレームで更新されるようになる。
+    entropy_threshold: f32 = 0.05,
+
+    /// 処理後の画像の最低の明るさ (HSV の V の値）。
+    min_intensity: u8 = 10,
+
+    /// 処理後の画像の最大の明るさ (HSV の V の値）。
+    max_intensity: u8 = 255,
+
+    /// 明るさ調整処理の度合い。
+    ///
+    /// AGCWD による明るさ調整処理適用前後の画像の混合割合（パーセンテージ）で、
+    /// 0 なら処理適用前の画像が、100 なら処理適用後の画像が、50 ならそれらの半々が、採用されることになる。
+    adjustment_level: u8 = 50,
+
+    /// 明るさ調整後に画像に適用するシャープネス処理の度合い。
+    ///
+    /// シャープネス処理適用前後の画像の混合割合（パーセンテージ）で、
+    /// 0 なら処理適用前の画像が、100 なら処理適用後の画像が、50 ならそれらの半々が、採用されることになる。
+    sharpenss_level: u8 = 20,
+};
+
+pub const LightAdjustment = struct {
+    agcwd: Agcwd,
+};
+
 pub const Mask = struct {
     data: []u8,
 
