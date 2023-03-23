@@ -39,7 +39,7 @@ pub const LightAdjustmentOptions = struct {
     ///
     /// シャープネス処理適用前後の画像の混合割合（パーセンテージ）で、
     /// 0 なら処理適用前の画像が、100 なら処理適用後の画像が、50 ならそれらの半々が、採用されることになる。
-    sharpenss_level: u8 = 20,
+    sharpness_level: u8 = 20,
 };
 
 /// 明るさ調整を行うための構造体。
@@ -50,7 +50,7 @@ pub const LightAdjustment = struct {
     const Self = @This();
 
     options: LightAdjustmentOptions,
-    agcwd: Agcwd2,
+    agcwd: Agcwd,
     sharpener: Sharpener,
     image: RgbaImage,
     mask: FocusMask,
@@ -65,13 +65,14 @@ pub const LightAdjustment = struct {
         unreachable;
     }
 
-    pub fn deinit(self: *const Self) Self {
+    pub fn deinit(self: *const Self) void {
         self.image.deinit();
         self.mask.deinit();
     }
 
     pub fn isStateObsolete(self: *const Self) bool {
         _ = self;
+        unreachable;
     }
 
     pub fn updateState(self: *Self) void {
@@ -174,63 +175,60 @@ const Rgb = struct {
 /// AGCWD アルゴリズムに基づいて画像の明るさ調整処理を行うための構造体。
 ///
 /// 論文: Efficient Contrast Enhancement Using Adaptive Gamma Correction With Weighting Distribution
-// TODO: rename
-const Agcwd2 = struct {
+const Agcwd = struct {
     const Self = @This();
 
+    /// 明るさ調整用の変換テーブル。
+    /// 形式: `table[変換前（ピクセル）の intensity][変換後の R or G or B 値] = 変換後の R or G or B 値`
+    table: [256][256]u8,
+
+    /// テーブルの更新が必要かどうかの判定に使われる画像のエントロピー値。
     entropy: f32 = -1.0,
-    mapping_curve: [256]u8,
-    rgb_table: [256][256]u8,
 
     fn init() Self {
         // updateState() が呼ばれるまでは入力画像と出力画像が一致するマッピングとなる
-        var mapping_curve: [256]u8 = undefined;
-        var rgb_table: [256][256]u8 = undefined;
-        for (0..mapping_curve.len) |i| {
-            mapping_curve[i] = @truncate(u8, i);
-            for (0..rgb_table[i].len) |j| {
-                rgb_table[i][j] = @truncate(u8, j);
+        var table: [256][256]u8 = undefined;
+        for (0..table.len) |i| {
+            for (0..i + 1) |j| {
+                table[i][j] = @truncate(u8, j);
             }
         }
-        return .{ .mapping_curve = mapping_curve, .rgb_table = rgb_table };
+        return .{ .table = table };
     }
 
-    pub fn isStateObsolete(self: Self, image: Image) bool {
+    fn isStateObsolete(self: *const Self, image: *const Image, options: *const LightAdjustmentOptions) bool {
         const pdf = Pdf.fromImage(image);
         const entropy = pdf.entropy();
-        return @fabs(self.entropy - entropy) > self.options.entropy_threshold;
+        return @fabs(self.entropy - entropy) > options.entropy_threshold;
     }
 
-    pub fn updateState(self: *Self, image: Image, mask: ?Mask) void {
+    fn updateState(self: *Self, image: *const Image, mask: *const Mask, options: *const LightAdjustmentOptions) void {
+        // エントロピーは画像全体から求める
         var pdf = Pdf.fromImage(image);
         self.entropy = pdf.entropy();
 
+        // 明るさ変換に使うテーブルはマスク領域だけから求める
         pdf = Pdf.fromImageAndMask(image, mask);
-        const cdf = Cdf.fromPdf(&pdf.toWeightingDistribution(self.options.alpha));
-        self.mapping_curve = cdf.toIntensityMappingCurve(self.options);
-        for (0..self.mapping_curve.len) |v| {
-            const nv = @intCast(u32, self.mapping_curve[v]);
-            // TODO: 0..v で十分そう
-            for (0..self.rgb_table[v].len) |rgb| {
-                self.rgb_table[v][rgb] = @truncate(u8, if (v > 0) rgb * nv / v else nv);
+        const cdf = Cdf.fromPdf(&pdf.toWeightingDistribution(options.alpha));
+        const mapping_curve = cdf.toIntensityMappingCurve(options);
+        for (0..mapping_curve.len) |intensity| {
+            const processed_intensity = @intCast(u16, mapping_curve[intensity]);
+            for (0..intensity) |pixel_value| {
+                self.table[intensity][pixel_value] = @truncate(u8, pixel_value * processed_intensity / intensity);
             }
+            self.table[intensity][intensity] = @truncate(u8, processed_intensity);
         }
     }
 
-    pub fn enhanceImage(self: Self, image: *Image) void {
+    fn processImage(self: *const Self, image: *Image) void {
         var i: usize = 0;
         while (i < image.data.len) : (i += 4) {
             var rgb = image.getRgb(i);
-            const v = @max(rgb.r, @max(rgb.g, rgb.b));
-            rgb.r = self.rgb_table[v][rgb.r];
-            rgb.g = self.rgb_table[v][rgb.g];
-            rgb.b = self.rgb_table[v][rgb.b];
+            const v = rgb.intensity();
+            rgb.r = self.table[v][rgb.r];
+            rgb.g = self.table[v][rgb.g];
+            rgb.b = self.table[v][rgb.b];
             image.setRgb(i, rgb);
-        }
-
-        if (self.options.sharpen_level > 0) {
-            // TODO: error handling (or make it always success by pre-allocating necasary memory)
-            sharpen(image, self.options.sharpen_level) catch unreachable;
         }
     }
 };
@@ -299,94 +297,17 @@ pub const Image = struct {
     }
 };
 
-pub const AgcwdOptions = struct {
-    /// 論文中に出てくる α パラメータ
-    alpha: f32 = 0.5,
-    fusion: f32 = 0.5,
-    min_intensity: u8 = 10,
-    max_intensity: u8 = 245,
-    entropy_threshold: f32 = 0.05,
-
-    // TODO: AGCWD とは無関係なのでこのオプションからは外す (or struct 名を LightAdjuster とかに変更する）
-    sharpen_level: u8 = 2, // 0~10
-};
-
-/// 画像の明るさ調整処理を行うための構造体
-///
-/// 「Efficient Contrast Enhancement Using Adaptive Gamma Correction With Weighting Distribution」論文がベース
-pub const Agcwd = struct {
-    options: AgcwdOptions,
-    entropy: f32 = -1.0,
-    mapping_curve: [256]u8,
-    rgb_table: [256][256]u8,
-
+/// Probability Density Function.
+const Pdf = struct {
     const Self = @This();
 
-    pub fn init(options: AgcwdOptions) Self {
-        // updateState() が呼ばれるまでは入力画像と出力画像が一致するマッピングとなる
-        // (実際には RGB <-> HSV 変換による誤差の影響によって微妙に変化する）
-        var mapping_curve: [256]u8 = undefined;
-        var rgb_table: [256][256]u8 = undefined;
-        for (0..mapping_curve.len) |i| {
-            mapping_curve[i] = @truncate(u8, i);
-            for (0..rgb_table[i].len) |j| {
-                rgb_table[i][j] = @truncate(u8, j);
-            }
-        }
-
-        return .{ .options = options, .mapping_curve = mapping_curve, .rgb_table = rgb_table };
-    }
-
-    pub fn isStateObsolete(self: Self, image: Image) bool {
-        const pdf = Pdf.fromImage(image);
-        const entropy = pdf.entropy();
-        return @fabs(self.entropy - entropy) > self.options.entropy_threshold;
-    }
-
-    pub fn updateState(self: *Self, image: Image, mask: ?Mask) void {
-        var pdf = Pdf.fromImage(image);
-        self.entropy = pdf.entropy();
-
-        pdf = Pdf.fromImageAndMask(image, mask);
-        const cdf = Cdf.fromPdf(&pdf.toWeightingDistribution(self.options.alpha));
-        self.mapping_curve = cdf.toIntensityMappingCurve(self.options);
-        for (0..self.mapping_curve.len) |v| {
-            const nv = @intCast(u32, self.mapping_curve[v]);
-            // TODO: 0..v で十分そう
-            for (0..self.rgb_table[v].len) |rgb| {
-                self.rgb_table[v][rgb] = @truncate(u8, if (v > 0) rgb * nv / v else nv);
-            }
-        }
-    }
-
-    pub fn enhanceImage(self: Self, image: *Image) void {
-        var i: usize = 0;
-        while (i < image.data.len) : (i += 4) {
-            var rgb = image.getRgb(i);
-            const v = @max(rgb.r, @max(rgb.g, rgb.b));
-            rgb.r = self.rgb_table[v][rgb.r];
-            rgb.g = self.rgb_table[v][rgb.g];
-            rgb.b = self.rgb_table[v][rgb.b];
-            image.setRgb(i, rgb);
-        }
-
-        if (self.options.sharpen_level > 0) {
-            // TODO: error handling (or make it always success by pre-allocating necasary memory)
-            sharpen(image, self.options.sharpen_level) catch unreachable;
-        }
-    }
-};
-
-const Pdf = struct {
     table: [256]f32,
 
-    const Self = @This();
-
-    fn fromImage(image: Image) Self {
+    fn fromImage(image: RgbaImage) Self {
         return Self.fromImageAndMask(image, null);
     }
 
-    fn fromImageAndMask(image: Image, mask: ?Mask) Self {
+    fn fromImageAndMask(image: RgbaImage, mask: ?FocusMask) Self {
         var histogram = [_]usize{0} ** 256;
         var total: usize = 0;
         {
@@ -439,6 +360,7 @@ const Pdf = struct {
     }
 };
 
+/// Cumulative Distribution Function.
 const Cdf = struct {
     const Self = @This();
 
@@ -460,86 +382,86 @@ const Cdf = struct {
         return .{ .table = table };
     }
 
-    fn toIntensityMappingCurve(self: *const Self, options: AgcwdOptions) [256]u8 {
+    fn toIntensityMappingCurve(self: *const Self, options: LightAdjustmentOptions) [256]u8 {
         var curve: [256]u8 = undefined;
         const min: f32 = @intToFloat(f32, options.min_intensity);
         const max: f32 = @intToFloat(f32, options.max_intensity);
         const range: f32 = @max(0.0, max - min);
-        const fusion = options.fusion;
+        const ratio = @intToFloat(f32, options.adjustment_level) / 100.0;
 
         for (self.table, 0..) |gamma, i| {
             const v0: f32 = @intToFloat(f32, i);
             const v1: f32 = range * math.pow(f32, v0 / 255.0, 1.0 - gamma) + min;
-            curve[i] = @floatToInt(u8, math.round(v0 * (1.0 - fusion) + v1 * fusion));
+            curve[i] = @floatToInt(u8, math.round(v0 * (1.0 - ratio) + v1 * ratio));
         }
         return curve;
     }
 };
 
-pub const Sharpener = struct {
+const Sharpener = struct {
     buf: Image,
 };
 
-// TODO: optimize
-fn sharpen(image: *Image, level: u8) !void {
-    const filter = [_]i8{ 0, -1, 0, -1, 5, -1, 0, -1, 0 };
+// // TODO: optimize
+// fn sharpen(image: *Image, level: u8) !void {
+//     const filter = [_]i8{ 0, -1, 0, -1, 5, -1, 0, -1, 0 };
 
-    const original_image = try image.clone();
-    defer original_image.deinit();
+//     const original_image = try image.clone();
+//     defer original_image.deinit();
 
-    const original_data = original_image.data;
-    const processed_data = image.data;
+//     const original_data = original_image.data;
+//     const processed_data = image.data;
 
-    for (0..image.height) |y| {
-        for (0..image.width) |x| {
-            const i = (y * image.width + x) * 4;
-            var r: isize = 0;
-            var g: isize = 0;
-            var b: isize = 0;
+//     for (0..image.height) |y| {
+//         for (0..image.width) |x| {
+//             const i = (y * image.width + x) * 4;
+//             var r: isize = 0;
+//             var g: isize = 0;
+//             var b: isize = 0;
 
-            for (0..3) |fy| {
-                if ((fy == 0 and y == 0) or (fy == 2 and y + 1 == image.height)) {
-                    continue;
-                }
+//             for (0..3) |fy| {
+//                 if ((fy == 0 and y == 0) or (fy == 2 and y + 1 == image.height)) {
+//                     continue;
+//                 }
 
-                for (0..3) |fx| {
-                    if ((fx == 0 and x == 0) or (fx == 2 and x + 1 == image.width)) {
-                        continue;
-                    }
+//                 for (0..3) |fx| {
+//                     if ((fx == 0 and x == 0) or (fx == 2 and x + 1 == image.width)) {
+//                         continue;
+//                     }
 
-                    const fi = fy * 3 + fx;
-                    const f = filter[fi];
-                    const j = ((y + fy - 1) * image.width + (x + fx - 1)) * 4;
-                    r += @intCast(isize, original_data[j + 0]) * f;
-                    g += @intCast(isize, original_data[j + 1]) * f;
-                    b += @intCast(isize, original_data[j + 2]) * f;
-                }
-            }
+//                     const fi = fy * 3 + fx;
+//                     const f = filter[fi];
+//                     const j = ((y + fy - 1) * image.width + (x + fx - 1)) * 4;
+//                     r += @intCast(isize, original_data[j + 0]) * f;
+//                     g += @intCast(isize, original_data[j + 1]) * f;
+//                     b += @intCast(isize, original_data[j + 2]) * f;
+//                 }
+//             }
 
-            r = @max(0, @min(r, 255));
-            g = @max(0, @min(g, 255));
-            b = @max(0, @min(b, 255));
-            processed_data[i + 0] = @intCast(u8, (@intCast(usize, r) * level + @intCast(usize, original_data[i + 0]) * (10 - level)) / 10);
-            processed_data[i + 1] = @intCast(u8, (@intCast(usize, g) * level + @intCast(usize, original_data[i + 1]) * (10 - level)) / 10);
-            processed_data[i + 2] = @intCast(u8, (@intCast(usize, b) * level + @intCast(usize, original_data[i + 2]) * (10 - level)) / 10);
-        }
-    }
-}
+//             r = @max(0, @min(r, 255));
+//             g = @max(0, @min(g, 255));
+//             b = @max(0, @min(b, 255));
+//             processed_data[i + 0] = @intCast(u8, (@intCast(usize, r) * level + @intCast(usize, original_data[i + 0]) * (10 - level)) / 10);
+//             processed_data[i + 1] = @intCast(u8, (@intCast(usize, g) * level + @intCast(usize, original_data[i + 1]) * (10 - level)) / 10);
+//             processed_data[i + 2] = @intCast(u8, (@intCast(usize, b) * level + @intCast(usize, original_data[i + 2]) * (10 - level)) / 10);
+//         }
+//     }
+// }
 
-test "Enhance image" {
-    var data = [_]u8{ 1, 2, 3, 255, 4, 5, 6, 255 };
-    var image = try Image.fromSlice(2, 1, &data);
-    defer image.deinit();
+// test "Enhance image" {
+//     var data = [_]u8{ 1, 2, 3, 255, 4, 5, 6, 255 };
+//     var image = try Image.fromSlice(2, 1, &data);
+//     defer image.deinit();
 
-    var agcwd = Agcwd.init(.{});
+//     var agcwd = Agcwd.init(.{});
 
-    // 最初は常に状態の更新が必要
-    try expect(agcwd.isStateObsolete(image));
-    agcwd.updateState(image, null);
+//     // 最初は常に状態の更新が必要
+//     try expect(agcwd.isStateObsolete(image));
+//     agcwd.updateState(image, null);
 
-    // すでに更新済み
-    try expect(!agcwd.isStateObsolete(image));
+//     // すでに更新済み
+//     try expect(!agcwd.isStateObsolete(image));
 
-    // 画像を処理
-    agcwd.enhanceImage(&image);
-}
+//     // 画像を処理
+//     agcwd.enhanceImage(&image);
+// }
