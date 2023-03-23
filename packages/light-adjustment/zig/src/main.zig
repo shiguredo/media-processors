@@ -131,7 +131,7 @@ pub const Agcwd = struct {
         for (0..self.mapping_curve.len) |v| {
             const nv = @intCast(u32, self.mapping_curve[v]);
             for (0..self.rgb_table[v].len) |rgb| {
-                self.rgb_table[v][rgb] = @truncate(u8, if (v > 0) rgb * nv / v else 0);
+                self.rgb_table[v][rgb] = @truncate(u8, if (v > 0) rgb * nv / v else nv);
             }
         }
     }
