@@ -42,8 +42,54 @@ pub const LightAdjustmentOptions = struct {
     sharpenss_level: u8 = 20,
 };
 
+/// 明るさ調整を行うための構造体。
+///
+/// 明るさ調整は「Efficient Contrast Enhancement Using Adaptive Gamma Correction With Weighting Distribution」論文がベース。
+/// 明るさ調整後には deconvolution filter に基づくシャープネス処理を適用する。
 pub const LightAdjustment = struct {
+    const Self = @This();
+
+    options: LightAdjustmentOptions,
     agcwd: Agcwd,
+    sharpener: Sharpener,
+    image: Image,
+    mask: Mask,
+
+    pub fn init() Self {
+        unreachable;
+    }
+
+    pub fn deinit(self: Self) Self {
+        _ = self;
+        unreachable;
+    }
+
+    pub fn isStateObsolete(self: *const Self) bool {
+        _ = self;
+    }
+
+    pub fn updateState(self: *Self) void {
+        _ = self;
+    }
+
+    pub fn processImage(self: *Self) void {
+        _ = self;
+    }
+
+    pub fn resize(self: *Self, width: u32, height: u32) !void {
+        _ = self;
+        _ = width;
+        _ = height;
+        unreachable;
+    }
+
+    pub fn getImageData(self: *Self) []u8 {
+        return self.image.data;
+    }
+
+    pub fn getMaskData(self: *Self) []u8 {
+        return self.mask.data;
+    }
 };
 
 pub const Mask = struct {
@@ -52,10 +98,6 @@ pub const Mask = struct {
     allocator: ?Allocator = null,
 
     const Self = @This();
-
-    pub fn fromSlice(data: []u8) !Self {
-        return .{ .data = data };
-    }
 
     pub fn deinit(self: Self) void {
         if (self.allocator) |allocator| {
@@ -171,6 +213,7 @@ pub const Agcwd = struct {
         self.mapping_curve = cdf.toIntensityMappingCurve(self.options);
         for (0..self.mapping_curve.len) |v| {
             const nv = @intCast(u32, self.mapping_curve[v]);
+            // TODO: 0..v で十分そう
             for (0..self.rgb_table[v].len) |rgb| {
                 self.rgb_table[v][rgb] = @truncate(u8, if (v > 0) rgb * nv / v else nv);
             }
@@ -292,6 +335,10 @@ const Cdf = struct {
         }
         return curve;
     }
+};
+
+pub const Sharpener = struct {
+    buf: Image,
 };
 
 // TODO: optimize
