@@ -128,10 +128,13 @@ pub const Agcwd = struct {
     pub fn enhanceImage(self: Self, image: *Image) void {
         var i: usize = 0;
         while (i < image.data.len) : (i += 4) {
-            const rgb = image.getRgb(i);
-            var hsv = rgb.toHsv();
-            hsv.v = self.mapping_curve[hsv.v];
-            image.setRgb(i, hsv.toRgb());
+            var rgb = image.getRgb(i);
+            const v = @intCast(u32, @max(rgb.r, @max(rgb.g, rgb.b)));
+            const nv = @intCast(u32, self.mapping_curve[v]);
+            rgb.r = @truncate(u8, @intCast(u32, rgb.r) * nv / v);
+            rgb.g = @truncate(u8, @intCast(u32, rgb.g) * nv / v);
+            rgb.b = @truncate(u8, @intCast(u32, rgb.b) * nv / v);
+            image.setRgb(i, rgb);
         }
 
         if (self.options.sharpen_level > 0) {
