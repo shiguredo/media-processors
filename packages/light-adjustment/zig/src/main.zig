@@ -96,6 +96,7 @@ pub const Agcwd = struct {
     options: AgcwdOptions,
     entropy: f32 = -1.0,
     mapping_curve: [256]u8,
+    rgb_table: [256][256]u8,
 
     const Self = @This();
 
@@ -103,11 +104,15 @@ pub const Agcwd = struct {
         // updateState() が呼ばれるまでは入力画像と出力画像が一致するマッピングとなる
         // (実際には RGB <-> HSV 変換による誤差の影響によって微妙に変化する）
         var mapping_curve: [256]u8 = undefined;
+        var rgb_table: [256][256]u8 = undefined;
         for (0..mapping_curve.len) |i| {
             mapping_curve[i] = @truncate(u8, i);
+            for (0..rgb_table[i].len) |j| {
+                rgb_table[i][j] = @truncate(u8, j);
+            }
         }
 
-        return .{ .options = options, .mapping_curve = mapping_curve };
+        return .{ .options = options, .mapping_curve = mapping_curve, .rgb_table = rgb_table };
     }
 
     pub fn isStateObsolete(self: Self, image: Image) bool {
@@ -123,15 +128,23 @@ pub const Agcwd = struct {
         pdf = Pdf.fromImageAndMask(image, mask);
         const cdf = Cdf.fromPdf(&pdf.toWeightingDistribution(self.options.alpha));
         self.mapping_curve = cdf.toIntensityMappingCurve(self.options);
+        for (0..self.mapping_curve.len) |v| {
+            const nv = @intCast(u32, self.mapping_curve[v]);
+            for (0..self.rgb_table[v].len) |rgb| {
+                self.rgb_table[v][rgb] = @truncate(u8, if (v > 0) rgb * nv / v else nv);
+            }
+        }
     }
 
     pub fn enhanceImage(self: Self, image: *Image) void {
         var i: usize = 0;
         while (i < image.data.len) : (i += 4) {
-            const rgb = image.getRgb(i);
-            var hsv = rgb.toHsv();
-            hsv.v = self.mapping_curve[hsv.v];
-            image.setRgb(i, hsv.toRgb());
+            var rgb = image.getRgb(i);
+            const v = @max(rgb.r, @max(rgb.g, rgb.b));
+            rgb.r = self.rgb_table[v][rgb.r];
+            rgb.g = self.rgb_table[v][rgb.g];
+            rgb.b = self.rgb_table[v][rgb.b];
+            image.setRgb(i, rgb);
         }
 
         if (self.options.sharpen_level > 0) {
