@@ -50,18 +50,24 @@ pub const LightAdjustment = struct {
     const Self = @This();
 
     options: LightAdjustmentOptions,
-    agcwd: Agcwd,
+    agcwd: Agcwd2,
     sharpener: Sharpener,
-    image: Image,
-    mask: Mask,
+    image: RgbaImage,
+    mask: FocusMask,
 
-    pub fn init() Self {
+    pub fn init(allocator: Allocator, width: u32, height: u32) !Self {
+        const image = try RgbaImage.init(allocator, width, height);
+        errdefer image.deinit();
+
+        const mask = try FocusMask.init(allocator, width, height);
+        errdefer mask.deinit();
+
         unreachable;
     }
 
-    pub fn deinit(self: Self) Self {
-        _ = self;
-        unreachable;
+    pub fn deinit(self: *const Self) Self {
+        self.image.deinit();
+        self.mask.deinit();
     }
 
     pub fn isStateObsolete(self: *const Self) bool {
@@ -77,9 +83,14 @@ pub const LightAdjustment = struct {
     }
 
     pub fn resize(self: *Self, width: u32, height: u32) !void {
-        _ = self;
-        _ = width;
-        _ = height;
+        self.deinit();
+
+        const image = try RgbaImage.init(self.image.allocator, width, height);
+        errdefer image.deinit();
+
+        const mask = try FocusMask.init(self.mask.allocator, width, height);
+        errdefer mask.deinit();
+
         unreachable;
     }
 
@@ -89,6 +100,138 @@ pub const LightAdjustment = struct {
 
     pub fn getMaskData(self: *Self) []u8 {
         return self.mask.data;
+    }
+};
+
+/// AGCWD で明るさ調整を行う際に、画像のどの部分を基準に調整するかを指定するための構造体。
+///
+/// これによって「逆光時に画像全体ではなく人物部分の明るさを改善するように指定する」といったことが可能になる。
+/// なお、このマスクの値によらず、明るさ調整処理自体は常に画像全体に対して適用される（その適用のされ方が変わるだけ）。
+const FocusMask = struct {
+    const Self = @This();
+
+    /// 画像の各ピクセルの重み。
+    /// 0 ならそのピクセルは無視され、値が大きくなるほど明るさ調整の際に重視されるようになる。
+    data: []u8,
+
+    allocator: Allocator,
+
+    fn init(allocator: Allocator, width: u32, height: u32) !Self {
+        const data = try allocator.alloc(u8, width * height);
+        return .{ .data = data, .allocator = allocator };
+    }
+
+    fn deinit(self: Self) void {
+        self.allocator.free(self.data);
+    }
+};
+
+/// 処理対象の画像データを格納するための構造体。
+const RgbaImage = struct {
+    const Self = @This();
+
+    /// RGBA 形式のピクセル列。
+    data: []u8,
+
+    allocator: Allocator,
+
+    fn init(allocator: Allocator, width: u32, height: u32) !Self {
+        const data = try allocator.alloc(u8, width * height * 4);
+        return .{ .data = data, .allocator = allocator };
+    }
+
+    fn deinit(self: Self) void {
+        self.allocator.free(self.data);
+    }
+
+    fn getRgb(self: Self, offset: usize) Rgb {
+        return .{
+            .r = self.data[offset],
+            .g = self.data[offset + 1],
+            .b = self.data[offset + 2],
+        };
+    }
+
+    fn setRgb(self: Self, offset: usize, rgb: Rgb) void {
+        self.data[offset] = rgb.r;
+        self.data[offset + 1] = rgb.g;
+        self.data[offset + 2] = rgb.b;
+    }
+};
+
+const Rgb = struct {
+    const Self = @This();
+
+    r: u8,
+    g: u8,
+    b: u8,
+
+    fn intensity(self: Self) u8 {
+        return @max(self.r, @max(self.g, self.b));
+    }
+};
+
+/// AGCWD アルゴリズムに基づいて画像の明るさ調整処理を行うための構造体。
+///
+/// 論文: Efficient Contrast Enhancement Using Adaptive Gamma Correction With Weighting Distribution
+// TODO: rename
+const Agcwd2 = struct {
+    const Self = @This();
+
+    entropy: f32 = -1.0,
+    mapping_curve: [256]u8,
+    rgb_table: [256][256]u8,
+
+    fn init() Self {
+        // updateState() が呼ばれるまでは入力画像と出力画像が一致するマッピングとなる
+        var mapping_curve: [256]u8 = undefined;
+        var rgb_table: [256][256]u8 = undefined;
+        for (0..mapping_curve.len) |i| {
+            mapping_curve[i] = @truncate(u8, i);
+            for (0..rgb_table[i].len) |j| {
+                rgb_table[i][j] = @truncate(u8, j);
+            }
+        }
+        return .{ .mapping_curve = mapping_curve, .rgb_table = rgb_table };
+    }
+
+    pub fn isStateObsolete(self: Self, image: Image) bool {
+        const pdf = Pdf.fromImage(image);
+        const entropy = pdf.entropy();
+        return @fabs(self.entropy - entropy) > self.options.entropy_threshold;
+    }
+
+    pub fn updateState(self: *Self, image: Image, mask: ?Mask) void {
+        var pdf = Pdf.fromImage(image);
+        self.entropy = pdf.entropy();
+
+        pdf = Pdf.fromImageAndMask(image, mask);
+        const cdf = Cdf.fromPdf(&pdf.toWeightingDistribution(self.options.alpha));
+        self.mapping_curve = cdf.toIntensityMappingCurve(self.options);
+        for (0..self.mapping_curve.len) |v| {
+            const nv = @intCast(u32, self.mapping_curve[v]);
+            // TODO: 0..v で十分そう
+            for (0..self.rgb_table[v].len) |rgb| {
+                self.rgb_table[v][rgb] = @truncate(u8, if (v > 0) rgb * nv / v else nv);
+            }
+        }
+    }
+
+    pub fn enhanceImage(self: Self, image: *Image) void {
+        var i: usize = 0;
+        while (i < image.data.len) : (i += 4) {
+            var rgb = image.getRgb(i);
+            const v = @max(rgb.r, @max(rgb.g, rgb.b));
+            rgb.r = self.rgb_table[v][rgb.r];
+            rgb.g = self.rgb_table[v][rgb.g];
+            rgb.b = self.rgb_table[v][rgb.b];
+            image.setRgb(i, rgb);
+        }
+
+        if (self.options.sharpen_level > 0) {
+            // TODO: error handling (or make it always success by pre-allocating necasary memory)
+            sharpen(image, self.options.sharpen_level) catch unreachable;
+        }
     }
 };
 
@@ -171,10 +314,6 @@ pub const AgcwdOptions = struct {
 /// 画像の明るさ調整処理を行うための構造体
 ///
 /// 「Efficient Contrast Enhancement Using Adaptive Gamma Correction With Weighting Distribution」論文がベース
-// TODO: オリジナルとの違いを書く
-// - セグメンテーションマスク
-// - 明るさの底上げ
-// - fusion
 pub const Agcwd = struct {
     options: AgcwdOptions,
     entropy: f32 = -1.0,
@@ -386,18 +525,6 @@ fn sharpen(image: *Image, level: u8) !void {
         }
     }
 }
-
-const Rgb = struct {
-    r: u8,
-    g: u8,
-    b: u8,
-
-    const Self = @This();
-
-    fn intensity(self: Self) u8 {
-        return @max(self.r, @max(self.g, self.b));
-    }
-};
 
 test "Enhance image" {
     var data = [_]u8{ 1, 2, 3, 255, 4, 5, 6, 255 };
