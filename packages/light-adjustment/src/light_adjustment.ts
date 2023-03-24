@@ -7,13 +7,83 @@ import {
 
 const LIGHT_ADJUSTMENT_WASM = "__LIGHT_ADJUSTMENT_WASM__";
 
+/**
+ * {@link LightAdjustmentProcessor} に指定可能なオプション
+ */
 interface LightAdjustmentProcessorOptions {
+  /**
+   * AGCWD の論文 (Efficient Contrast Enhancement Using Adaptive Gamma Correction With Weighting Distribution) に
+   * 登場する調整パラメータ（非負の数値）。
+   * この値が大きいほど画像のコントラストが強調される傾向がある。
+   *
+   * デフォルト値は 0.5
+   */
   alpha?: number;
+
+  /**
+   * ライト調整処理の度合い。
+   *
+   * AGCWD によるライト調整処理適用前後の画像の混合割合（パーセンテージ）で、
+   * 0 なら処理適用前の画像が、100 なら処理適用後の画像が、50 ならそれらの半々が、採用されることになる。
+   *
+   * デフォルト値は 50
+   */
   adjustmentLevel?: number;
-  minIntensity?: number;
-  maxIntensity?: number;
-  entropyThreshold?: number;
+
+  /**
+   * AGCWD によるライト調整後に画像に適用するシャープネス処理の度合い。
+   *
+   * シャープネス処理適用前後の画像の混合割合（パーセンテージ）で、
+   * 0 なら処理適用前の画像が、100 なら処理適用後の画像が、50 ならそれらの半々が、採用されることになる。
+   *
+   * 0 を指定した場合にはシャープネス処理が完全にスキップされて、処理全体がより高速になる。
+   *
+   * デフォルト値は 20
+   */
   sharpnessLevel?: number;
+
+  /**
+   * 処理後の画像の最低の明るさ (HSV の V の値、 0 ~ 255 の整数）。
+   *
+   * デフォルト値は 10
+   */
+  minIntensity?: number;
+
+  /**
+   * 処理後の画像の最大の明るさ (HSV の V の値、 0 ~ 255 の整数）。
+   *
+   * デフォルト値は 255
+   */
+  maxIntensity?: number;
+
+  /**
+   * AGCWD の論文に登場する、映像のフレーム間の差異を検知する際の閾値（0.0 ~ 1.0 の数値）
+   *
+   * 新しい映像フレームが以前のものと差異があると判定された場合には、
+   * ライト調整用の変換テーブルが更新されることになる。
+   *
+   * 値が小さくなるほど、微細な変化でテーブルが更新されるようになるため、
+   * より適切な調整が行われやすくなるが、その分処理負荷は高くなる。
+   *
+   * 0 を指定した場合には毎フレームで更新が行われるようになる。
+   *
+   * デフォルト値は 0.05
+   */
+  entropyThreshold?: number;
+
+  /**
+   * ライト調整の際に基準とする画像領域を指定するマスクの取得方法。
+   *
+   * デフォルトでは {@link UniformFocusMask} が使用される。
+   *
+   * {@link UniformFocusMask} は画像全体を均一に扱って調整を行うため、
+   * 例えば逆光時には人物が暗いままになってしまうことがある。
+   * その際には {@link SelfieSegmentationFocusMask} を使用すれば、
+   * 人物部分のみがマスクとして取得され、そこの明るさが適切になるような調整が行われるようになる。
+   *
+   * なおマスクの値は「画像のライトをどのように調整するか（より具体的には明るさ変換テーブルをどう構築するか）」を
+   * 左右するだけで、調整処理自体は常に画像全体に対して行われる。
+   */
   focusMask?: FocusMask;
 }
 
@@ -196,8 +266,8 @@ class WasmLightAdjustment {
 
   setOptions(options: LightAdjustmentProcessorOptions): void {
     if (options.alpha !== undefined) {
-      if (!isFinite(options.alpha)) {
-        throw new Error(`Invaild alpha value: ${options.alpha} (must be a finite number)`);
+      if (options.alpha < 0 || !isFinite(options.alpha)) {
+        throw new Error(`Invaild alpha value: ${options.alpha} (must be a non-negative number)`);
       }
       (this.wasm.exports.setAlpha as CallableFunction)(this.lightAdjustmentPtr, options.alpha);
     }
