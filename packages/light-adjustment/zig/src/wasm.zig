@@ -2,10 +2,10 @@ const std = @import("std");
 const allocator = std.heap.wasm_allocator;
 
 const light_adjustment = @import("./main.zig");
-const Mask = light_adjustment.Mask;
-const Image = light_adjustment.Image;
-const Agcwd = light_adjustment.Agcwd;
+const LightAdjustment = light_adjustment.LightAdjustment;
 
+// ログ関数の指定がないと WebAssembly ビルドの際にコンパイルエラーとなる。
+// 今回はログ出力は不要なので何もしない関数を指定している。
 pub const std_options = struct {
     pub const logFn = log;
 };
@@ -22,120 +22,80 @@ pub fn log(
     _ = args;
 }
 
-export fn imageNew(width: u32, height: u32) ?*anyopaque {
-    const image = allocator.create(Image) catch return null;
-    errdefer allocator.destroy(image);
+export fn new(width: u32, height: u32) ?*anyopaque {
+    const la = allocator.create(LightAdjustment) catch return null;
+    errdefer allocator.destroy(la);
 
-    const data = allocator.alloc(u8, width * height * 4) catch return null;
-    errdefer allocator.free(data);
-
-    image.width = width;
-    image.height = height;
-    image.data = data;
-    image.allocator = allocator;
-
-    return image;
+    la.* = LightAdjustment.init(allocator, width, height) catch return null;
+    return la;
 }
 
-export fn imageFree(image_ptr: *anyopaque) void {
-    const image = wasmPtrCast(*const Image, image_ptr);
-    image.deinit();
-    allocator.destroy(image);
+export fn free(ptr: *anyopaque) void {
+    const la = wasmPtrCast(*const LightAdjustment, ptr);
+    la.deinit();
+    allocator.destroy(la);
 }
 
-export fn imageGetDataOffset(image_ptr: *anyopaque) *u8 {
-    const image = wasmPtrCast(*const Image, image_ptr);
-    return @ptrCast(*u8, image.data.ptr);
+export fn isStateObsolete(ptr: *anyopaque) bool {
+    const la = wasmPtrCast(*const LightAdjustment, ptr);
+    return la.isStateObsolete();
 }
 
-export fn maskNew(size: u32) ?*anyopaque {
-    const mask = allocator.create(Mask) catch return null;
-    errdefer allocator.destroy(mask);
-
-    const data = allocator.alloc(u8, size) catch return null;
-    errdefer allocator.free(data);
-
-    mask.data = data;
-    mask.allocator = allocator;
-
-    return mask;
+export fn updateState(ptr: *anyopaque) void {
+    const la = wasmPtrCast(*LightAdjustment, ptr);
+    la.updateState();
 }
 
-export fn maskFree(mask_ptr: *anyopaque) void {
-    const mask = wasmPtrCast(*const Mask, mask_ptr);
-    mask.deinit();
-    allocator.destroy(mask);
+export fn processImage(ptr: *anyopaque) void {
+    const la = wasmPtrCast(*LightAdjustment, ptr);
+    la.processImage();
 }
 
-export fn maskGetDataOffset(mask_ptr: *anyopaque) *u8 {
-    const mask = wasmPtrCast(*const Mask, mask_ptr);
-    return @ptrCast(*u8, mask.data.ptr);
+export fn resize(ptr: *anyopaque, width: u32, height: u32) bool {
+    const la = wasmPtrCast(*LightAdjustment, ptr);
+    la.resize(width, height) catch return false;
+    return true;
 }
 
-export fn agcwdNew() ?*anyopaque {
-    const agcwd = allocator.create(Agcwd) catch return null;
-    errdefer allocator.destroy(agcwd);
-
-    agcwd.* = Agcwd.init(.{});
-    return agcwd;
+export fn getImageData(ptr: *anyopaque) *u8 {
+    const la = wasmPtrCast(*const LightAdjustment, ptr);
+    return @ptrCast(*u8, la.image.data.ptr);
 }
 
-export fn agcwdFree(agcwd_ptr: *anyopaque) void {
-    const agcwd = wasmPtrCast(*const Agcwd, agcwd_ptr);
-    allocator.destroy(agcwd);
+export fn getFocusMaskData(ptr: *anyopaque) *u8 {
+    const la = wasmPtrCast(*const LightAdjustment, ptr);
+    return @ptrCast(*u8, la.mask.data.ptr);
 }
 
-export fn agcwdSetAlpha(agcwd_ptr: *anyopaque, alpha: f32) void {
-    const agcwd = wasmPtrCast(*Agcwd, agcwd_ptr);
-    agcwd.options.alpha = alpha;
+// オプション設定系（バリデーションは TypeScript 側で行なっている前提）
+export fn setAlpha(ptr: *anyopaque, alpha: f32) void {
+    const la = wasmPtrCast(*LightAdjustment, ptr);
+    la.options.alpha = alpha;
 }
 
-export fn agcwdSetFusion(agcwd_ptr: *anyopaque, fusion: f32) void {
-    const agcwd = wasmPtrCast(*Agcwd, agcwd_ptr);
-    agcwd.options.fusion = fusion;
+export fn setAdjustmentLevel(ptr: *anyopaque, level: u8) void {
+    const la = wasmPtrCast(*LightAdjustment, ptr);
+    la.options.adjustment_level = level;
 }
 
-export fn agcwdSetSharpenLevel(agcwd_ptr: *anyopaque, level: u8) void {
-    const agcwd = wasmPtrCast(*Agcwd, agcwd_ptr);
-    agcwd.options.sharpen_level = level;
+export fn setSharpnessLevel(ptr: *anyopaque, level: u8) void {
+    const la = wasmPtrCast(*LightAdjustment, ptr);
+    la.options.sharpness_level = level;
 }
 
-export fn agcwdSetMinIntensity(agcwd_ptr: *anyopaque, min: u8) void {
-    const agcwd = wasmPtrCast(*Agcwd, agcwd_ptr);
-    agcwd.options.min_intensity = min;
+export fn setMinIntensity(ptr: *anyopaque, min: u8) void {
+    const la = wasmPtrCast(*LightAdjustment, ptr);
+    la.options.min_intensity = min;
 }
 
-export fn agcwdSetMaxIntensity(agcwd_ptr: *anyopaque, max: u8) void {
-    const agcwd = wasmPtrCast(*Agcwd, agcwd_ptr);
-    agcwd.options.max_intensity = max;
+export fn setMaxIntensity(ptr: *anyopaque, max: u8) void {
+    const la = wasmPtrCast(*LightAdjustment, ptr);
+    la.options.max_intensity = max;
 }
 
-export fn agcwdSetEntropyThreshold(agcwd_ptr: *anyopaque, threshold: f32) void {
-    const agcwd = wasmPtrCast(*Agcwd, agcwd_ptr);
-    agcwd.options.entropy_threshold = threshold;
-}
-
-export fn agcwdIsStateObsolete(agcwd_ptr: *anyopaque, image_ptr: *anyopaque) bool {
-    const agcwd = wasmPtrCast(*const Agcwd, agcwd_ptr);
-    const image = wasmPtrCast(*const Image, image_ptr);
-    return agcwd.isStateObsolete(image.*);
-}
-
-export fn agcwdUpdateState(agcwd_ptr: *anyopaque, image_ptr: *anyopaque, mask_ptr: ?*anyopaque) void {
-    const agcwd = wasmPtrCast(*Agcwd, agcwd_ptr);
-    const image = wasmPtrCast(*const Image, image_ptr);
-    if (mask_ptr) |non_null_mask_ptr| {
-        const mask = wasmPtrCast(*const Mask, non_null_mask_ptr);
-        agcwd.updateState(image.*, mask.*);
-    } else {
-        agcwd.updateState(image.*, null);
-    }
-}
-
-export fn agcwdEnhanceImage(agcwd_ptr: *anyopaque, image_ptr: *anyopaque) void {
-    const agcwd = wasmPtrCast(*const Agcwd, agcwd_ptr);
-    const image = wasmPtrCast(*Image, image_ptr);
-    agcwd.enhanceImage(image);
+export fn setEntropyThreshold(ptr: *anyopaque, threshold: f32) void {
+    const la = wasmPtrCast(*LightAdjustment, ptr);
+    la.options.entropy_threshold = threshold;
 }
 
 fn wasmPtrCast(comptime t: type, ptr: *anyopaque) t {

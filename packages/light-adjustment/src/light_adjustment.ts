@@ -97,21 +97,21 @@ class SelfieSegmentationFocusMask implements FocusMask {
 
 interface LightAdjustmentProcessorOptions {
   alpha?: number;
-  fusion?: number;
+  adjustmentLevel?: number;
   minIntensity?: number;
   maxIntensity?: number;
   entropyThreshold?: number;
-  sharpenLevel?: number;
+  sharpnessLevel?: number;
   focusMask?: FocusMask;
 }
 
 const DEFAULT_OPTIONS: LightAdjustmentProcessorOptions = {
   alpha: 0.5,
-  fusion: 0.5,
+  adjustmentLevel: 50,
   minIntensity: 10,
   maxIntensity: 255,
   entropyThreshold: 0.05,
-  sharpenLevel: 2,
+  sharpnessLevel: 20,
   focusMask: new UniformFocusMask(),
 };
 
@@ -137,87 +137,86 @@ class LightAdjustmentStats {
   }
 }
 
-class Agcwd {
+class WasmLightAdjustment {
   private wasm: WebAssembly.Instance;
   private memory: WebAssembly.Memory;
-  private agcwdPtr = 0;
-  private imagePtr = 0;
-  private imageWidth = 0;
-  private imageHeight = 0;
-  private imageDataPtr = 0;
-  private maskPtr = 0;
-  private maskDataPtr = 0;
-  private isStateObsolete = false;
-  private stats: LightAdjustmentStats;
-  private focusMask: FocusMask = new UniformFocusMask();
+  private lightAdjustmentPtr: number;
+  private imageDataPtr: number;
+  private maskDataPtr: number;
+  private imageWidth: number;
+  private imageHeight: number;
 
-  constructor(
-    wasm: WebAssembly.Instance,
-    track: MediaStreamVideoTrack,
-    stats: LightAdjustmentStats,
-    options: LightAdjustmentProcessorOptions
-  ) {
+  constructor(wasm: WebAssembly.Instance, track: MediaStreamVideoTrack) {
     this.wasm = wasm;
     this.memory = wasm.exports.memory as WebAssembly.Memory;
-    this.stats = stats;
-
-    const agcwdPtr = (wasm.exports.agcwdNew as CallableFunction)() as number;
-    if (agcwdPtr === 0) {
-      throw new Error("Failed to create WebAssembly agcwd instance.");
-    }
-    this.agcwdPtr = agcwdPtr;
-    this.setOptions(DEFAULT_OPTIONS);
-    this.setOptions(options);
 
     const { width, height } = track.getSettings();
     if (width === undefined || height === undefined) {
       throw new Error("Failed to get video track resolution");
     }
-    this.resizeImageIfNeed(width, height);
+    this.imageWidth = width;
+    this.imageHeight = height;
+
+    const lightAdjustmentPtr = (wasm.exports.new as CallableFunction)(width, height) as number;
+    if (lightAdjustmentPtr === 0) {
+      throw new Error("Failed to create WebAssembly LightAdjustment instance.");
+    }
+    this.lightAdjustmentPtr = lightAdjustmentPtr;
+    this.imageDataPtr = (wasm.exports.getImageData as CallableFunction)(lightAdjustmentPtr) as number;
+    this.maskDataPtr = (wasm.exports.getFocusMaskData as CallableFunction)(lightAdjustmentPtr) as number;
   }
 
   destroy(): void {
-    (this.wasm.exports.agcwdFree as CallableFunction)(this.agcwdPtr);
-    (this.wasm.exports.imageFree as CallableFunction)(this.imagePtr);
-    (this.wasm.exports.imageFree as CallableFunction)(this.maskPtr);
+    (this.wasm.exports.free as CallableFunction)(this.lightAdjustmentPtr);
   }
 
-  async processImage(image: ImageData): Promise<void> {
-    const { width, height } = image;
-    this.resizeImageIfNeed(width, height);
+  setImageData(image: ImageData): void {
+    this.resizeIfNeed(image);
     new Uint8Array(this.memory.buffer, this.imageDataPtr, this.imageWidth * this.imageHeight * 4).set(image.data);
+  }
 
-    await this.updateStateIfNeed(image);
-    (this.wasm.exports.agcwdEnhanceImage as CallableFunction)(this.agcwdPtr, this.imagePtr);
+  copyProcessedImageData(image: ImageData): void {
     image.data.set(new Uint8Array(this.memory.buffer, this.imageDataPtr, this.imageWidth * this.imageHeight * 4));
   }
 
+  setFocusMaskData(data: Uint8Array): void {
+    new Uint8Array(this.memory.buffer, this.maskDataPtr, this.imageWidth * this.imageHeight).set(data);
+  }
+
+  isStateObsolete(): boolean {
+    return (this.wasm.exports.isStateObsolete as CallableFunction)(this.lightAdjustmentPtr) as boolean;
+  }
+
+  updateState(): boolean {
+    return (this.wasm.exports.updateState as CallableFunction)(this.lightAdjustmentPtr) as boolean;
+  }
+
+  processImage(): boolean {
+    return (this.wasm.exports.processImage as CallableFunction)(this.lightAdjustmentPtr) as boolean;
+  }
+
   setOptions(options: LightAdjustmentProcessorOptions): void {
-    if (options.focusMask !== undefined) {
-      this.focusMask = options.focusMask;
-    }
-
-    this.isStateObsolete = true;
-
     if (options.alpha !== undefined) {
-      if (options.alpha <= 0.0 || !isFinite(options.alpha)) {
-        throw new Error(`Invaild alpha value: ${options.alpha} (must be a positive number)`);
+      if (!isFinite(options.alpha)) {
+        throw new Error(`Invaild alpha value: ${options.alpha} (must be a finite number)`);
       }
-      (this.wasm.exports.agcwdSetAlpha as CallableFunction)(this.agcwdPtr, options.alpha);
+      (this.wasm.exports.setAlpha as CallableFunction)(this.lightAdjustmentPtr, options.alpha);
     }
 
-    if (options.fusion !== undefined) {
-      if (!(0.0 <= options.fusion && options.fusion <= 1.0)) {
-        throw new Error(`Invaild fusion value: ${options.fusion} (must be a number between 0.0 and 1.0)`);
+    if (options.adjustmentLevel !== undefined) {
+      if (!(0 <= options.adjustmentLevel && options.adjustmentLevel <= 100)) {
+        throw new Error(`Invaild fusion value: ${options.adjustmentLevel} (must be an integer between 0 and 100)`);
       }
-      (this.wasm.exports.agcwdSetFusion as CallableFunction)(this.agcwdPtr, options.fusion);
+      (this.wasm.exports.setAdjustmentLevel as CallableFunction)(this.lightAdjustmentPtr, options.adjustmentLevel);
     }
 
-    if (options.sharpenLevel !== undefined) {
-      if (!(0 <= options.sharpenLevel && options.sharpenLevel <= 10)) {
-        throw new Error(`Invaild sharpen level value: ${options.sharpenLevel} (must be an integer between 0 and 10)`);
+    if (options.sharpnessLevel !== undefined) {
+      if (!(0 <= options.sharpnessLevel && options.sharpnessLevel <= 100)) {
+        throw new Error(
+          `Invaild sharpen level value: ${options.sharpnessLevel} (must be an integer between 0 and 100)`
+        );
       }
-      (this.wasm.exports.agcwdSetSharpenLevel as CallableFunction)(this.agcwdPtr, options.sharpenLevel);
+      (this.wasm.exports.setSharpnessLevel as CallableFunction)(this.lightAdjustmentPtr, options.sharpnessLevel);
     }
 
     if (options.entropyThreshold !== undefined) {
@@ -226,71 +225,51 @@ class Agcwd {
           `Invaild entropyThreshold value: ${options.entropyThreshold} (must be a number between 0.0 and 1.0)`
         );
       }
-      (this.wasm.exports.agcwdSetEntropyThreshold as CallableFunction)(this.agcwdPtr, options.entropyThreshold);
+      (this.wasm.exports.setEntropyThreshold as CallableFunction)(this.lightAdjustmentPtr, options.entropyThreshold);
     }
 
     if (options.minIntensity !== undefined) {
       if (!(0 <= options.minIntensity && options.minIntensity <= 255)) {
         throw new Error(`Invaild minIntensity value: ${options.minIntensity} (must be an integer between 0 and 255)`);
       }
-      (this.wasm.exports.agcwdSetMinIntensity as CallableFunction)(this.agcwdPtr, options.minIntensity);
+      (this.wasm.exports.setMinIntensity as CallableFunction)(this.lightAdjustmentPtr, options.minIntensity);
     }
 
     if (options.maxIntensity !== undefined) {
       if (!(0 <= options.maxIntensity && options.maxIntensity <= 255)) {
         throw new Error(`Invaild maxIntensity value: ${options.maxIntensity} (must be an integer between 0 and 255)`);
       }
-      (this.wasm.exports.agcwdSetMaxIntensity as CallableFunction)(this.agcwdPtr, options.maxIntensity);
+      (this.wasm.exports.setMaxIntensity as CallableFunction)(this.lightAdjustmentPtr, options.maxIntensity);
     }
   }
 
-  private async updateStateIfNeed(image: ImageData): Promise<void> {
-    const isStateObsolete = this.wasm.exports.agcwdIsStateObsolete as CallableFunction;
-    if (this.isStateObsolete || (isStateObsolete(this.agcwdPtr, this.imagePtr) as boolean)) {
-      const mask = await this.focusMask.getFocusMask(image);
-      new Uint8Array(this.memory.buffer, this.maskDataPtr, this.imageWidth * this.imageHeight).set(mask);
-      (this.wasm.exports.agcwdUpdateState as CallableFunction)(this.agcwdPtr, this.imagePtr, this.maskPtr);
-
-      this.isStateObsolete = false;
-      this.stats.totalUpdateStateCount += 1;
-    }
-  }
-
-  private resizeImageIfNeed(width: number, height: number): void {
-    if (this.imageWidth === width && this.imageHeight === height) {
+  private resizeIfNeed(image: ImageData): void {
+    if (image.width === this.imageWidth && image.height === this.imageHeight) {
       return;
     }
-    if (this.imagePtr !== 0) {
-      (this.wasm.exports.imageFree as CallableFunction)(this.imagePtr);
-      (this.wasm.exports.imageFree as CallableFunction)(this.maskPtr);
+
+    if (!((this.wasm.exports.resize as CallableFunction)(image.width, image.height) as boolean)) {
+      throw new Error("Failed to resize WebAssembly image data.");
     }
 
-    this.imageWidth = width;
-    this.imageHeight = height;
-    const imagePtr = (this.wasm.exports.imageNew as CallableFunction)(width, height) as number;
-    if (imagePtr === 0) {
-      throw new Error("Failed to create WebAssembly image instance.");
-    }
-    this.imagePtr = imagePtr;
-    this.imageDataPtr = (this.wasm.exports.imageGetDataOffset as CallableFunction)(imagePtr) as number;
-
-    const maskPtr = (this.wasm.exports.maskNew as CallableFunction)(this.imageWidth * this.imageHeight) as number;
-    if (maskPtr === 0) {
-      throw new Error("Failed to create WebAssembly mask instance.");
-    }
-    this.maskPtr = maskPtr;
-    this.maskDataPtr = (this.wasm.exports.maskGetDataOffset as CallableFunction)(maskPtr) as number;
+    this.imageDataPtr = (this.wasm.exports.getImageData as CallableFunction)(this.lightAdjustmentPtr) as number;
+    this.maskDataPtr = (this.wasm.exports.getFocusMaskData as CallableFunction)(this.lightAdjustmentPtr) as number;
+    this.imageWidth = image.width;
+    this.imageHeight = image.height;
   }
 }
 
 class LightAdjustmentProcessor {
   private trackProcessor: VideoTrackProcessor;
   private stats: LightAdjustmentStats;
-  private agcwd?: Agcwd;
+  private wasm?: WasmLightAdjustment;
+  private focusMask: FocusMask;
+  private isOptionsUpdated = false;
 
   constructor() {
     this.trackProcessor = new VideoTrackProcessor();
     this.stats = new LightAdjustmentStats();
+    this.focusMask = new UniformFocusMask();
   }
 
   static isSupported(): boolean {
@@ -306,25 +285,44 @@ class LightAdjustmentProcessor {
       {}
     );
 
-    this.agcwd = new Agcwd(wasmResults.instance, track, this.stats, options);
+    this.wasm = new WasmLightAdjustment(wasmResults.instance, track);
+    this.focusMask = new UniformFocusMask();
+    this.setOptions(options);
 
     return this.trackProcessor.startProcessing(track, async (image: ImageData) => {
-      if (this.agcwd !== undefined) {
-        this.stats.numberOfFrames += 1;
-        const start = performance.now() / 1000;
-        await this.agcwd.processImage(image);
-        this.stats.lastElapsedSeconds = performance.now() / 1000 - start;
-        this.stats.totalElapsedSeconds += this.stats.lastElapsedSeconds;
-      }
-      return Promise.resolve(image);
+      await this.processImage(image);
+      return image;
     });
+  }
+
+  private async processImage(image: ImageData): Promise<void> {
+    if (this.wasm === undefined) {
+      return;
+    }
+
+    this.stats.numberOfFrames += 1;
+    const start = performance.now() / 1000;
+
+    this.wasm.setImageData(image);
+    if (this.isOptionsUpdated || this.wasm.isStateObsolete()) {
+      const mask = await this.focusMask.getFocusMask(image);
+      this.wasm.setFocusMaskData(mask);
+      this.wasm.updateState();
+      this.stats.totalUpdateStateCount += 1;
+      this.isOptionsUpdated = false;
+    }
+    this.wasm.processImage();
+    this.wasm.copyProcessedImageData(image);
+
+    this.stats.lastElapsedSeconds = performance.now() / 1000 - start;
+    this.stats.totalElapsedSeconds += this.stats.lastElapsedSeconds;
   }
 
   stopProcessing() {
     this.trackProcessor.stopProcessing();
-    if (this.agcwd !== undefined) {
-      this.agcwd.destroy();
-      this.agcwd = undefined;
+    if (this.wasm !== undefined) {
+      this.wasm.destroy();
+      this.wasm = undefined;
     }
     this.resetStats();
   }
@@ -342,8 +340,12 @@ class LightAdjustmentProcessor {
   }
 
   setOptions(options: LightAdjustmentProcessorOptions): void {
-    if (this.agcwd !== undefined) {
-      this.agcwd.setOptions(options);
+    if (this.wasm !== undefined) {
+      this.wasm.setOptions(options);
+      if (options.focusMask !== undefined) {
+        this.focusMask = options.focusMask;
+      }
+      this.isOptionsUpdated = true;
     }
   }
 
@@ -383,4 +385,5 @@ export {
   UniformFocusMask,
   CenterFocusMask,
   SelfieSegmentationFocusMask,
+  DEFAULT_OPTIONS,
 };
