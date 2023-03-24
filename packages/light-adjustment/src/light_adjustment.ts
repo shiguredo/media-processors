@@ -225,24 +225,21 @@ class WasmLightAdjustment {
           `Invaild entropyThreshold value: ${options.entropyThreshold} (must be a number between 0.0 and 1.0)`
         );
       }
-      (this.wasm.exports.agcwdSetEntropyThreshold as CallableFunction)(
-        this.lightAdjustmentPtr,
-        options.entropyThreshold
-      );
+      (this.wasm.exports.setEntropyThreshold as CallableFunction)(this.lightAdjustmentPtr, options.entropyThreshold);
     }
 
     if (options.minIntensity !== undefined) {
       if (!(0 <= options.minIntensity && options.minIntensity <= 255)) {
         throw new Error(`Invaild minIntensity value: ${options.minIntensity} (must be an integer between 0 and 255)`);
       }
-      (this.wasm.exports.agcwdSetMinIntensity as CallableFunction)(this.lightAdjustmentPtr, options.minIntensity);
+      (this.wasm.exports.setMinIntensity as CallableFunction)(this.lightAdjustmentPtr, options.minIntensity);
     }
 
     if (options.maxIntensity !== undefined) {
       if (!(0 <= options.maxIntensity && options.maxIntensity <= 255)) {
         throw new Error(`Invaild maxIntensity value: ${options.maxIntensity} (must be an integer between 0 and 255)`);
       }
-      (this.wasm.exports.agcwdSetMaxIntensity as CallableFunction)(this.lightAdjustmentPtr, options.maxIntensity);
+      (this.wasm.exports.setMaxIntensity as CallableFunction)(this.lightAdjustmentPtr, options.maxIntensity);
     }
   }
 
