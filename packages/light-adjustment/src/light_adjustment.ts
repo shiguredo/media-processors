@@ -90,26 +90,12 @@ interface LightAdjustmentProcessorOptions {
   focusMask?: FocusMask;
 }
 
-class LightAdjustmentProcessorStats {
-  totalProcessedFrames = 0;
-  totalProcessedTimeMs = 0;
-  totalUpdateStateCount = 0;
-
-  getAverageProcessedTimeMs(): number {
-    if (this.totalProcessedFrames === 0) {
-      return 0;
-    } else {
-      return this.totalProcessedTimeMs / this.totalProcessedFrames;
-    }
-  }
-
-  reset(): void {
-    this.totalProcessedFrames = 0;
-    this.totalProcessedTimeMs = 0;
-    this.totalUpdateStateCount = 0;
-  }
-}
-
+/**
+ * 映像トラックにライト（明るさ）調整処理を適用するためのプロセッサ
+ *
+ * 調整処理は AGCWD (Efficient Contrast Enhancement Using Adaptive Gamma Correction With Weighting Distribution) という
+ * アルゴリズムをベースにしています
+ */
 class LightAdjustmentProcessor {
   private trackProcessor: VideoTrackProcessor;
   private stats: LightAdjustmentProcessorStats;
@@ -117,16 +103,41 @@ class LightAdjustmentProcessor {
   private focusMask: FocusMask;
   private isOptionsUpdated = false;
 
+  /**
+   * {@link LightAdjustmentProcessor} インスタンスを生成します
+   */
   constructor() {
     this.trackProcessor = new VideoTrackProcessor();
     this.stats = new LightAdjustmentProcessorStats();
     this.focusMask = new UniformFocusMask();
   }
 
+  /**
+   * 実行環境が必要な機能をサポートしているかどうかを判定します
+   *
+   * 以下のいずれかが利用可能である必要があります:
+   * - MediaStreamTrack Insertable Streams (aka. Breakout Box)
+   * - HTMLVideoElement.requestVideoFrameCallback
+   *
+   * @returns サポートされているかどうか
+   */
   static isSupported(): boolean {
     return VideoTrackProcessor.isSupported();
   }
 
+  /**
+   * ライト調整処理の適用を開始します
+   *
+   * @param track 処理適用対象となる映像トラック
+   * @param options 各種オプション
+   *
+   * @returns 処理適用後の映像トラック
+   *
+   * @throws
+   * 既にあるトラックを処理中の場合には、エラーが送出されます
+   *
+   * 処理中かどうかは {@link LightAdjustmentProcessor.isProcessing} で判定可能です
+   */
   async startProcessing(
     track: MediaStreamVideoTrack,
     options: LightAdjustmentProcessorOptions = {}
@@ -138,8 +149,9 @@ class LightAdjustmentProcessor {
 
     this.wasm = new WasmLightAdjustment(wasmResults.instance, track);
     this.focusMask = new UniformFocusMask();
-    this.setOptions(options);
+    this.updateOptions(options);
 
+    this.resetStats();
     return this.trackProcessor.startProcessing(track, async (image: ImageData) => {
       await this.processImage(image);
       return image;
@@ -169,30 +181,67 @@ class LightAdjustmentProcessor {
     this.stats.totalProcessedFrames += 1;
   }
 
+  /**
+   * ライト調整処理の適用を停止します
+   *
+   * コンストラクタに渡された映像トラックは閉じないので、
+   * 必要であれば、別途呼び出し側で対処する必要があります
+   */
   stopProcessing() {
     this.trackProcessor.stopProcessing();
     if (this.wasm !== undefined) {
       this.wasm.destroy();
       this.wasm = undefined;
     }
-    this.resetStats();
   }
 
+  /**
+   * ライト調整処理が実行中かどうかを判定します
+   *
+   * @returns 実行中であれば `true` 、そうでなければ `false`
+   */
   isProcessing(): boolean {
     return this.trackProcessor.isProcessing();
   }
 
+  /**
+   * 処理適用前の映像トラックを返します
+   *
+   * これは {@link LightAdjustmentProcessor.startProcessing} に渡したトラックと等しいです
+   *
+   * {@link LightAdjustmentProcessor.startProcessing} 呼び出し前、あるいは、
+   * {@link LightAdjustmentProcessor.stopProcessing} 呼び出し後には `undefined` が返されます
+   *
+   * @returns 処理適用中の場合は映像トラック、それ以外なら `undefined`
+   */
   getOriginalTrack(): MediaStreamVideoTrack | undefined {
     return this.trackProcessor.getOriginalTrack();
   }
 
+  /**
+   * 処理適用後の映像トラックを返します
+   *
+   * これは {@link LightAdjustmentProcessor.startProcessing} が返したトラックと等しいです
+   *
+   * {@link LightAdjustmentProcessor.startProcessing} 呼び出し前、あるいは、
+   * {@link LightAdjustmentProcessor.stopProcessing} 呼び出し後には `undefined` が返されます
+   *
+   * @returns 処理適用中の場合は映像トラック、それ以外なら `undefined`
+   */
   getProcessedTrack(): MediaStreamVideoTrack | undefined {
     return this.trackProcessor.getProcessedTrack();
   }
 
-  setOptions(options: LightAdjustmentProcessorOptions): void {
+  /**
+   * 適用中の処理のオプションを更新します
+   *
+   * 処理が適用中ではない場合には、このメソッド呼び出しは単に無視されます
+   *
+   * @param options 更新対象のオプション。省略された項目については現在の値がそのまま使用されます。
+   */
+  updateOptions(options: LightAdjustmentProcessorOptions): void {
     if (this.wasm !== undefined) {
-      this.wasm.setOptions(options);
+      this.wasm.updateOptions(options);
       if (options.focusMask !== undefined) {
         this.focusMask = options.focusMask;
       }
@@ -200,12 +249,62 @@ class LightAdjustmentProcessor {
     }
   }
 
+  /**
+   * 適用中の処理の現在の統計値を取得します
+   *
+   * @returns 統計値オブジェクト
+   */
   getStats(): LightAdjustmentProcessorStats {
     return this.stats;
   }
 
+  /**
+   * 統計値を初期化します
+   */
   resetStats(): void {
     this.stats.reset();
+  }
+}
+
+/**
+ * ライト調整処理の各種統計値
+ */
+class LightAdjustmentProcessorStats {
+  /**
+   * 処理した映像フレームの合計数
+   */
+  totalProcessedFrames = 0;
+
+  /**
+   * 映像フレームの処理に要した合計時間（ミリ秒単位）
+   */
+  totalProcessedTimeMs = 0;
+
+  /**
+   * ライト調整用の変換テーブルを更新した数
+   */
+  totalUpdateStateCount = 0;
+
+  /**
+   * 映像フレームの処理に要した時間の平均値を取得します
+   *
+   * @returns ミリ秒単位の平均所要時間
+   */
+  getAverageProcessedTimeMs(): number {
+    if (this.totalProcessedFrames === 0) {
+      return 0;
+    } else {
+      return this.totalProcessedTimeMs / this.totalProcessedFrames;
+    }
+  }
+
+  /**
+   * 統計値を初期化します
+   */
+  reset(): void {
+    this.totalProcessedFrames = 0;
+    this.totalProcessedTimeMs = 0;
+    this.totalUpdateStateCount = 0;
   }
 }
 
@@ -267,7 +366,7 @@ class WasmLightAdjustment {
     return (this.wasm.exports.processImage as CallableFunction)(this.lightAdjustmentPtr) as boolean;
   }
 
-  setOptions(options: LightAdjustmentProcessorOptions): void {
+  updateOptions(options: LightAdjustmentProcessorOptions): void {
     if (options.alpha !== undefined) {
       if (options.alpha < 0 || !isFinite(options.alpha)) {
         throw new Error(`Invaild alpha value: ${options.alpha} (must be a non-negative number)`);
