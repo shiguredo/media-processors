@@ -162,8 +162,8 @@ class WasmLightAdjustment {
       throw new Error("Failed to create WebAssembly LightAdjustment instance.");
     }
     this.lightAdjustmentPtr = lightAdjustmentPtr;
-    this.imageDataPtr = (wasm.exports.getImageData as CallableFunction)() as number;
-    this.maskDataPtr = (wasm.exports.getFocusMaskData as CallableFunction)() as number;
+    this.imageDataPtr = (wasm.exports.getImageData as CallableFunction)(lightAdjustmentPtr) as number;
+    this.maskDataPtr = (wasm.exports.getFocusMaskData as CallableFunction)(lightAdjustmentPtr) as number;
   }
 
   destroy(): void {
@@ -197,8 +197,8 @@ class WasmLightAdjustment {
 
   setOptions(options: LightAdjustmentProcessorOptions): void {
     if (options.alpha !== undefined) {
-      if (options.alpha <= 0.0 || !isFinite(options.alpha)) {
-        throw new Error(`Invaild alpha value: ${options.alpha} (must be a positive number)`);
+      if (!isFinite(options.alpha)) {
+        throw new Error(`Invaild alpha value: ${options.alpha} (must be a finite number)`);
       }
       (this.wasm.exports.setAlpha as CallableFunction)(this.lightAdjustmentPtr, options.alpha);
     }
@@ -252,8 +252,8 @@ class WasmLightAdjustment {
       throw new Error("Failed to resize WebAssembly image data.");
     }
 
-    this.imageDataPtr = (this.wasm.exports.getImageData as CallableFunction)() as number;
-    this.maskDataPtr = (this.wasm.exports.getFocusMaskData as CallableFunction)() as number;
+    this.imageDataPtr = (this.wasm.exports.getImageData as CallableFunction)(this.lightAdjustmentPtr) as number;
+    this.maskDataPtr = (this.wasm.exports.getFocusMaskData as CallableFunction)(this.lightAdjustmentPtr) as number;
     this.imageWidth = image.width;
     this.imageHeight = image.height;
   }
@@ -264,6 +264,7 @@ class LightAdjustmentProcessor {
   private stats: LightAdjustmentStats;
   private wasm?: WasmLightAdjustment;
   private focusMask: FocusMask;
+  private isOptionsUpdated = false;
 
   constructor() {
     this.trackProcessor = new VideoTrackProcessor();
@@ -303,11 +304,12 @@ class LightAdjustmentProcessor {
     const start = performance.now() / 1000;
 
     this.wasm.setImageData(image);
-    if (this.wasm.isStateObsolete()) {
+    if (this.isOptionsUpdated || this.wasm.isStateObsolete()) {
       const mask = await this.focusMask.getFocusMask(image);
       this.wasm.setFocusMaskData(mask);
       this.wasm.updateState();
       this.stats.totalUpdateStateCount += 1;
+      this.isOptionsUpdated = false;
     }
     this.wasm.processImage();
     this.wasm.copyProcessedImageData(image);
@@ -338,11 +340,12 @@ class LightAdjustmentProcessor {
   }
 
   setOptions(options: LightAdjustmentProcessorOptions): void {
-    if (options.focusMask !== undefined) {
-      this.focusMask = options.focusMask;
-    }
     if (this.wasm !== undefined) {
       this.wasm.setOptions(options);
+      if (options.focusMask !== undefined) {
+        this.focusMask = options.focusMask;
+      }
+      this.isOptionsUpdated = true;
     }
   }
 

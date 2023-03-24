@@ -80,10 +80,6 @@ pub const LightAdjustment = struct {
         self.sharpener.deinit();
     }
 
-    pub fn markStateObsolete(self: *Self) void {
-        self.agcwd.entropy = -1.0;
-    }
-
     pub fn isStateObsolete(self: *const Self) bool {
         return self.agcwd.isStateObsolete(&self.image, &self.options);
     }
