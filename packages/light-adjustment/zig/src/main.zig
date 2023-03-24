@@ -384,7 +384,6 @@ const Sharpener = struct {
         self.temp_image.deinit();
     }
 
-    // TODO: optimize
     fn processImage(self: *const Self, image: *RgbaImage, options: *const LightAdjustmentOptions) void {
         const level = options.sharpness_level;
         if (level == 0) {
