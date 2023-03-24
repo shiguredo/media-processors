@@ -83,6 +83,9 @@ interface LightAdjustmentProcessorOptions {
    *
    * なおマスクの値は「画像のライトをどのように調整するか（より具体的には明るさ変換テーブルをどう構築するか）」を
    * 左右するだけで、調整処理自体は常に画像全体に対して行われる。
+   *
+   * マスク取得は毎フレームではなく、最後にマスクを取得したフレームに対して、
+   * {@link LightAdjustmentProcessorOptions.entropyThreshold} の閾値を超える変化が検知された時にのみ行われる。
    */
   focusMask?: FocusMask;
 }
