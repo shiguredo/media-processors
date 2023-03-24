@@ -15,12 +15,12 @@
     Alpha: <input id="alpha" type="range" min="0" max="2" value="0.5" step="0.1"
                   oninput="updateOption('alpha')">
            <span id="alpha-value">0.5</span><br />
-    Fusion: <input id="fusion" type="range" min="0" max="1" value="0.5" step="0.1"
-                   oninput="updateOption('fusion')">
-            <span id="fusion-value">0.5</span><br />
-    SharpenLevel: <input id="sharpenLevel" type="range" min="0" max="10" value="2" step="1"
-                   oninput="updateOption('sharpenLevel')">
-            <span id="sharpenLevel-value">2</span><br />
+    AdjustmentLevel: <input id="adjustmentLevel" type="range" min="0" max="100" value="50" step="5"
+                   oninput="updateOption('adjustmentLevel')">
+            <span id="adjustmentLevel-value">50</span><br />
+    SharpnessLevel: <input id="sharpnessLevel" type="range" min="0" max="100" value="20" step="5"
+                   oninput="updateOption('sharpnessLevel')">
+            <span id="sharpnessLevel-value">20</span><br />
     MinIntensity: <input id="minIntensity" type="range" min="0" max="255" value="10" step="1"
                          oninput="updateOption('minIntensity')">
                   <span id="minIntensity-value">10</span><br />
@@ -97,15 +97,7 @@
           document.getElementById('videoOriginal').srcObject = stream;
 
           const track = stream.getVideoTracks()[0];
-
-          let options = {
-              alpha: Number(document.getElementById('alpha').value),
-              fusion: Number(document.getElementById('fusion').value),
-              minIntensity: Number(document.getElementById('minIntensity').value),
-              maxIntensity: Number(document.getElementById('maxIntensity').value),
-              entropyThreshold: Number(document.getElementById('entropyThreshold').value),
-          };
-          processor.startProcessing(track, options).then((processed_track) => {
+          processor.startProcessing(track).then((processed_track) => {
               document.getElementById('videoProcessed').srcObject = new MediaStream([processed_track]);
           });
         });

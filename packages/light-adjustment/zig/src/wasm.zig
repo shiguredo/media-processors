@@ -71,31 +71,37 @@ export fn getFocusMaskData(ptr: *anyopaque) *u8 {
 export fn setAlpha(ptr: *anyopaque, alpha: f32) void {
     const la = wasmPtrCast(*LightAdjustment, ptr);
     la.options.alpha = alpha;
+    la.markStateObsolete();
 }
 
 export fn setAdjustmentLevel(ptr: *anyopaque, level: u8) void {
     const la = wasmPtrCast(*LightAdjustment, ptr);
     la.options.adjustment_level = level;
+    la.markStateObsolete();
 }
 
 export fn setSharpnessLevel(ptr: *anyopaque, level: u8) void {
     const la = wasmPtrCast(*LightAdjustment, ptr);
     la.options.sharpness_level = level;
+    la.markStateObsolete();
 }
 
 export fn setMinIntensity(ptr: *anyopaque, min: u8) void {
     const la = wasmPtrCast(*LightAdjustment, ptr);
     la.options.min_intensity = min;
+    la.markStateObsolete();
 }
 
 export fn setMaxIntensity(ptr: *anyopaque, max: u8) void {
     const la = wasmPtrCast(*LightAdjustment, ptr);
     la.options.max_intensity = max;
+    la.markStateObsolete();
 }
 
 export fn setEntropyThreshold(ptr: *anyopaque, threshold: f32) void {
     const la = wasmPtrCast(*LightAdjustment, ptr);
     la.options.entropy_threshold = threshold;
+    la.markStateObsolete();
 }
 
 fn wasmPtrCast(comptime t: type, ptr: *anyopaque) t {
