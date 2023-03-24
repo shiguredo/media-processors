@@ -7,97 +7,6 @@ import {
 
 const LIGHT_ADJUSTMENT_WASM = "__LIGHT_ADJUSTMENT_WASM__";
 
-interface FocusMask {
-  getFocusMask(image: ImageData): Promise<Uint8Array>;
-}
-
-class UniformFocusMask implements FocusMask {
-  private mask: Uint8Array = new Uint8Array();
-
-  getFocusMask(image: ImageData): Promise<Uint8Array> {
-    const { width, height } = image;
-    if (this.mask.byteLength !== width * height) {
-      this.mask = new Uint8Array(width * height);
-      this.mask.fill(255);
-    }
-    return Promise.resolve(this.mask);
-  }
-}
-
-class CenterFocusMask implements FocusMask {
-  private mask: Uint8Array = new Uint8Array();
-
-  getFocusMask(image: ImageData): Promise<Uint8Array> {
-    const { width, height } = image;
-    if (this.mask.byteLength !== width * height) {
-      this.mask = new Uint8Array(width * height);
-      this.mask.fill(0);
-
-      const yStart = Math.floor(height / 3);
-      const yEnd = yStart * 2;
-      let xStart = yStart * width + Math.floor(width / 3);
-      let xEnd = yStart * width + Math.floor(width / 3) * 2;
-      for (let y = yStart; y < yEnd; y++, xStart += width, xEnd += width) {
-        this.mask.fill(255, xStart, xEnd);
-      }
-    }
-    return Promise.resolve(this.mask);
-  }
-}
-
-class SelfieSegmentationFocusMask implements FocusMask {
-  private segmentation: SelfieSegmentation;
-  private mask: Uint8Array;
-  private canvas: OffscreenCanvas;
-  private canvasCtx: OffscreenCanvasRenderingContext2D;
-
-  constructor(assetsPath: string) {
-    this.mask = new Uint8Array();
-    this.canvas = createOffscreenCanvas(0, 0) as OffscreenCanvas;
-    const canvasCtx = this.canvas.getContext("2d");
-    if (canvasCtx === null) {
-      throw Error("Failed to create 2D canvas context");
-    }
-    this.canvasCtx = canvasCtx;
-
-    const config: SelfieSegmentationConfig = {};
-    assetsPath = trimLastSlash(assetsPath);
-    config.locateFile = (file: string) => {
-      return `${assetsPath}/${file}`;
-    };
-    this.segmentation = new SelfieSegmentation(config);
-
-    const modelSelection = 1; // `1` means "landscape" mode.
-    this.segmentation.setOptions({ modelSelection });
-    this.segmentation.onResults((results: SelfieSegmentationResults) => {
-      this.processSegmentationResults(results);
-    });
-  }
-
-  async getFocusMask(image: ImageData): Promise<Uint8Array> {
-    // @ts-ignore TS2322: 「`image`の型が合っていない」と怒られるけれど、動作はするので一旦無視
-    await this.segmentation.send({ image });
-    return this.mask;
-  }
-
-  private processSegmentationResults(results: SelfieSegmentationResults): void {
-    const { width, height } = results.segmentationMask;
-
-    if (this.canvas.width !== width || this.canvas.height !== height) {
-      this.canvas.width = width;
-      this.canvas.height = height;
-      this.mask = new Uint8Array(width * height);
-    }
-
-    this.canvasCtx.drawImage(results.segmentationMask, 0, 0);
-    const image = this.canvasCtx.getImageData(0, 0, width, height);
-
-    for (let i = 0; i < image.data.byteLength; i += 4) {
-      this.mask[i / 4] = image.data[i];
-    }
-  }
-}
-
 interface LightAdjustmentProcessorOptions {
   alpha?: number;
   adjustmentLevel?: number;
@@ -107,16 +16,6 @@ interface LightAdjustmentProcessorOptions {
   sharpnessLevel?: number;
   focusMask?: FocusMask;
 }
-
-const DEFAULT_OPTIONS: LightAdjustmentProcessorOptions = {
-  alpha: 0.5,
-  adjustmentLevel: 50,
-  minIntensity: 10,
-  maxIntensity: 255,
-  entropyThreshold: 0.05,
-  sharpnessLevel: 20,
-  focusMask: new UniformFocusMask(),
-};
 
 class LightAdjustmentProcessorStats {
   totalProcessedFrames = 0;
@@ -135,6 +34,105 @@ class LightAdjustmentProcessorStats {
     this.totalProcessedFrames = 0;
     this.totalProcessedTimeMs = 0;
     this.totalUpdateStateCount = 0;
+  }
+}
+
+class LightAdjustmentProcessor {
+  private trackProcessor: VideoTrackProcessor;
+  private stats: LightAdjustmentProcessorStats;
+  private wasm?: WasmLightAdjustment;
+  private focusMask: FocusMask;
+  private isOptionsUpdated = false;
+
+  constructor() {
+    this.trackProcessor = new VideoTrackProcessor();
+    this.stats = new LightAdjustmentProcessorStats();
+    this.focusMask = new UniformFocusMask();
+  }
+
+  static isSupported(): boolean {
+    return VideoTrackProcessor.isSupported();
+  }
+
+  async startProcessing(
+    track: MediaStreamVideoTrack,
+    options: LightAdjustmentProcessorOptions = {}
+  ): Promise<MediaStreamVideoTrack> {
+    const wasmResults = await WebAssembly.instantiateStreaming(
+      fetch("data:application/wasm;base64," + LIGHT_ADJUSTMENT_WASM),
+      {}
+    );
+
+    this.wasm = new WasmLightAdjustment(wasmResults.instance, track);
+    this.focusMask = new UniformFocusMask();
+    this.setOptions(options);
+
+    return this.trackProcessor.startProcessing(track, async (image: ImageData) => {
+      await this.processImage(image);
+      return image;
+    });
+  }
+
+  private async processImage(image: ImageData): Promise<void> {
+    if (this.wasm === undefined) {
+      return;
+    }
+
+    const start = performance.now();
+
+    this.wasm.setImageData(image);
+    if (this.isOptionsUpdated || this.wasm.isStateObsolete()) {
+      const mask = await this.focusMask.getFocusMask(image);
+      this.wasm.setFocusMaskData(mask);
+      this.wasm.updateState();
+      this.stats.totalUpdateStateCount += 1;
+      this.isOptionsUpdated = false;
+    }
+    this.wasm.processImage();
+    this.wasm.copyProcessedImageData(image);
+
+    const elapsed = performance.now() - start;
+    this.stats.totalProcessedTimeMs += elapsed;
+    this.stats.totalProcessedFrames += 1;
+  }
+
+  stopProcessing() {
+    this.trackProcessor.stopProcessing();
+    if (this.wasm !== undefined) {
+      this.wasm.destroy();
+      this.wasm = undefined;
+    }
+    this.resetStats();
+  }
+
+  isProcessing(): boolean {
+    return this.trackProcessor.isProcessing();
+  }
+
+  getOriginalTrack(): MediaStreamVideoTrack | undefined {
+    return this.trackProcessor.getOriginalTrack();
+  }
+
+  getProcessedTrack(): MediaStreamVideoTrack | undefined {
+    return this.trackProcessor.getProcessedTrack();
+  }
+
+  setOptions(options: LightAdjustmentProcessorOptions): void {
+    if (this.wasm !== undefined) {
+      this.wasm.setOptions(options);
+      if (options.focusMask !== undefined) {
+        this.focusMask = options.focusMask;
+      }
+      this.isOptionsUpdated = true;
+    }
+  }
+
+  getStats(): LightAdjustmentProcessorStats {
+    return this.stats;
+  }
+
+  resetStats(): void {
+    this.stats.reset();
   }
 }
 
@@ -260,102 +258,94 @@ class WasmLightAdjustment {
   }
 }
 
-class LightAdjustmentProcessor {
-  private trackProcessor: VideoTrackProcessor;
-  private stats: LightAdjustmentProcessorStats;
-  private wasm?: WasmLightAdjustment;
-  private focusMask: FocusMask;
-  private isOptionsUpdated = false;
+interface FocusMask {
+  getFocusMask(image: ImageData): Promise<Uint8Array>;
+}
 
-  constructor() {
-    this.trackProcessor = new VideoTrackProcessor();
-    this.stats = new LightAdjustmentProcessorStats();
-    this.focusMask = new UniformFocusMask();
+class UniformFocusMask implements FocusMask {
+  private mask: Uint8Array = new Uint8Array();
+
+  getFocusMask(image: ImageData): Promise<Uint8Array> {
+    const { width, height } = image;
+    if (this.mask.byteLength !== width * height) {
+      this.mask = new Uint8Array(width * height);
+      this.mask.fill(255);
+    }
+    return Promise.resolve(this.mask);
   }
+}
 
-  static isSupported(): boolean {
-    return VideoTrackProcessor.isSupported();
+class CenterFocusMask implements FocusMask {
+  private mask: Uint8Array = new Uint8Array();
+
+  getFocusMask(image: ImageData): Promise<Uint8Array> {
+    const { width, height } = image;
+    if (this.mask.byteLength !== width * height) {
+      this.mask = new Uint8Array(width * height);
+      this.mask.fill(0);
+
+      const yStart = Math.floor(height / 3);
+      const yEnd = yStart * 2;
+      let xStart = yStart * width + Math.floor(width / 3);
+      let xEnd = yStart * width + Math.floor(width / 3) * 2;
+      for (let y = yStart; y < yEnd; y++, xStart += width, xEnd += width) {
+        this.mask.fill(255, xStart, xEnd);
+      }
+    }
+    return Promise.resolve(this.mask);
   }
+}
 
-  async startProcessing(
-    track: MediaStreamVideoTrack,
-    options: LightAdjustmentProcessorOptions = {}
-  ): Promise<MediaStreamVideoTrack> {
-    const wasmResults = await WebAssembly.instantiateStreaming(
-      fetch("data:application/wasm;base64," + LIGHT_ADJUSTMENT_WASM),
-      {}
-    );
+class SelfieSegmentationFocusMask implements FocusMask {
+  private segmentation: SelfieSegmentation;
+  private mask: Uint8Array;
+  private canvas: OffscreenCanvas;
+  private canvasCtx: OffscreenCanvasRenderingContext2D;
 
-    this.wasm = new WasmLightAdjustment(wasmResults.instance, track);
-    this.focusMask = new UniformFocusMask();
-    this.setOptions(options);
+  constructor(assetsPath: string) {
+    this.mask = new Uint8Array();
+    this.canvas = createOffscreenCanvas(0, 0) as OffscreenCanvas;
+    const canvasCtx = this.canvas.getContext("2d");
+    if (canvasCtx === null) {
+      throw Error("Failed to create 2D canvas context");
+    }
+    this.canvasCtx = canvasCtx;
 
-    return this.trackProcessor.startProcessing(track, async (image: ImageData) => {
-      await this.processImage(image);
-      return image;
+    const config: SelfieSegmentationConfig = {};
+    assetsPath = trimLastSlash(assetsPath);
+    config.locateFile = (file: string) => {
+      return `${assetsPath}/${file}`;
+    };
+    this.segmentation = new SelfieSegmentation(config);
+
+    const modelSelection = 1; // `1` means "landscape" mode.
+    this.segmentation.setOptions({ modelSelection });
+    this.segmentation.onResults((results: SelfieSegmentationResults) => {
+      this.processSegmentationResults(results);
     });
   }
 
-  private async processImage(image: ImageData): Promise<void> {
-    if (this.wasm === undefined) {
-      return;
+  async getFocusMask(image: ImageData): Promise<Uint8Array> {
+    // @ts-ignore TS2322: 「`image`の型が合っていない」と怒られるけれど、動作はするので一旦無視
+    await this.segmentation.send({ image });
+    return this.mask;
+  }
+
+  private processSegmentationResults(results: SelfieSegmentationResults): void {
+    const { width, height } = results.segmentationMask;
+
+    if (this.canvas.width !== width || this.canvas.height !== height) {
+      this.canvas.width = width;
+      this.canvas.height = height;
+      this.mask = new Uint8Array(width * height);
     }
 
-    const start = performance.now();
+    this.canvasCtx.drawImage(results.segmentationMask, 0, 0);
+    const image = this.canvasCtx.getImageData(0, 0, width, height);
 
-    this.wasm.setImageData(image);
-    if (this.isOptionsUpdated || this.wasm.isStateObsolete()) {
-      const mask = await this.focusMask.getFocusMask(image);
-      this.wasm.setFocusMaskData(mask);
-      this.wasm.updateState();
-      this.stats.totalUpdateStateCount += 1;
-      this.isOptionsUpdated = false;
+    for (let i = 0; i < image.data.byteLength; i += 4) {
+      this.mask[i / 4] = image.data[i];
     }
-    this.wasm.processImage();
-    this.wasm.copyProcessedImageData(image);
-
-    const elapsed = performance.now() - start;
-    this.stats.totalProcessedTimeMs += elapsed;
-    this.stats.totalProcessedFrames += 1;
-  }
-
-  stopProcessing() {
-    this.trackProcessor.stopProcessing();
-    if (this.wasm !== undefined) {
-      this.wasm.destroy();
-      this.wasm = undefined;
-    }
-    this.resetStats();
-  }
-
-  isProcessing(): boolean {
-    return this.trackProcessor.isProcessing();
-  }
-
-  getOriginalTrack(): MediaStreamVideoTrack | undefined {
-    return this.trackProcessor.getOriginalTrack();
-  }
-
-  getProcessedTrack(): MediaStreamVideoTrack | undefined {
-    return this.trackProcessor.getProcessedTrack();
-  }
-
-  setOptions(options: LightAdjustmentProcessorOptions): void {
-    if (this.wasm !== undefined) {
-      this.wasm.setOptions(options);
-      if (options.focusMask !== undefined) {
-        this.focusMask = options.focusMask;
-      }
-      this.isOptionsUpdated = true;
-    }
-  }
-
-  getStats(): LightAdjustmentProcessorStats {
-    return this.stats;
-  }
-
-  resetStats(): void {
-    this.stats.reset();
   }
 }
 
@@ -380,11 +370,10 @@ function trimLastSlash(s: string): string {
 
 export {
   LightAdjustmentProcessor,
-  LightAdjustmentProcessorOptions,
   LightAdjustmentProcessorStats,
+  LightAdjustmentProcessorOptions,
   FocusMask,
   UniformFocusMask,
   CenterFocusMask,
   SelfieSegmentationFocusMask,
-  DEFAULT_OPTIONS,
 };
