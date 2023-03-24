@@ -53,7 +53,8 @@
       const processor = new Shiguredo.LightAdjustmentProcessor();
       setInterval(() => {
           const stats = processor.getStats();
-          document.getElementById('elapsed').innerText = stats.getAverageElapsedSeconds().toFixed(4).padStart(4, '0');
+          const elapsed = stats.getAverageProcessedTimeMs() / 1000;
+          document.getElementById('elapsed').innerText = elapsed.toFixed(4).padStart(4, '0');
           processor.resetStats();
       }, 300);
 

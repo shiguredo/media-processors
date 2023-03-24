@@ -70,21 +70,7 @@ class SelfieSegmentationFocusMask implements FocusMask {
     const modelSelection = 1; // `1` means "landscape" mode.
     this.segmentation.setOptions({ modelSelection });
     this.segmentation.onResults((results: SelfieSegmentationResults) => {
-      // TODO: メソッドに分離する
-      const { width, height } = results.segmentationMask;
-
-      if (this.canvas.width !== width || this.canvas.height !== height) {
-        this.canvas.width = width;
-        this.canvas.height = height;
-        this.mask = new Uint8Array(width * height);
-      }
-
-      this.canvasCtx.drawImage(results.segmentationMask, 0, 0);
-      const image = this.canvasCtx.getImageData(0, 0, width, height);
-
-      for (let i = 0; i < image.data.byteLength; i += 4) {
-        this.mask[i / 4] = image.data[i];
-      }
+      this.processSegmentationResults(results);
     });
   }
 
@@ -92,6 +78,23 @@ class SelfieSegmentationFocusMask implements FocusMask {
     // @ts-ignore TS2322: 「`image`の型が合っていない」と怒られるけれど、動作はするので一旦無視
     await this.segmentation.send({ image });
     return this.mask;
+  }
+
+  private processSegmentationResults(results: SelfieSegmentationResults): void {
+    const { width, height } = results.segmentationMask;
+
+    if (this.canvas.width !== width || this.canvas.height !== height) {
+      this.canvas.width = width;
+      this.canvas.height = height;
+      this.mask = new Uint8Array(width * height);
+    }
+
+    this.canvasCtx.drawImage(results.segmentationMask, 0, 0);
+    const image = this.canvasCtx.getImageData(0, 0, width, height);
+
+    for (let i = 0; i < image.data.byteLength; i += 4) {
+      this.mask[i / 4] = image.data[i];
+    }
   }
 }
 
@@ -115,24 +118,22 @@ const DEFAULT_OPTIONS: LightAdjustmentProcessorOptions = {
   focusMask: new UniformFocusMask(),
 };
 
-class LightAdjustmentStats {
-  numberOfFrames = 0;
-  totalElapsedSeconds = 0;
-  lastElapsedSeconds = 0;
+class LightAdjustmentProcessorStats {
+  totalProcessedFrames = 0;
+  totalProcessedTimeMs = 0;
   totalUpdateStateCount = 0;
 
-  getAverageElapsedSeconds(): number {
-    if (this.numberOfFrames === 0) {
+  getAverageProcessedTimeMs(): number {
+    if (this.totalProcessedFrames === 0) {
       return 0;
     } else {
-      return this.totalElapsedSeconds / this.numberOfFrames;
+      return this.totalProcessedTimeMs / this.totalProcessedFrames;
     }
   }
 
   reset(): void {
-    this.numberOfFrames = 0;
-    this.totalElapsedSeconds = 0;
-    this.lastElapsedSeconds = 0;
+    this.totalProcessedFrames = 0;
+    this.totalProcessedTimeMs = 0;
     this.totalUpdateStateCount = 0;
   }
 }
@@ -261,14 +262,14 @@ class WasmLightAdjustment {
 
 class LightAdjustmentProcessor {
   private trackProcessor: VideoTrackProcessor;
-  private stats: LightAdjustmentStats;
+  private stats: LightAdjustmentProcessorStats;
   private wasm?: WasmLightAdjustment;
   private focusMask: FocusMask;
   private isOptionsUpdated = false;
 
   constructor() {
     this.trackProcessor = new VideoTrackProcessor();
-    this.stats = new LightAdjustmentStats();
+    this.stats = new LightAdjustmentProcessorStats();
     this.focusMask = new UniformFocusMask();
   }
 
@@ -300,8 +301,7 @@ class LightAdjustmentProcessor {
       return;
     }
 
-    this.stats.numberOfFrames += 1;
-    const start = performance.now() / 1000;
+    const start = performance.now();
 
     this.wasm.setImageData(image);
     if (this.isOptionsUpdated || this.wasm.isStateObsolete()) {
@@ -314,8 +314,9 @@ class LightAdjustmentProcessor {
     this.wasm.processImage();
     this.wasm.copyProcessedImageData(image);
 
-    this.stats.lastElapsedSeconds = performance.now() / 1000 - start;
-    this.stats.totalElapsedSeconds += this.stats.lastElapsedSeconds;
+    const elapsed = performance.now() - start;
+    this.stats.totalProcessedTimeMs += elapsed;
+    this.stats.totalProcessedFrames += 1;
   }
 
   stopProcessing() {
@@ -349,7 +350,7 @@ class LightAdjustmentProcessor {
     }
   }
 
-  getStats(): LightAdjustmentStats {
+  getStats(): LightAdjustmentProcessorStats {
     return this.stats;
   }
 
@@ -380,7 +381,7 @@ function trimLastSlash(s: string): string {
 export {
   LightAdjustmentProcessor,
   LightAdjustmentProcessorOptions,
-  LightAdjustmentStats,
+  LightAdjustmentProcessorStats,
   FocusMask,
   UniformFocusMask,
   CenterFocusMask,
