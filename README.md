@@ -72,8 +72,8 @@ Discord へお願いします。
 [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0)
 
 ```
-Copyright 2022-2022, Takeru Ohta (Original Author)
-Copyright 2022-2022, Shiguredo Inc.
+Copyright 2022-2023, Takeru Ohta (Original Author)
+Copyright 2022-2023, Shiguredo Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
