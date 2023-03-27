@@ -39,6 +39,21 @@
 </script>
 ```
 
+`startProcessing()` の第二引数にはオプションを指定することができます:
+
+```html
+const assetsPath = "https://cdn.jsdelivr.net/npm/@shiguredo/light-adjustment@latest/dist";
+
+const options = {
+    // 画像内の人物部分にフォーカスしてライト調整を行うようにする
+    "focusMask": new Shiguredo.SelfieSegmentationFocusMask(assetsPath)
+};
+
+processor.startProcessing(track, options).then((processed_track) => {
+    ...
+});
+```
+
 実際の動作は[デモページ](https://shiguredo.github.io/media-processors/examples/light-adjustment.html)（
 [ソースコード](https://github.com/shiguredo/media-processors/blob/develop/examples/light-adjustment.html)）で確認できます。
 
