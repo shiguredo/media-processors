@@ -1,8 +1,8 @@
 light-adjustment-zig
 ====================
 
-Zig によるライト調整機能の実装。
-WebAssembly にビルドされて TypeScript から利用される。
+Zig によるライト調整機能の実装です。
+WebAssembly にビルドされて TypeScript から利用されます。
 
 ビルド方法
 ----------
@@ -13,8 +13,8 @@ $ ls zig-out/lib/light_adjustment.wasm
 zig-out/lib/light_adjustment.wasm*
 ```
 
-ユニットテスト
--------------
+ユニットテストの実行方法
+------------------------
 
 ```console
 $ zig build test
