@@ -45,7 +45,7 @@ interface LightAdjustmentProcessorOptions {
   /**
    * 処理後の画像の最低の明るさ (HSV の V の値、 0 ~ 255 の整数）。
    *
-   * デフォルト値は 10
+   * デフォルト値は 0
    */
   minIntensity?: number;
 
@@ -509,7 +509,10 @@ class SelfieSegmentationFocusMask implements FocusMask {
   constructor(assetsPath: string) {
     this.mask = new Uint8Array();
     this.canvas = createOffscreenCanvas(0, 0) as OffscreenCanvas;
-    const canvasCtx = this.canvas.getContext("2d");
+    const canvasCtx = this.canvas.getContext("2d", {
+      desynchronized: true,
+      willReadFrequently: true,
+    });
     if (canvasCtx === null) {
       throw Error("Failed to create 2D canvas context");
     }

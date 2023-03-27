@@ -24,7 +24,7 @@ pub const LightAdjustmentOptions = struct {
     entropy_threshold: f32 = 0.05,
 
     /// 処理後の画像の最低の明るさ (HSV の V の値）。
-    min_intensity: u8 = 10,
+    min_intensity: u8 = 0,
 
     /// 処理後の画像の最大の明るさ (HSV の V の値）。
     max_intensity: u8 = 255,
