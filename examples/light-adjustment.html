@@ -1,40 +1,45 @@
 <html>
   <head>
     <meta charset="utf-8">
-    <title>Media Processors: 明るさ調整サンプル</title>
+    <title>Media Processors: ライト調整サンプル</title>
   </head>
   <body>
-    <h1>Media Processors: 明るさ調整サンプル</h1>
+    <h1>Media Processors: ライト調整サンプル</h1>
 
     <h3>入力映像設定</h3>
-    解像度: <input id="videoWidth" type="text" value="480">x<input id="videoHeight" type="text" value="480"><br />
-    FPS: <input id="videoFps" type="text" value="30"><br />
+    解像度: <input id="videoWidth" type="text" value="480" size="4">x
+            <input id="videoHeight" type="text" value="480" size="4">
+    &nbsp;
+    FPS: <input id="videoFps" type="text" value="30" size="3">
+    &nbsp;
     <input type="button" value="設定反映" onclick="start()">
 
-    <h3>明るさ調整設定</h3>
-    Alpha: <input id="alpha" type="range" min="0" max="2" value="0.5" step="0.1"
-                  oninput="updateOption('alpha')">
-           <span id="alpha-value">0.5</span><br />
+    <h3>ライト調整設定</h3>
+    AGCWD Alpha: <input id="alpha" type="range" min="0" max="2" value="0.5" step="0.1"
+                        oninput="updateOption('alpha')">
+                 <span id="alpha-value">0.5</span><br />
     AdjustmentLevel: <input id="adjustmentLevel" type="range" min="0" max="100" value="50" step="5"
                    oninput="updateOption('adjustmentLevel')">
             <span id="adjustmentLevel-value">50</span><br />
     SharpnessLevel: <input id="sharpnessLevel" type="range" min="0" max="100" value="20" step="5"
                    oninput="updateOption('sharpnessLevel')">
             <span id="sharpnessLevel-value">20</span><br />
-    MinIntensity: <input id="minIntensity" type="range" min="0" max="255" value="10" step="1"
+    MinIntensity: <input id="minIntensity" type="range" min="0" max="255" value="0" step="1"
                          oninput="updateOption('minIntensity')">
-                  <span id="minIntensity-value">10</span><br />
+                  <span id="minIntensity-value">0</span><br />
     MaxIntensity: <input id="maxIntensity" type="range" min="0" max="255" value="255" step="1"
                          oninput="updateOption('maxIntensity')">
                   <span id="maxIntensity-value">255</span><br />
+    FocusMask: <select id="focusMask" size="1" oninput="updateOption('focusMask')">
+                  <option value="uniform">Uniform</option>
+                  <option value="center">Center</option>
+                  <option value="selfieSegmentation" selected>SelfieSegmentation</option>
+               </select>
+    <!-- 開発者用の隠しパラメータ
     EntropyThreshold: <input id="entropyThreshold" type="range" min="0" max="0.2" value="0.05" step="0.01"
                              oninput="updateOption('entropyThreshold')">
                       <span id="entropyThreshold-value">0.5</span><br />
-    Focus: <select id="focusMask" size="3" oninput="updateOption('focusMask')">
-              <option value="uniform" selected>Uniform</option>
-              <option value="center">Center</option>
-              <option value="selfieSegmentation">SelfieSegmentation</option>
-           </select>
+    -->
     <br />
 
     <h3>左: 処理映像、右: オリジナル映像</h3>
@@ -53,7 +58,8 @@
       const processor = new Shiguredo.LightAdjustmentProcessor();
       setInterval(() => {
           const stats = processor.getStats();
-          document.getElementById('elapsed').innerText = stats.getAverageElapsedSeconds().toFixed(4).padStart(4, '0');
+          const elapsed = stats.getAverageProcessedTimeMs() / 1000;
+          document.getElementById('elapsed').innerText = elapsed.toFixed(4).padStart(4, '0');
           processor.resetStats();
       }, 300);
 
@@ -87,7 +93,7 @@
               options[name] = value;
           }
 
-          processor.setOptions(options);
+          processor.updateOptions(options);
       }
 
       function start() {
@@ -97,7 +103,10 @@
           document.getElementById('videoOriginal').srcObject = stream;
 
           const track = stream.getVideoTracks()[0];
-          processor.startProcessing(track).then((processed_track) => {
+          const options = {
+            "focusMask": new Shiguredo.SelfieSegmentationFocusMask("./light-adjustment/")
+          };
+          processor.startProcessing(track, options).then((processed_track) => {
               document.getElementById('videoProcessed').srcObject = new MediaStream([processed_track]);
           });
         });
