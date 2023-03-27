@@ -41,7 +41,7 @@
 
 `startProcessing()` の第二引数にはオプションを指定することができます:
 
-```html
+```javascript
 const assetsPath = "https://cdn.jsdelivr.net/npm/@shiguredo/light-adjustment@latest/dist";
 
 const options = {
