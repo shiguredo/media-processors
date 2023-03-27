@@ -167,6 +167,10 @@ class LightAdjustmentProcessor {
 
     this.wasm.setImageData(image);
     if (this.isOptionsUpdated || this.wasm.isStateObsolete()) {
+      // TODO(sile): SelfieSegmentationFocusMask の場合には、一番最初にファイルのダウンロードや初期化処理が入るので、
+      //             ここに await を入れると少し映像が止まることがある。
+      //             マスク更新は必須の処理という訳ではないので `await` ではなく `.then()` で繋いだ方が
+      //             ユーザの体験としては良くなるかもしれない。
       const mask = await this.focusMask.getFocusMask(image);
       this.wasm.setFocusMaskData(mask);
       this.wasm.updateState();
