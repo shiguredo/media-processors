@@ -419,7 +419,12 @@ class WasmLightAdjustment {
       return;
     }
 
-    if (!((this.wasm.exports.resize as CallableFunction)(image.width, image.height) as boolean)) {
+    const succeeded = (this.wasm.exports.resize as CallableFunction)(
+      this.lightAdjustmentPtr,
+      image.width,
+      image.height
+    ) as boolean;
+    if (!succeeded) {
       throw new Error("Failed to resize WebAssembly image data.");
     }
 

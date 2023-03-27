@@ -96,14 +96,14 @@ pub const LightAdjustment = struct {
     pub fn resize(self: *Self, width: u32, height: u32) !void {
         self.deinit();
 
-        const image = try RgbaImage.init(self.image.allocator, width, height);
-        errdefer image.deinit();
+        self.image = try RgbaImage.init(self.image.allocator, width, height);
+        errdefer self.image.deinit();
 
-        const mask = try FocusMask.init(self.mask.allocator, width, height);
-        errdefer mask.deinit();
+        self.mask = try FocusMask.init(self.mask.allocator, width, height);
+        errdefer self.mask.deinit();
 
-        self.sharpener.temp_image = try RgbaImage.init(self.image.allocator, width, height);
-        errdefer self.sharpener.temp_image.deinit();
+        self.sharpener = try Sharpener.init(self.sharpener.allocator, width, height);
+        errdefer self.sharpener.deinit();
     }
 };
 
