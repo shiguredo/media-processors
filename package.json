@@ -9,10 +9,12 @@
     "start": "npx serve -S -l 8080 ."
   },
   "devDependencies": {
-    "serve": "^14.0.1"
+    "serve": "14.2.0"
   },
   "workspaces": [
+    "packages/video-track-processor",
     "packages/virtual-background",
+    "packages/light-adjustment",
     "packages/noise-suppression"
   ]
 }

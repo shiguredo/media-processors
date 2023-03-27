@@ -1,0 +1,251 @@
+// [NOTE]
+// ImageData ではなく ImageBitmap の方が効率的な可能性はあるが
+// https://bugs.chromium.org/p/chromium/issues/detail?id=961777 のように特定条件下で処理後の結果が
+// 不正なものになる現象が確認できているので安全のために ImageData にしている
+type ProcessImageDataCallback = (image: ImageData) => Promise<ImageData>;
+
+/**
+ * 映像トラックの各フレームの変換処理を行いやすくするためのユーティリティクラス
+ *
+ * 以下の二つの仕組みを抽象化して共通のインタフェースを提供する:
+ * - MediaStreamTrack Insertable Streams (aka. Breakout Box)
+ * - HTMLVideoElement.requestVideoFrameCallback
+ *
+ * 実際の変換処理は利用側がコールバック関数として指定する
+ */
+class VideoTrackProcessor {
+  private trackProcessor?: Processor;
+  private processedTrack?: MediaStreamVideoTrack;
+  private originalTrack?: MediaStreamVideoTrack;
+
+  static isSupported(): boolean {
+    return BreakoutBoxProcessor.isSupported() || RequestVideoFrameCallbackProcessor.isSupported();
+  }
+
+  async startProcessing(
+    track: MediaStreamVideoTrack,
+    callback: ProcessImageDataCallback
+  ): Promise<MediaStreamVideoTrack> {
+    if (this.isProcessing()) {
+      throw Error("Video track processing has already started.");
+    }
+
+    if (BreakoutBoxProcessor.isSupported()) {
+      this.trackProcessor = new BreakoutBoxProcessor(track, callback);
+    } else if (RequestVideoFrameCallbackProcessor.isSupported()) {
+      this.trackProcessor = new RequestVideoFrameCallbackProcessor(track, callback);
+    } else {
+      throw Error("Unsupported browser");
+    }
+    this.originalTrack = track;
+    this.processedTrack = await this.trackProcessor.startProcessing();
+    return this.processedTrack;
+  }
+
+  stopProcessing() {
+    // NOTE: コンパイラの警告を防ぐために isProcessing は使わずに判定している
+    if (this.trackProcessor !== undefined) {
+      this.trackProcessor.stopProcessing();
+      this.trackProcessor = undefined;
+      this.originalTrack = undefined;
+      this.processedTrack = undefined;
+    }
+  }
+
+  isProcessing(): boolean {
+    return this.trackProcessor !== undefined;
+  }
+
+  getOriginalTrack(): MediaStreamVideoTrack | undefined {
+    return this.originalTrack;
+  }
+
+  getProcessedTrack(): MediaStreamVideoTrack | undefined {
+    return this.processedTrack;
+  }
+}
+
+abstract class Processor {
+  protected track: MediaStreamVideoTrack;
+  protected callback: ProcessImageDataCallback;
+
+  constructor(track: MediaStreamVideoTrack, callback: ProcessImageDataCallback) {
+    this.track = track;
+    this.callback = callback;
+  }
+
+  abstract startProcessing(): Promise<MediaStreamVideoTrack>;
+
+  abstract stopProcessing(): void;
+}
+
+class BreakoutBoxProcessor extends Processor {
+  private abortController: AbortController;
+  private generator: MediaStreamVideoTrackGenerator;
+  private processor: MediaStreamTrackProcessor<VideoFrame>;
+  private canvas: OffscreenCanvas;
+  private canvasCtx: OffscreenCanvasRenderingContext2D;
+
+  constructor(track: MediaStreamVideoTrack, callback: ProcessImageDataCallback) {
+    super(track, callback);
+
+    // 処理を停止するための AbortController を初期化
+    this.abortController = new AbortController();
+
+    // generator / processor インスタンスを生成（まだ処理は開始しない）
+    this.generator = new MediaStreamTrackGenerator({ kind: "video" });
+    this.processor = new MediaStreamTrackProcessor({ track: this.track });
+
+    // 作業用キャンバスを作成
+    const { width, height } = track.getSettings();
+    if (width === undefined || height === undefined) {
+      throw Error(`Could not retrieve the resolution of the video track: {track}`);
+    }
+
+    this.canvas = new OffscreenCanvas(width, height);
+    const canvasCtx = this.canvas.getContext("2d", { desynchronized: true, willReadFrequently: true });
+    if (canvasCtx === null) {
+      throw Error("Failed to get the 2D context of an offscreen canvas");
+    }
+    this.canvasCtx = canvasCtx;
+  }
+
+  static isSupported(): boolean {
+    return !(typeof MediaStreamTrackProcessor === "undefined" || typeof MediaStreamTrackGenerator === "undefined");
+  }
+
+  startProcessing(): Promise<MediaStreamVideoTrack> {
+    const signal = this.abortController.signal;
+    this.processor.readable
+      .pipeThrough(
+        new TransformStream({
+          transform: async (frame, controller) => {
+            const { displayWidth: width, displayHeight: height, timestamp, duration } = frame;
+            resizeCanvasIfNeed(width, height, this.canvas);
+
+            this.canvasCtx.drawImage(frame, 0, 0);
+            frame.close();
+            const image = this.canvasCtx.getImageData(0, 0, width, height);
+
+            const processedImage = await this.callback(image);
+
+            if (this.generator.readyState === "ended") {
+              // ジェネレータ（ユーザに渡している処理結果トラック）がクローズ済み。
+              // この状態で `controller.enqueue()` を呼び出すとエラーが発生するのでスキップする。
+              // また `stopProcessing()` を呼び出して変換処理を停止し、以後は `transform()` 自体が呼ばれないようにする。
+              //
+              // なお、上の条件判定と下のエンキューの間でジェネレータの状態が変わり、エラーが発生する可能性もないとは
+              // 言い切れないが、かなりレアケースだと想定され、そこまでケアするのはコスパが悪いので諦めることとする。
+              this.stopProcessing();
+              return;
+            }
+
+            const bitmap = await createImageBitmap(processedImage);
+            controller.enqueue(new VideoFrame(bitmap, { timestamp, duration } as VideoFrameInit));
+          },
+        }),
+        { signal }
+      )
+      .pipeTo(this.generator.writable)
+      .catch((e) => {
+        if (signal.aborted) {
+          console.debug("Shutting down streams after abort.");
+        } else {
+          console.warn("Error from stream transform:", e);
+        }
+        this.processor.readable.cancel(e).catch((e) => {
+          console.warn("Failed to cancel `MediaStreamTrackProcessor`:", e);
+        });
+        this.generator.writable.abort(e).catch((e) => {
+          console.warn("Failed to abort `MediaStreamTrackGenerator`:", e);
+        });
+      });
+    return Promise.resolve(this.generator);
+  }
+
+  stopProcessing() {
+    this.abortController.abort();
+  }
+}
+
+class RequestVideoFrameCallbackProcessor extends Processor {
+  private video: HTMLVideoElement;
+  private canvas: HTMLCanvasElement;
+  private canvasCtx: CanvasRenderingContext2D;
+  private requestVideoFrameCallbackHandle?: number;
+
+  constructor(track: MediaStreamVideoTrack, callback: ProcessImageDataCallback) {
+    super(track, callback);
+
+    // requestVideoFrameCallbackHandle()` はトラックではなくビデオ単位のメソッドなので
+    // 内部的に HTMLVideoElement を生成する
+    this.video = document.createElement("video");
+    this.video.muted = true;
+    this.video.playsInline = true;
+    this.video.srcObject = new MediaStream([track]);
+
+    // 処理後の映像フレームを書き込むための canvas を生成する
+    //
+    // captureStream() メソッドは OffscreenCanvas にはないようなので HTMLCanvasElement を使用する
+    const width = track.getSettings().width;
+    const height = track.getSettings().height;
+    if (width === undefined || height === undefined) {
+      throw Error(`Could not retrieve the resolution of the video track: {track}`);
+    }
+    this.canvas = document.createElement("canvas");
+    this.canvas.width = width;
+    this.canvas.height = height;
+    const canvasCtx = this.canvas.getContext("2d");
+    if (canvasCtx === null) {
+      throw Error("Failed to create 2D canvas context");
+    }
+    this.canvasCtx = canvasCtx;
+  }
+
+  static isSupported(): boolean {
+    return "requestVideoFrameCallback" in HTMLVideoElement.prototype;
+  }
+
+  async startProcessing(): Promise<MediaStreamVideoTrack> {
+    this.requestVideoFrameCallbackHandle = this.video.requestVideoFrameCallback(() => {
+      this.onFrame().catch((e) => console.warn("Error: ", e));
+    });
+    await this.video.play();
+
+    const stream = this.canvas.captureStream();
+    return Promise.resolve(stream.getVideoTracks()[0]);
+  }
+
+  stopProcessing() {
+    if (this.requestVideoFrameCallbackHandle !== undefined) {
+      this.video.pause();
+      this.video.cancelVideoFrameCallback(this.requestVideoFrameCallbackHandle);
+      this.requestVideoFrameCallbackHandle = undefined;
+    }
+  }
+
+  private async onFrame() {
+    const { videoWidth: width, videoHeight: height } = this.video;
+    resizeCanvasIfNeed(width, height, this.canvas);
+
+    this.canvasCtx.drawImage(this.video, 0, 0);
+    const image = this.canvasCtx.getImageData(0, 0, width, height);
+    const processedImage = await this.callback(image);
+    this.canvasCtx.putImageData(processedImage, 0, 0);
+
+    // @ts-ignore
+    // eslint-disable-next-line
+    this.requestVideoFrameCallbackHandle = this.video.requestVideoFrameCallback(() => {
+      this.onFrame().catch((e) => console.warn("Error: ", e));
+    });
+  }
+}
+
+function resizeCanvasIfNeed(width: number, height: number, canvas: OffscreenCanvas | HTMLCanvasElement) {
+  if (canvas.width !== width || canvas.height !== height) {
+    canvas.width = width;
+    canvas.height = height;
+  }
+}
+
+export { VideoTrackProcessor, ProcessImageDataCallback };

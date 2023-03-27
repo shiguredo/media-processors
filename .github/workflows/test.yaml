@@ -12,18 +12,21 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node: ['16']
+        node: ['16', '18']
     steps:
-      - uses: actions/checkout@v2
-      - uses: actions/setup-node@v2
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node }}
           cache: npm
       - run: npm --version
+      - uses: goto-bus-stop/setup-zig@v2
+      - run: zig version
       - run: npm install
       - run: npm run build
       - run: npm run lint
       - run: npm run doc
+      - run: cd packages/light-adjustment/zig/ && zig build test
       - name: Slack Notification
         if: failure()
         uses: rtCamp/action-slack-notify@v2

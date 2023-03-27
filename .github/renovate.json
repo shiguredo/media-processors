@@ -1,0 +1,35 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:base",
+    ":timezone(Asia/Tokyo)",
+    ":combinePatchMinorReleases",
+    ":prHourlyLimitNone",
+    ":prConcurrentLimit10",
+    "group:recommended",
+    "group:allNonMajor",
+    "schedule:weekly"
+  ],
+  "dependencyDashboard": false,
+  "packageRules": [
+    {
+      "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
+      "platformAutomerge": true,
+      "automerge": true
+    },
+    {
+      "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
+      "matchPackagePatterns": ["eslint"],
+      "groupName": "eslint",
+      "platformAutomerge": true,
+      "automerge": true
+    },
+    {
+      "matchUpdateTypes": ["minor", "patch", "pin", "digest"],
+      "matchPackagePatterns": ["rollup"],
+      "groupName": "rollup",
+      "platformAutomerge": true,
+      "automerge": true
+    }
+  ]
+}

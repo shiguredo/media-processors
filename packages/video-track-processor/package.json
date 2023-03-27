@@ -1,12 +1,11 @@
 {
-  "name": "@shiguredo/noise-suppression",
-  "version": "2022.4.2",
-  "description": "Noise Suppression Library",
+  "name": "@shiguredo/video-track-processor",
+  "version": "0.0.0",
+  "description": "Unpublished internal utility package for video track processing",
   "author": "Shiguredo Inc.",
   "license": "Apache-2.0",
-  "main": "dist/noise_suppression.js",
-  "module": "dist/noise_suppression.mjs",
-  "types": "dist/noise_suppression.d.ts",
+  "module": "dist/video_track_processor.mjs",
+  "types": "dist/video_track_processor.d.ts",
   "scripts": {
     "build": "rollup -c ./rollup.config.mjs --bundleConfigAsCjs && tsc --emitDeclarationOnly",
     "lint": "eslint --ext .ts ./src",
@@ -17,9 +16,7 @@
     "type": "git",
     "url": "git+https://github.com/shiguredo/media-processors.git"
   },
-  "keywords": [
-    "noise-suppression"
-  ],
+  "keywords": [],
   "bugs": {
     "url": "https://discord.gg/shiguredo"
   },
@@ -28,20 +25,19 @@
     "dist"
   ],
   "dependencies": {
-    "@types/dom-mediacapture-transform": "^0.1.3"
+    "@types/dom-mediacapture-transform": "^0.1.4"
   },
   "devDependencies": {
     "@rollup/plugin-commonjs": "24.0.1",
     "@rollup/plugin-node-resolve": "15.0.1",
     "@rollup/plugin-typescript": "11.0.0",
-    "@shiguredo/rnnoise-wasm": "2022.2.0",
+    "@types/offscreencanvas": "2019.7.0",
     "@typescript-eslint/eslint-plugin": "5.56.0",
     "@typescript-eslint/parser": "5.56.0",
     "eslint": "8.36.0",
     "eslint-config-prettier": "8.8.0",
     "eslint-plugin-prettier": "4.2.1",
     "rollup": "3.20.2",
-    "rollup-plugin-copy": "3.4.0",
     "typedoc": "0.23.28",
     "typescript": "5.0.2"
   }
