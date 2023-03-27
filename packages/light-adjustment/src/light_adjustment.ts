@@ -430,10 +430,28 @@ class WasmLightAdjustment {
   }
 }
 
+/**
+ * ライト調整の際に画像のどの領域を基準にするかを指定するためのインタフェース。
+ */
 interface FocusMask {
+  /**
+   * ライト調整の際にフォーカスする領域を示すマスク配列を返す。
+   *
+   * 返り値の各バイトは画像の一つのピクセルに対応し、値はそのピクセルの重みを表す。
+   * 重みが大きいピクセルほど、ライト調整の際により適切な明るさになるように処理される。
+   *
+   * なお、このメソッドが返すマスク配列はあくまでも「画像（の明るさ）をどのように調整するか」を
+   * 左右するだけであり、ライト調整処理自体は常に画像全体に適用される。
+   *
+   * @param options 処理対象となる入力画像
+   * @returns フォーカス領域を示すバイト列
+   */
   getFocusMask(image: ImageData): Promise<Uint8Array>;
 }
 
+/**
+ * 画像全体を均等に扱うフォーカスマスク。
+ */
 class UniformFocusMask implements FocusMask {
   private mask: Uint8Array = new Uint8Array();
 
@@ -447,6 +465,9 @@ class UniformFocusMask implements FocusMask {
   }
 }
 
+/**
+ * 画像全体を九分割して、その中央部分にフォーカスするマスク。
+ */
 class CenterFocusMask implements FocusMask {
   private mask: Uint8Array = new Uint8Array();
 
@@ -468,12 +489,23 @@ class CenterFocusMask implements FocusMask {
   }
 }
 
+/**
+ * 画像内の人物部分にフォーカスするマスク。
+ *
+ * 画像から人物領域をセグメンテーションするためには
+ * @mediapipe/selfie-segmentation パッケージを使用している。
+ */
 class SelfieSegmentationFocusMask implements FocusMask {
   private segmentation: SelfieSegmentation;
   private mask: Uint8Array;
   private canvas: OffscreenCanvas;
   private canvasCtx: OffscreenCanvasRenderingContext2D;
 
+  /**
+   * {@link SelfieSegmentationFocusMask} インスタンスを生成する。
+   *
+   * @param assetsPath @mediapipe/selfie-segmentation のアセットファイル（.wasm や .tflite）が配置されているパス
+   */
   constructor(assetsPath: string) {
     this.mask = new Uint8Array();
     this.canvas = createOffscreenCanvas(0, 0) as OffscreenCanvas;
