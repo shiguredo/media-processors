@@ -168,10 +168,16 @@ class BreakoutBoxProcessor extends Processor {
 
 class RequestVideoFrameCallbackProcessor extends Processor {
   private video: HTMLVideoElement;
-  private canvas: HTMLCanvasElement;
-  private canvasCtx: CanvasRenderingContext2D;
   private requestVideoFrameCallbackHandle?: number;
 
+  // 処理結果画像を書き込むキャンバス
+  private canvas: HTMLCanvasElement;
+  private canvasCtx: CanvasRenderingContext2D;
+
+  // 処理途中の作業用キャンバス
+  private tmpCanvas: HTMLCanvasElement;
+  private tmpCanvasCtx: CanvasRenderingContext2D;
+  
   constructor(track: MediaStreamVideoTrack, callback: ProcessImageDataCallback) {
     super(track, callback);
 
@@ -187,6 +193,7 @@ class RequestVideoFrameCallbackProcessor extends Processor {
     // captureStream() メソッドは OffscreenCanvas にはないようなので HTMLCanvasElement を使用する
     const width = track.getSettings().width || 0;
     const height = track.getSettings().height || 0;
+
     this.canvas = document.createElement("canvas");
     this.canvas.width = width;
     this.canvas.height = height;
@@ -195,6 +202,15 @@ class RequestVideoFrameCallbackProcessor extends Processor {
       throw Error("Failed to create 2D canvas context");
     }
     this.canvasCtx = canvasCtx;
+
+    this.tmpCanvas = document.createElement("canvas");
+    this.tmpCanvas.width = width;
+    this.tmpCanvas.height = height;
+    const tmpCanvasCtx = this.tmpCanvas.getContext("2d");
+    if (tmpCanvasCtx === null) {
+      throw Error("Failed to create 2D canvas context");
+    }
+    this.tmpCanvasCtx = tmpCanvasCtx;
   }
 
   static isSupported(): boolean {
@@ -222,9 +238,10 @@ class RequestVideoFrameCallbackProcessor extends Processor {
   private async onFrame() {
     const { videoWidth: width, videoHeight: height } = this.video;
     resizeCanvasIfNeed(width, height, this.canvas);
+    resizeCanvasIfNeed(width, height, this.tmpCanvas);
 
-    this.canvasCtx.drawImage(this.video, 0, 0);
-    const image = this.canvasCtx.getImageData(0, 0, width, height);
+    this.tmpCanvasCtx.drawImage(this.video, 0, 0);
+    const image = this.tmpCanvasCtx.getImageData(0, 0, width, height);
     const processedImage = await this.callback(image);
     this.canvasCtx.putImageData(processedImage, 0, 0);
 
