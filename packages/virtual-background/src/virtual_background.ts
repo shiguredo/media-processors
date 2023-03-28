@@ -153,11 +153,8 @@ class VirtualBackgroundProcessor {
     track: MediaStreamVideoTrack,
     options: VirtualBackgroundProcessorOptions = {}
   ): Promise<MediaStreamVideoTrack> {
-    const width = track.getSettings().width;
-    const height = track.getSettings().height;
-    if (width === undefined || height === undefined) {
-      throw Error(`Could not retrieve the resolution of the video track: {track}`);
-    }
+    const width = track.getSettings().width || 0;
+    const height = track.getSettings().height || 0;
     const canvas = createOffscreenCanvas(width, height);
     const canvasCtx = canvas.getContext("2d", {
       desynchronized: true,

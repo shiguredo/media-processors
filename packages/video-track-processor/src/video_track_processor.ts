@@ -97,10 +97,8 @@ class BreakoutBoxProcessor extends Processor {
     this.processor = new MediaStreamTrackProcessor({ track: this.track });
 
     // 作業用キャンバスを作成
-    const { width, height } = track.getSettings();
-    if (width === undefined || height === undefined) {
-      throw Error(`Could not retrieve the resolution of the video track: {track}`);
-    }
+    const width = track.getSettings().width || 0;
+    const height = track.getSettings().height || 0;
 
     this.canvas = new OffscreenCanvas(width, height);
     const canvasCtx = this.canvas.getContext("2d", { desynchronized: true, willReadFrequently: true });
@@ -187,11 +185,8 @@ class RequestVideoFrameCallbackProcessor extends Processor {
     // 処理後の映像フレームを書き込むための canvas を生成する
     //
     // captureStream() メソッドは OffscreenCanvas にはないようなので HTMLCanvasElement を使用する
-    const width = track.getSettings().width;
-    const height = track.getSettings().height;
-    if (width === undefined || height === undefined) {
-      throw Error(`Could not retrieve the resolution of the video track: {track}`);
-    }
+    const width = track.getSettings().width || 0;
+    const height = track.getSettings().height || 0;
     this.canvas = document.createElement("canvas");
     this.canvas.width = width;
     this.canvas.height = height;
