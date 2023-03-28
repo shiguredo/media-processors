@@ -153,9 +153,9 @@ class VirtualBackgroundProcessor {
     track: MediaStreamVideoTrack,
     options: VirtualBackgroundProcessorOptions = {}
   ): Promise<MediaStreamVideoTrack> {
-    const width = track.getSettings().width || 0;
-    const height = track.getSettings().height || 0;
-    const canvas = createOffscreenCanvas(width, height);
+    const initialWidth = track.getSettings().width || 0;
+    const initialHeight = track.getSettings().height || 0;    
+    const canvas = createOffscreenCanvas(initialWidth, initialHeight);
     const canvasCtx = canvas.getContext("2d", {
       desynchronized: true,
       willReadFrequently: true,
@@ -169,7 +169,7 @@ class VirtualBackgroundProcessor {
     // TODO(sile): Safari が filter に対応したらこの分岐は削除する
     let blurCanvasCtx: OffscreenCanvasRenderingContext2D | undefined;
     if (options.blurRadius !== undefined && browser() === "safari") {
-      const ctx = createOffscreenCanvas(width, height).getContext("2d", {
+      const ctx = createOffscreenCanvas(initialWidth, initialHeight).getContext("2d", {
         desynchronized: true,
         willReadFrequently: true,
       });
@@ -187,6 +187,7 @@ class VirtualBackgroundProcessor {
     }
     this.segmentation.setOptions({ modelSelection });
     this.segmentation.onResults((results) => {
+      const {width, height} = results.segmentationMask;
       resizeCanvasIfNeed(width, height, canvas);
       if (blurCanvasCtx !== undefined) {
         resizeCanvasIfNeed(width, height, blurCanvasCtx.canvas);
