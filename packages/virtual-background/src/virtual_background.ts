@@ -154,7 +154,7 @@ class VirtualBackgroundProcessor {
     options: VirtualBackgroundProcessorOptions = {}
   ): Promise<MediaStreamVideoTrack> {
     const initialWidth = track.getSettings().width || 0;
-    const initialHeight = track.getSettings().height || 0;    
+    const initialHeight = track.getSettings().height || 0;
     const canvas = createOffscreenCanvas(initialWidth, initialHeight);
     const canvasCtx = canvas.getContext("2d", {
       desynchronized: true,
@@ -187,7 +187,7 @@ class VirtualBackgroundProcessor {
     }
     this.segmentation.setOptions({ modelSelection });
     this.segmentation.onResults((results) => {
-      const {width, height} = results.segmentationMask;
+      const { width, height } = results.segmentationMask;
       resizeCanvasIfNeed(width, height, canvas);
       if (blurCanvasCtx !== undefined) {
         resizeCanvasIfNeed(width, height, blurCanvasCtx.canvas);
