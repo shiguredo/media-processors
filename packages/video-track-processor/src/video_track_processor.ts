@@ -177,7 +177,7 @@ class RequestVideoFrameCallbackProcessor extends Processor {
   // 処理途中の作業用キャンバス
   private tmpCanvas: HTMLCanvasElement;
   private tmpCanvasCtx: CanvasRenderingContext2D;
-  
+
   constructor(track: MediaStreamVideoTrack, callback: ProcessImageDataCallback) {
     super(track, callback);
 
