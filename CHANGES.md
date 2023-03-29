@@ -11,9 +11,13 @@
 
 ## develop
 
-- [UPDATE] 映像処理用の共通部分を @shiguredo/virtual-background から @shiguredo/video-track-processor として切り出す
-    - Breakout Box と Safari の requestVideoFrameCallback を抽象化した汎用的な部分を切り出して、他の映像処理パッケージからも使えるようにする
-    - npm には公開せず、このリポジトリの内部からのみ参照される想定
+## virtual-background-2023.1.0
+
+- [UPDATE] 複数の映像プロセッサを併用できるようにする
+    - 現状では Chrome / Edge のみで対応
+    - @sile
+- [UPDATE] 映像トラック処理の共通部分を @shiguredo/video-track-processor として分離する
+    - Chrome / Edge 用の Breakout Box と Safari 用の requestVideoFrameCallback を抽象化した汎用的な部分を切り出して、他の映像処理パッケージからも使えるようにする
     - @sile
 
 ## light-adjustment-2023.2.0
