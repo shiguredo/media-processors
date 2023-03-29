@@ -171,12 +171,12 @@ class RequestVideoFrameCallbackProcessor extends Processor {
   private requestVideoFrameCallbackHandle?: number;
 
   // 処理結果画像を書き込むキャンバス
-  private canvas: HTMLCanvasElement;
-  private canvasCtx: CanvasRenderingContext2D;
+  private canvas: OffscreenCanvas;
+  private canvasCtx: OffscreenCanvasRenderingContext2D;
 
   // 処理途中の作業用キャンバス
-  private tmpCanvas: HTMLCanvasElement;
-  private tmpCanvasCtx: CanvasRenderingContext2D;
+  private tmpCanvas: OffscreenCanvas;
+  private tmpCanvasCtx: OffscreenCanvasRenderingContext2D;
 
   constructor(track: MediaStreamVideoTrack, callback: ProcessImageDataCallback) {
     super(track, callback);
@@ -189,23 +189,16 @@ class RequestVideoFrameCallbackProcessor extends Processor {
     this.video.srcObject = new MediaStream([track]);
 
     // 処理後の映像フレームを書き込むための canvas を生成する
-    //
-    // captureStream() メソッドは OffscreenCanvas にはないようなので HTMLCanvasElement を使用する
     const width = track.getSettings().width || 0;
     const height = track.getSettings().height || 0;
-
-    this.canvas = document.createElement("canvas");
-    this.canvas.width = width;
-    this.canvas.height = height;
+    this.canvas = createOffscreenCanvas(width, height) as OffscreenCanvas;
     const canvasCtx = this.canvas.getContext("2d");
     if (canvasCtx === null) {
       throw Error("Failed to create 2D canvas context");
     }
     this.canvasCtx = canvasCtx;
 
-    this.tmpCanvas = document.createElement("canvas");
-    this.tmpCanvas.width = width;
-    this.tmpCanvas.height = height;
+    this.tmpCanvas = createOffscreenCanvas(width, height) as OffscreenCanvas;
     const tmpCanvasCtx = this.tmpCanvas.getContext("2d");
     if (tmpCanvasCtx === null) {
       throw Error("Failed to create 2D canvas context");
@@ -250,6 +243,19 @@ class RequestVideoFrameCallbackProcessor extends Processor {
     this.requestVideoFrameCallbackHandle = this.video.requestVideoFrameCallback(() => {
       this.onFrame().catch((e) => console.warn("Error: ", e));
     });
+  }
+}
+
+// TODO(sile): Safari 16.4 から OffscreenCanvas に対応したので、そのうちにこの関数は削除する
+function createOffscreenCanvas(width: number, height: number): OffscreenCanvas | HTMLCanvasElement {
+  if (typeof OffscreenCanvas === "undefined") {
+    // OffscreenCanvas が使えない場合には通常の canvas で代替する
+    const canvas = document.createElement("canvas");
+    canvas.width = width;
+    canvas.height = height;
+    return canvas;
+  } else {
+    return new OffscreenCanvas(width, height);
   }
 }
 

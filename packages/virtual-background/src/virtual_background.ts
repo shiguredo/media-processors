@@ -326,6 +326,7 @@ function trimLastSlash(s: string): string {
   return s;
 }
 
+// TODO(sile): Safari 16.4 から OffscreenCanvas に対応したので、そのうちにこの関数は削除する
 function createOffscreenCanvas(width: number, height: number): OffscreenCanvas | HTMLCanvasElement {
   if (typeof OffscreenCanvas === "undefined") {
     // OffscreenCanvas が使えない場合には通常の canvas で代替する
