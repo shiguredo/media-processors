@@ -16,6 +16,12 @@
     - npm には公開せず、このリポジトリの内部からのみ参照される想定
     - @sile
 
+## light-adjustment-2023.2.0
+
+- [UPDATE] 複数の映像プロセッサを併用できるようにする
+    - 現状では Chrome / Edge のみで対応
+    - @sile
+
 ## light-adjustment-2023.1.0
 
 **初リリース**
