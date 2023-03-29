@@ -325,10 +325,8 @@ class WasmLightAdjustment {
     this.wasm = wasm;
     this.memory = wasm.exports.memory as WebAssembly.Memory;
 
-    const { width, height } = track.getSettings();
-    if (width === undefined || height === undefined) {
-      throw new Error("Failed to get video track resolution");
-    }
+    const width = track.getSettings().width || 0;
+    const height = track.getSettings().height || 0;
     this.imageWidth = width;
     this.imageHeight = height;
 

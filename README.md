@@ -2,7 +2,7 @@
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
-仮想背景やノイズ抑制といったメディア処理をブラウザで簡単に行えるようにするためのライブラリです。
+仮想背景やノイズ抑制、ライト調整といったメディア処理をブラウザで簡単に行えるようにするためのライブラリです。
 
 ## About Shiguredo's open source software
 
@@ -23,11 +23,13 @@ Please read https://github.com/shiguredo/oss/blob/master/README.en.md before use
 
 - [仮想背景 / 背景ぼかし](https://github.com/shiguredo/media-processors/tree/develop/packages/virtual-background)
 - [ノイズ抑制](https://github.com/shiguredo/media-processors/tree/develop/packages/noise-suppression)
+- [ライト調整](https://github.com/shiguredo/media-processors/tree/develop/packages/light-adjustment)
 
 ## npm
 
 - [@shiguredo/virtual\-background \- npm](https://www.npmjs.com/package/@shiguredo/virtual-background)
 - [@shiguredo/noise\-suppression \- npm](https://www.npmjs.com/package/@shiguredo/noise-suppression)
+- [@shiguredo/light\-adjustment \- npm](https://www.npmjs.com/package/@shiguredo/light-adjustment)
 
 ## サンプル
 
@@ -35,6 +37,7 @@ GitHub Pages にサンプルを用意しています。完全にクライアン�
 
 - [仮想背景 / 背景ぼかし](https://shiguredo.github.io/media-processors/examples/virtual-background.html)
 - [ノイズ抑制](https://shiguredo.github.io/media-processors/examples/noise-suppression.html)
+- [ライト調整](https://shiguredo.github.io/media-processors/examples/light-adjustment)
 
 ## 優先実装
 
@@ -45,9 +48,6 @@ GitHub Pages にサンプルを用意しています。完全にクライアン�
 **詳細は Discord やメールなどでお気軽にお問い合わせください**
 
 - フェイスフレーミング
-- 露出補正
-- ホワイトバランス編集
-- エコーキャンセル
 
 すでに存在するライブラリや仕組みを利用する前提となります。
 
@@ -72,8 +72,8 @@ Discord へお願いします。
 [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0)
 
 ```
-Copyright 2022-2022, Takeru Ohta (Original Author)
-Copyright 2022-2022, Shiguredo Inc.
+Copyright 2022-2023, Takeru Ohta (Original Author)
+Copyright 2022-2023, Shiguredo Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
