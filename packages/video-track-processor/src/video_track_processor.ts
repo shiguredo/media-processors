@@ -171,8 +171,8 @@ class RequestVideoFrameCallbackProcessor extends Processor {
   private requestVideoFrameCallbackHandle?: number;
 
   // 処理結果画像を書き込むキャンバス
-  private canvas: OffscreenCanvas;
-  private canvasCtx: OffscreenCanvasRenderingContext2D;
+  private canvas: HTMLCanvasElement;
+  private canvasCtx: CanvasRenderingContext2D;
 
   // 処理途中の作業用キャンバス
   private tmpCanvas: OffscreenCanvas;
@@ -189,15 +189,19 @@ class RequestVideoFrameCallbackProcessor extends Processor {
     this.video.srcObject = new MediaStream([track]);
 
     // 処理後の映像フレームを書き込むための canvas を生成する
+    // captureStream() を使いたいので OffscreenCanvas にはできない
     const width = track.getSettings().width || 0;
     const height = track.getSettings().height || 0;
-    this.canvas = createOffscreenCanvas(width, height) as OffscreenCanvas;
+    this.canvas = document.createElement("canvas");
+    this.canvas.width = width;
+    this.canvas.height = height;
     const canvasCtx = this.canvas.getContext("2d");
     if (canvasCtx === null) {
       throw Error("Failed to create 2D canvas context");
     }
     this.canvasCtx = canvasCtx;
 
+    // 作業用キャンバスを生成する
     this.tmpCanvas = createOffscreenCanvas(width, height) as OffscreenCanvas;
     const tmpCanvasCtx = this.tmpCanvas.getContext("2d");
     if (tmpCanvasCtx === null) {
