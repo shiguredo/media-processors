@@ -1,0 +1,42 @@
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Media Processors: ライト調整 + 仮想背景</title>
+  </head>
+  <body>
+    <h1>Media Processors: ライト調整 + 仮想背景</h1>
+
+    <h2>左: 処理後の映像、右: オリジナル映像</h2>    
+    <video id="processedVideo" muted autoplay playsinline></video>
+    <video id="originalVideo" muted autoplay playsinline></video>
+
+    <script src="./light-adjustment/light_adjustment.js"></script>
+    <script src="./virtual-background/virtual_background.js"></script>
+    <script>
+      if (!Shiguredo.VirtualBackgroundProcessor.isSupported() || !Shiguredo.LightAdjustmentProcessor.isSupported()) {
+        alert("Unsupported platform");
+        throw Error("Unsupported platform");
+      }
+
+      function getUserMedia() {
+        const constraints = {
+          width: 320,
+          height: 240,
+        };
+        return navigator.mediaDevices.getUserMedia({video: constraints});
+      }
+
+      getUserMedia().then(async (stream) => {
+        const lightAdjustmentProcessor = new Shiguredo.LightAdjustmentProcessor();
+        const virtualBackgroundProcessor = new Shiguredo.VirtualBackgroundProcessor("./virtual-background/");
+
+        const originalTrack = stream.getVideoTracks()[0];
+        const processedTrack0 = await lightAdjustmentProcessor.startProcessing(originalTrack);
+        const processedTrack1 = await virtualBackgroundProcessor.startProcessing(processedTrack0, {blurRadius: 5});
+
+        document.getElementById("originalVideo").srcObject = new MediaStream([originalTrack]);
+        document.getElementById("processedVideo").srcObject = new MediaStream([processedTrack1]);
+      });
+    </script>
+  </body>
+</html>

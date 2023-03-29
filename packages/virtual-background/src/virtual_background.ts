@@ -153,12 +153,9 @@ class VirtualBackgroundProcessor {
     track: MediaStreamVideoTrack,
     options: VirtualBackgroundProcessorOptions = {}
   ): Promise<MediaStreamVideoTrack> {
-    const width = track.getSettings().width;
-    const height = track.getSettings().height;
-    if (width === undefined || height === undefined) {
-      throw Error(`Could not retrieve the resolution of the video track: {track}`);
-    }
-    const canvas = createOffscreenCanvas(width, height);
+    const initialWidth = track.getSettings().width || 0;
+    const initialHeight = track.getSettings().height || 0;
+    const canvas = createOffscreenCanvas(initialWidth, initialHeight);
     const canvasCtx = canvas.getContext("2d", {
       desynchronized: true,
       willReadFrequently: true,
@@ -172,7 +169,7 @@ class VirtualBackgroundProcessor {
     // TODO(sile): Safari が filter に対応したらこの分岐は削除する
     let blurCanvasCtx: OffscreenCanvasRenderingContext2D | undefined;
     if (options.blurRadius !== undefined && browser() === "safari") {
-      const ctx = createOffscreenCanvas(width, height).getContext("2d", {
+      const ctx = createOffscreenCanvas(initialWidth, initialHeight).getContext("2d", {
         desynchronized: true,
         willReadFrequently: true,
       });
@@ -190,6 +187,7 @@ class VirtualBackgroundProcessor {
     }
     this.segmentation.setOptions({ modelSelection });
     this.segmentation.onResults((results) => {
+      const { width, height } = results.segmentationMask;
       resizeCanvasIfNeed(width, height, canvas);
       if (blurCanvasCtx !== undefined) {
         resizeCanvasIfNeed(width, height, blurCanvasCtx.canvas);
@@ -328,6 +326,7 @@ function trimLastSlash(s: string): string {
   return s;
 }
 
+// TODO(sile): Safari 16.4 から OffscreenCanvas に対応したので、そのうちにこの関数は削除する
 function createOffscreenCanvas(width: number, height: number): OffscreenCanvas | HTMLCanvasElement {
   if (typeof OffscreenCanvas === "undefined") {
     // OffscreenCanvas が使えない場合には通常の canvas で代替する
