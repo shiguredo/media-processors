@@ -8,7 +8,8 @@
 
     <h3>入力設定</h3>
     解像度: <input id="videoWidth" type="text" value="640">x<input id="videoHeight" type="text" value="360"><br />
-    FPS: <input id="videoFps" type="text" value="15">
+    FPS: <input id="videoFps" type="text" value="15"><br />
+    入力カメラデバイス: <select id="videoDevice" size="1"><option>未指定</option></select>
 
     <h3>仮想背景設定</h3>
     <select id="virtualBackgroundType" size="3">
@@ -39,8 +40,31 @@
               width: document.getElementById("videoWidth").value,
               height: document.getElementById("videoHeight").value,
               frameRate: {ideal: document.getElementById("videoFps").value},
+              deviceId: document.getElementById("videoDevice").value,
           };
-          return navigator.mediaDevices.getUserMedia({video: constraints});
+          return navigator.mediaDevices.getUserMedia({video: constraints}).then((result) => {
+              updateDeviceList();
+              return result;
+          });
+      }
+
+      let isFirst = true;
+      function updateDeviceList() {
+          if (!isFirst) {
+              return;
+          }
+          isFirst = false;
+
+          navigator.mediaDevices.enumerateDevices().then((devices) => {
+              const videoDevices = devices.filter((device) => device.kind === "videoinput" && device.label);
+              const select = document.getElementById("videoDevice");
+              videoDevices.forEach((device) => {
+                  const option = document.createElement("option");
+                  option.value = device.deviceId;
+                  option.text = device.label;
+                  select.appendChild(option);
+              });
+          });
       }
 
       function showOriginalVideo() {
