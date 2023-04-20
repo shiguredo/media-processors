@@ -1,10 +1,26 @@
 import { VideoTrackProcessor } from "@shiguredo/video-track-processor";
+import { FilesetResolver, ImageSegmenter } from "@mediapipe/tasks-vision";
 import {
   SelfieSegmentation,
   SelfieSegmentationConfig,
   Results as SelfieSegmentationResults,
 } from "@mediapipe/selfie_segmentation";
 import * as StackBlur from "stackblur-canvas";
+
+async function createImageSegmenter() {
+  const vision = await FilesetResolver.forVisionTasks(
+    "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@latest/wasm"
+  );
+
+  return await ImageSegmenter.createFromOptions(vision, {
+    baseOptions: {
+      modelAssetPath: "https://storage.googleapis.com/mediapipe-assets/deeplabv3.tflite?generation=1661875711618421",
+    },
+    outputConfidenceMasks: false,
+    outputCategoryMask: true,
+    runningMode: "VIDEO",
+  });
+}
 
 /**
  * {@link VirtualBackgroundProcessor.startProcessing} メソッドに指定可能なオプション
@@ -186,21 +202,56 @@ class VirtualBackgroundProcessor {
       modelSelection = 0;
     }
     this.segmentation.setOptions({ modelSelection });
-    this.segmentation.onResults((results) => {
-      const { width, height } = results.segmentationMask;
-      resizeCanvasIfNeed(width, height, canvas);
-      if (blurCanvasCtx !== undefined) {
-        resizeCanvasIfNeed(width, height, blurCanvasCtx.canvas);
-      }
-      this.updateOffscreenCanvas(results, canvasCtx, blurCanvasCtx, options);
-    });
+    // this.segmentation.onResults((results) => {
+    //   const { width, height } = results.segmentationMask;
+    //   resizeCanvasIfNeed(width, height, canvas);
+    //   if (blurCanvasCtx !== undefined) {
+    //     resizeCanvasIfNeed(width, height, blurCanvasCtx.canvas);
+    //   }
+    //   this.updateOffscreenCanvas(results, canvasCtx, blurCanvasCtx, options);
+    // });
+
+    const imageSegmentation = await createImageSegmenter();
+    console.log(imageSegmentation.getLabels());
+    const personIndex = imageSegmentation.getLabels().indexOf("person");
 
     // 仮想背景処理を開始
     return this.trackProcessor.startProcessing(track, async (image: ImageData) => {
       const { width, height } = image;
+      resizeCanvasIfNeed(width, height, canvas);
+      if (blurCanvasCtx !== undefined) {
+        resizeCanvasIfNeed(width, height, blurCanvasCtx.canvas);
+      }
+
+      const startTimeMs = performance.now();
+      let categoryMask: Uint8Array | WebGLTexture | undefined;
+      imageSegmentation.segmentForVideo(image, startTimeMs, (result) => {
+        categoryMask = result.categoryMask;
+      });
+
+      if (categoryMask === undefined) {
+        /// ここには来ないはずだけど、型チェックを通すために条件分岐を入れておく
+        throw new Error("TODO");
+      }
+
+      if (categoryMask instanceof WebGLTexture) {
+        throw new Error("TODO");
+      }
+
+      const maskBuffer = new Uint8ClampedArray(width * height * 4);
+      for (let i = 0; i < categoryMask.length; i++) {
+        if (categoryMask[i] == personIndex) {
+          maskBuffer[i * 4 + 0] = 255;
+          maskBuffer[i * 4 + 3] = 255;
+        } else {
+          maskBuffer[i * 4 + 3] = 0;
+        }
+      }
+      const segmentationMask = new ImageData(maskBuffer, width, height);
+      await this.updateOffscreenCanvas(image, segmentationMask, canvasCtx, blurCanvasCtx, options);
 
       // @ts-ignore TS2322: 「`image`の型が合っていない」と怒られるけれど、動作はするので一旦無視
-      await this.segmentation.send({ image });
+      //await this.segmentation.send({ image });
 
       return canvasCtx.getImageData(0, 0, width, height);
     });
@@ -254,20 +305,23 @@ class VirtualBackgroundProcessor {
     return this.trackProcessor.getProcessedTrack();
   }
 
-  private updateOffscreenCanvas(
-    segmentationResults: SelfieSegmentationResults,
+  private async updateOffscreenCanvas(
+    image: ImageData,
+    segmentationMask: ImageData,
     canvasCtx: OffscreenCanvasRenderingContext2D,
     blurCanvasCtx: OffscreenCanvasRenderingContext2D | undefined,
     options: VirtualBackgroundProcessorOptions
   ) {
-    const { width, height } = segmentationResults.image;
+    const { width, height } = image;
 
     canvasCtx.save();
     canvasCtx.clearRect(0, 0, width, height);
-    canvasCtx.drawImage(segmentationResults.segmentationMask, 0, 0, width, height);
+    canvasCtx.drawImage(await createImageBitmap(segmentationMask), 0, 0, width, height);
+    //canvasCtx.putImageData(segmentationMask, 0, 0);
 
     canvasCtx.globalCompositeOperation = "source-in";
-    canvasCtx.drawImage(segmentationResults.image, 0, 0, width, height);
+    canvasCtx.drawImage(await createImageBitmap(image), 0, 0, width, height);
+    //canvasCtx.putImageData(image, 0, 0);
 
     // NOTE: mediapipeの例 (https://google.github.io/mediapipe/solutions/selfie_segmentation.html) では、
     //       "destination-atop"が使われているけれど、背景画像にアルファチャンネルが含まれている場合には、
@@ -299,7 +353,8 @@ class VirtualBackgroundProcessor {
         height
       );
     } else {
-      tmpCanvasCtx.drawImage(segmentationResults.image, 0, 0);
+      tmpCanvasCtx.drawImage(await createImageBitmap(image), 0, 0, width, height);
+      //tmpCanvasCtx.putImageData(image, 0, 0);
     }
 
     if (blurCanvasCtx !== undefined) {
