@@ -38,7 +38,7 @@
     "eslint-config-prettier": "8.8.0",
     "eslint-plugin-prettier": "4.2.1",
     "rollup": "3.21.2",
-    "typedoc": "0.24.5",
+    "typedoc": "0.24.6",
     "typescript": "5.0.4"
   }
 }
