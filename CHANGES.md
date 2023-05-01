@@ -11,6 +11,9 @@
 
 ## develop
 
+- [UPDATE] GitHub Actions に Node 20 を追加
+    - @voluntas
+
 ## virtual-background-2023.1.0
 
 - [UPDATE] 複数の映像プロセッサを併用できるようにする
