@@ -32,7 +32,7 @@
   },
   "devDependencies": {
     "@rollup/plugin-commonjs": "25.0.0",
-    "@rollup/plugin-node-resolve": "15.0.2",
+    "@rollup/plugin-node-resolve": "15.1.0",
     "@rollup/plugin-typescript": "11.1.1",
     "@shiguredo/rnnoise-wasm": "2022.2.0",
     "@typescript-eslint/eslint-plugin": "5.59.8",
@@ -40,7 +40,7 @@
     "eslint": "8.42.0",
     "eslint-config-prettier": "8.8.0",
     "eslint-plugin-prettier": "4.2.1",
-    "rollup": "3.23.0",
+    "rollup": "3.23.1",
     "rollup-plugin-copy": "3.4.0",
     "typedoc": "0.24.7",
     "typescript": "5.0.4"
