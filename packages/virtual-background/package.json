@@ -45,7 +45,7 @@
     "rollup": "3.23.1",
     "rollup-plugin-copy": "3.4.0",
     "stackblur-canvas": "2.6.0",
-    "typedoc": "0.24.8",
+    "typedoc": "0.24.7",
     "typescript": "5.0.4"
   }
 }
