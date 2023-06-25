@@ -289,10 +289,10 @@ const Pdf = struct {
 
         var table: [256]f32 = undefined;
         if (total > 0) {
-            const n = @intToFloat(f32, total);
+            const n = @floatFromInt(f32, total);
 
             for (histogram, 0..) |weight, i| {
-                table[i] = @intToFloat(f32, weight) / n;
+                table[i] = @floatFromInt(f32, weight) / n;
             }
         }
 
@@ -352,15 +352,15 @@ const Cdf = struct {
 
     fn toIntensityMappingCurve(self: *const Self, options: *const LightAdjustmentOptions) [256]u8 {
         var curve: [256]u8 = undefined;
-        const min: f32 = @intToFloat(f32, options.min_intensity);
-        const max: f32 = @intToFloat(f32, options.max_intensity);
+        const min: f32 = @floatFromInt(f32, options.min_intensity);
+        const max: f32 = @floatFromInt(f32, options.max_intensity);
         const range: f32 = @max(0.0, max - min);
-        const ratio = @intToFloat(f32, options.adjustment_level) / 100.0;
+        const ratio = @floatFromInt(f32, options.adjustment_level) / 100.0;
 
         for (self.table, 0..) |gamma, i| {
-            const v0: f32 = @intToFloat(f32, i);
+            const v0: f32 = @floatFromInt(f32, i);
             const v1: f32 = range * math.pow(f32, v0 / 255.0, 1.0 - gamma) + min;
-            curve[i] = @floatToInt(u8, math.round(v0 * (1.0 - ratio) + v1 * ratio));
+            curve[i] = @intFromFloat(u8, math.round(v0 * (1.0 - ratio) + v1 * ratio));
         }
         return curve;
     }
