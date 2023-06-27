@@ -1,8 +1,20 @@
 // [NOTE]
 // ImageData ではなく ImageBitmap の方が効率的な可能性はあるが
 // https://bugs.chromium.org/p/chromium/issues/detail?id=961777 のように特定条件下で処理後の結果が
-// 不正なものになる現象が確認できているので安全のために ImageData にしている
+// 不正なものになる現象が確認できているので安全のために ImageData にしていたが、
+// CanvasからImageDataを作成する処理がGPU-CPU間のコピーになり重いため、Canvas/ImageDataの両対応にする
 type ProcessImageDataCallback = (image: ImageData) => Promise<ImageData>;
+type ProcessCanvasCallback = (image: ImageBitmap | HTMLVideoElement) => Promise<HTMLCanvasElement | OffscreenCanvas>;
+
+type StartProcessingParams = {
+  track: MediaStreamVideoTrack;
+  imageDataCallback: ProcessImageDataCallback;
+  canvasCallback: undefined;
+} | {
+  track: MediaStreamVideoTrack;
+  imageDataCallback: undefined;
+  canvasCallback: ProcessCanvasCallback;
+}
 
 /**
  * 映像トラックの各フレームの変換処理を行いやすくするためのユーティリティクラス
@@ -23,17 +35,16 @@ class VideoTrackProcessor {
   }
 
   async startProcessing(
-    track: MediaStreamVideoTrack,
-    callback: ProcessImageDataCallback
+    {track, imageDataCallback, canvasCallback}: StartProcessingParams
   ): Promise<MediaStreamVideoTrack> {
     if (this.isProcessing()) {
       throw Error("Video track processing has already started.");
     }
 
     if (BreakoutBoxProcessor.isSupported()) {
-      this.trackProcessor = new BreakoutBoxProcessor(track, callback);
+      this.trackProcessor = new BreakoutBoxProcessor(track, imageDataCallback, canvasCallback);
     } else if (RequestVideoFrameCallbackProcessor.isSupported()) {
-      this.trackProcessor = new RequestVideoFrameCallbackProcessor(track, callback);
+      this.trackProcessor = new RequestVideoFrameCallbackProcessor(track, imageDataCallback, canvasCallback);
     } else {
       throw Error("Unsupported browser");
     }
@@ -67,11 +78,13 @@ class VideoTrackProcessor {
 
 abstract class Processor {
   protected track: MediaStreamVideoTrack;
-  protected callback: ProcessImageDataCallback;
+  protected imageDataCallback?: ProcessImageDataCallback;
+  protected canvasCallback?: ProcessCanvasCallback;
 
-  constructor(track: MediaStreamVideoTrack, callback: ProcessImageDataCallback) {
+  constructor(track: MediaStreamVideoTrack, imageDataCallback?: ProcessImageDataCallback, canvasCallback?: ProcessCanvasCallback) {
     this.track = track;
-    this.callback = callback;
+    this.imageDataCallback = imageDataCallback;
+    this.canvasCallback = canvasCallback;
   }
 
   abstract startProcessing(): Promise<MediaStreamVideoTrack>;
@@ -86,8 +99,8 @@ class BreakoutBoxProcessor extends Processor {
   private canvas: OffscreenCanvas;
   private canvasCtx: OffscreenCanvasRenderingContext2D;
 
-  constructor(track: MediaStreamVideoTrack, callback: ProcessImageDataCallback) {
-    super(track, callback);
+  constructor(track: MediaStreamVideoTrack, imageDataCallback?: ProcessImageDataCallback, canvasCallback?: ProcessCanvasCallback) {
+    super(track, imageDataCallback, canvasCallback);
 
     // 処理を停止するための AbortController を初期化
     this.abortController = new AbortController();
@@ -118,15 +131,6 @@ class BreakoutBoxProcessor extends Processor {
       .pipeThrough(
         new TransformStream({
           transform: async (frame, controller) => {
-            const { displayWidth: width, displayHeight: height, timestamp, duration } = frame;
-            resizeCanvasIfNeed(width, height, this.canvas);
-
-            this.canvasCtx.drawImage(frame, 0, 0);
-            frame.close();
-            const image = this.canvasCtx.getImageData(0, 0, width, height);
-
-            const processedImage = await this.callback(image);
-
             if (this.generator.readyState === "ended") {
               // ジェネレータ（ユーザに渡している処理結果トラック）がクローズ済み。
               // この状態で `controller.enqueue()` を呼び出すとエラーが発生するのでスキップする。
@@ -137,9 +141,27 @@ class BreakoutBoxProcessor extends Processor {
               this.stopProcessing();
               return;
             }
+            const { displayWidth: width, displayHeight: height, timestamp, duration } = frame;
+            if (this.imageDataCallback !== undefined) {
+              resizeCanvasIfNeed(width, height, this.canvas);
 
-            const bitmap = await createImageBitmap(processedImage);
-            controller.enqueue(new VideoFrame(bitmap, { timestamp, duration } as VideoFrameInit));
+              this.canvasCtx.drawImage(frame, 0, 0);
+              frame.close();
+              const image = this.canvasCtx.getImageData(0, 0, width, height);
+              const processedImage = await this.imageDataCallback(image);
+
+
+              const bitmap = await createImageBitmap(processedImage);
+              controller.enqueue(new VideoFrame(bitmap, { timestamp, duration } as VideoFrameInit));
+            } else if (this.canvasCallback !== undefined) {
+              const image = await createImageBitmap(frame);
+              frame.close();
+              const processedImage = await this.canvasCallback(image);
+              image.close();
+              controller.enqueue(new VideoFrame(processedImage, {timestamp, duration} as VideoFrameInit));
+            } else {
+              throw new Error("No callback is set");
+            }
           },
         }),
         { signal }
@@ -178,8 +200,8 @@ class RequestVideoFrameCallbackProcessor extends Processor {
   private tmpCanvas: OffscreenCanvas;
   private tmpCanvasCtx: OffscreenCanvasRenderingContext2D;
 
-  constructor(track: MediaStreamVideoTrack, callback: ProcessImageDataCallback) {
-    super(track, callback);
+  constructor(track: MediaStreamVideoTrack, imageDataCallback?: ProcessImageDataCallback, canvasCallback?: ProcessCanvasCallback) {
+    super(track, imageDataCallback, canvasCallback);
 
     // requestVideoFrameCallbackHandle()` はトラックではなくビデオ単位のメソッドなので
     // 内部的に HTMLVideoElement を生成する
@@ -237,11 +259,17 @@ class RequestVideoFrameCallbackProcessor extends Processor {
     resizeCanvasIfNeed(width, height, this.canvas);
     resizeCanvasIfNeed(width, height, this.tmpCanvas);
 
-    this.tmpCanvasCtx.drawImage(this.video, 0, 0);
-    const image = this.tmpCanvasCtx.getImageData(0, 0, width, height);
-    const processedImage = await this.callback(image);
-    this.canvasCtx.putImageData(processedImage, 0, 0);
-
+    if (this.imageDataCallback !== undefined) {
+      this.tmpCanvasCtx.drawImage(this.video, 0, 0);
+      const image = this.tmpCanvasCtx.getImageData(0, 0, width, height);
+      const processedImage = await this.imageDataCallback(image);
+      this.canvasCtx.putImageData(processedImage, 0, 0);
+    } else if (this.canvasCallback !== undefined) {
+      const processedImage = await this.canvasCallback(this.video);
+      this.canvasCtx.drawImage(processedImage, 0, 0);
+    } else {
+      throw new Error("No callback is set");
+    }
     // @ts-ignore
     // eslint-disable-next-line
     this.requestVideoFrameCallbackHandle = this.video.requestVideoFrameCallback(() => {
