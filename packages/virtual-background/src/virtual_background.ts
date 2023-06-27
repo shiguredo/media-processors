@@ -158,7 +158,7 @@ class VirtualBackgroundProcessor {
     const canvas = createOffscreenCanvas(initialWidth, initialHeight);
     const canvasCtx = canvas.getContext("2d", {
       desynchronized: true,
-      willReadFrequently: false,
+      willReadFrequently: false, // ここをtrueにするとCPU-GPUメモリ転送が発生して遅くなる
     }) as OffscreenCanvasRenderingContext2D | null;
     if (canvasCtx === null) {
       throw Error("Failed to create 2D canvas context");
