@@ -196,12 +196,16 @@ class VirtualBackgroundProcessor {
     });
 
     // 仮想背景処理を開始
-    return this.trackProcessor.startProcessing({track, canvasCallback: async (image: ImageBitmap | HTMLVideoElement) => {
-      // @ts-ignore TS2322: 「`image`の型が合っていない」と怒られるけれど、動作はするので一旦無視
-      await this.segmentation.send({ image });
+    return this.trackProcessor.startProcessing({
+      track,
+      canvasCallback: async (image: ImageBitmap | HTMLVideoElement) => {
+        // @ts-ignore TS2322: 「`image`の型が合っていない」と怒られるけれど、動作はするので一旦無視
+        await this.segmentation.send({ image });
 
-      return canvas;
-    }, imageDataCallback: undefined});
+        return canvas;
+      },
+      imageDataCallback: undefined,
+    });
   }
 
   /**

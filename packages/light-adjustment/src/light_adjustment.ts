@@ -152,10 +152,14 @@ class LightAdjustmentProcessor {
     this.updateOptions(options);
 
     this.resetStats();
-    return this.trackProcessor.startProcessing({track, imageDataCallback: async (image: ImageData) => {
-      await this.processImage(image);
-      return image;
-    }, canvasCallback: undefined});
+    return this.trackProcessor.startProcessing({
+      track,
+      imageDataCallback: async (image: ImageData) => {
+        await this.processImage(image);
+        return image;
+      },
+      canvasCallback: undefined,
+    });
   }
 
   private async processImage(image: ImageData): Promise<void> {

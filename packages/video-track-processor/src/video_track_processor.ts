@@ -6,15 +6,17 @@
 type ProcessImageDataCallback = (image: ImageData) => Promise<ImageData>;
 type ProcessCanvasCallback = (image: ImageBitmap | HTMLVideoElement) => Promise<HTMLCanvasElement | OffscreenCanvas>;
 
-type StartProcessingParams = {
-  track: MediaStreamVideoTrack;
-  imageDataCallback: ProcessImageDataCallback;
-  canvasCallback: undefined;
-} | {
-  track: MediaStreamVideoTrack;
-  imageDataCallback: undefined;
-  canvasCallback: ProcessCanvasCallback;
-}
+type StartProcessingParams =
+  | {
+      track: MediaStreamVideoTrack;
+      imageDataCallback: ProcessImageDataCallback;
+      canvasCallback: undefined;
+    }
+  | {
+      track: MediaStreamVideoTrack;
+      imageDataCallback: undefined;
+      canvasCallback: ProcessCanvasCallback;
+    };
 
 /**
  * 映像トラックの各フレームの変換処理を行いやすくするためのユーティリティクラス
@@ -34,9 +36,11 @@ class VideoTrackProcessor {
     return BreakoutBoxProcessor.isSupported() || RequestVideoFrameCallbackProcessor.isSupported();
   }
 
-  async startProcessing(
-    {track, imageDataCallback, canvasCallback}: StartProcessingParams
-  ): Promise<MediaStreamVideoTrack> {
+  async startProcessing({
+    track,
+    imageDataCallback,
+    canvasCallback,
+  }: StartProcessingParams): Promise<MediaStreamVideoTrack> {
     if (this.isProcessing()) {
       throw Error("Video track processing has already started.");
     }
@@ -81,7 +85,11 @@ abstract class Processor {
   protected imageDataCallback?: ProcessImageDataCallback;
   protected canvasCallback?: ProcessCanvasCallback;
 
-  constructor(track: MediaStreamVideoTrack, imageDataCallback?: ProcessImageDataCallback, canvasCallback?: ProcessCanvasCallback) {
+  constructor(
+    track: MediaStreamVideoTrack,
+    imageDataCallback?: ProcessImageDataCallback,
+    canvasCallback?: ProcessCanvasCallback
+  ) {
     this.track = track;
     this.imageDataCallback = imageDataCallback;
     this.canvasCallback = canvasCallback;
@@ -99,7 +107,11 @@ class BreakoutBoxProcessor extends Processor {
   private canvas: OffscreenCanvas;
   private canvasCtx: OffscreenCanvasRenderingContext2D;
 
-  constructor(track: MediaStreamVideoTrack, imageDataCallback?: ProcessImageDataCallback, canvasCallback?: ProcessCanvasCallback) {
+  constructor(
+    track: MediaStreamVideoTrack,
+    imageDataCallback?: ProcessImageDataCallback,
+    canvasCallback?: ProcessCanvasCallback
+  ) {
     super(track, imageDataCallback, canvasCallback);
 
     // 処理を停止するための AbortController を初期化
@@ -150,7 +162,6 @@ class BreakoutBoxProcessor extends Processor {
               const image = this.canvasCtx.getImageData(0, 0, width, height);
               const processedImage = await this.imageDataCallback(image);
 
-
               const bitmap = await createImageBitmap(processedImage);
               controller.enqueue(new VideoFrame(bitmap, { timestamp, duration } as VideoFrameInit));
             } else if (this.canvasCallback !== undefined) {
@@ -158,7 +169,7 @@ class BreakoutBoxProcessor extends Processor {
               frame.close();
               const processedImage = await this.canvasCallback(image);
               image.close();
-              controller.enqueue(new VideoFrame(processedImage, {timestamp, duration} as VideoFrameInit));
+              controller.enqueue(new VideoFrame(processedImage, { timestamp, duration } as VideoFrameInit));
             } else {
               throw new Error("No callback is set");
             }
@@ -200,7 +211,11 @@ class RequestVideoFrameCallbackProcessor extends Processor {
   private tmpCanvas: OffscreenCanvas;
   private tmpCanvasCtx: OffscreenCanvasRenderingContext2D;
 
-  constructor(track: MediaStreamVideoTrack, imageDataCallback?: ProcessImageDataCallback, canvasCallback?: ProcessCanvasCallback) {
+  constructor(
+    track: MediaStreamVideoTrack,
+    imageDataCallback?: ProcessImageDataCallback,
+    canvasCallback?: ProcessCanvasCallback
+  ) {
     super(track, imageDataCallback, canvasCallback);
 
     // requestVideoFrameCallbackHandle()` はトラックではなくビデオ単位のメソッドなので
