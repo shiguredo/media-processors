@@ -59,12 +59,12 @@ export fn resize(ptr: *anyopaque, width: u32, height: u32) bool {
 
 export fn getImageData(ptr: *anyopaque) *u8 {
     const la = wasmPtrCast(*const LightAdjustment, ptr);
-    return @ptrCast(*u8, la.image.data.ptr);
+    return @as(*u8, @ptrCast(la.image.data.ptr));
 }
 
 export fn getFocusMaskData(ptr: *anyopaque) *u8 {
     const la = wasmPtrCast(*const LightAdjustment, ptr);
-    return @ptrCast(*u8, la.mask.data.ptr);
+    return @as(*u8, @ptrCast(la.mask.data.ptr));
 }
 
 // オプション設定系（バリデーションは TypeScript 側で行なっている前提）
@@ -99,5 +99,5 @@ export fn setEntropyThreshold(ptr: *anyopaque, threshold: f32) void {
 }
 
 fn wasmPtrCast(comptime t: type, ptr: *anyopaque) t {
-    return @ptrCast(t, @alignCast(@typeInfo(t).Pointer.alignment, ptr));
+    return @as(t, @ptrCast(@alignCast(ptr)));
 }
