@@ -142,23 +142,35 @@ class LightAdjustmentProcessor {
     track: MediaStreamVideoTrack,
     options: LightAdjustmentProcessorOptions = {}
   ): Promise<MediaStreamVideoTrack> {
+    const initialWidth = track.getSettings().width || 0;
+    const initialHeight = track.getSettings().height || 0;
+
+    const canvas = createOffscreenCanvas(initialWidth, initialHeight);
+    const canvasCtx = canvas.getContext("2d", {
+      desynchronized: true,
+      willReadFrequently: false, // ここをtrueにするとCPU-GPUメモリ転送が発生して遅くなる
+    }) as OffscreenCanvasRenderingContext2D | null;
+    if (canvasCtx === null) {
+      throw Error("Failed to create 2D canvas context");
+    }
+
     const wasmResults = await WebAssembly.instantiateStreaming(
       fetch("data:application/wasm;base64," + LIGHT_ADJUSTMENT_WASM),
       {}
     );
-
     this.wasm = new WasmLightAdjustment(wasmResults.instance, track);
     this.focusMask = new UniformFocusMask();
     this.updateOptions(options);
 
     this.resetStats();
-    return this.trackProcessor.startProcessing({
-      track,
-      imageDataCallback: async (image: ImageData) => {
-        await this.processImage(image);
-        return image;
-      },
-      canvasCallback: undefined,
+    return this.trackProcessor.startProcessing(track, async (image: ImageBitmap | HTMLVideoElement) => {
+      const { width, height } = image;
+      resizeCanvasIfNeed(width, height, canvas);
+      canvasCtx.drawImage(image, 0, 0);
+      const imageData = canvasCtx.getImageData(0, 0, width, height);
+      await this.processImage(imageData);
+      canvasCtx.putImageData(imageData, 0, 0);
+      return canvas;
     });
   }
 
@@ -576,6 +588,13 @@ function createOffscreenCanvas(width: number, height: number): OffscreenCanvas |
     return canvas;
   } else {
     return new OffscreenCanvas(width, height);
+  }
+}
+
+function resizeCanvasIfNeed(width: number, height: number, canvas: OffscreenCanvas | HTMLCanvasElement) {
+  if (canvas.width !== width || canvas.height !== height) {
+    canvas.width = width;
+    canvas.height = height;
   }
 }
 

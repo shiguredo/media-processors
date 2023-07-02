@@ -3,20 +3,7 @@
 // https://bugs.chromium.org/p/chromium/issues/detail?id=961777 のように特定条件下で処理後の結果が
 // 不正なものになる現象が確認できているので安全のために ImageData にしていたが、
 // CanvasからImageDataを作成する処理がGPU-CPU間のコピーになり重いため、Canvas/ImageDataの両対応にする
-type ProcessImageDataCallback = (image: ImageData) => Promise<ImageData>;
-type ProcessCanvasCallback = (image: ImageBitmap | HTMLVideoElement) => Promise<HTMLCanvasElement | OffscreenCanvas>;
-
-type StartProcessingParams =
-  | {
-      track: MediaStreamVideoTrack;
-      imageDataCallback: ProcessImageDataCallback;
-      canvasCallback: undefined;
-    }
-  | {
-      track: MediaStreamVideoTrack;
-      imageDataCallback: undefined;
-      canvasCallback: ProcessCanvasCallback;
-    };
+type ProcessImageCallback = (image: ImageBitmap | HTMLVideoElement) => Promise<HTMLCanvasElement | OffscreenCanvas>;
 
 /**
  * 映像トラックの各フレームの変換処理を行いやすくするためのユーティリティクラス
@@ -36,19 +23,15 @@ class VideoTrackProcessor {
     return BreakoutBoxProcessor.isSupported() || RequestVideoFrameCallbackProcessor.isSupported();
   }
 
-  async startProcessing({
-    track,
-    imageDataCallback,
-    canvasCallback,
-  }: StartProcessingParams): Promise<MediaStreamVideoTrack> {
+  async startProcessing(track: MediaStreamVideoTrack, callback: ProcessImageCallback): Promise<MediaStreamVideoTrack> {
     if (this.isProcessing()) {
       throw Error("Video track processing has already started.");
     }
 
     if (BreakoutBoxProcessor.isSupported()) {
-      this.trackProcessor = new BreakoutBoxProcessor(track, imageDataCallback, canvasCallback);
+      this.trackProcessor = new BreakoutBoxProcessor(track, callback);
     } else if (RequestVideoFrameCallbackProcessor.isSupported()) {
-      this.trackProcessor = new RequestVideoFrameCallbackProcessor(track, imageDataCallback, canvasCallback);
+      this.trackProcessor = new RequestVideoFrameCallbackProcessor(track, callback);
     } else {
       throw Error("Unsupported browser");
     }
@@ -82,17 +65,11 @@ class VideoTrackProcessor {
 
 abstract class Processor {
   protected track: MediaStreamVideoTrack;
-  protected imageDataCallback?: ProcessImageDataCallback;
-  protected canvasCallback?: ProcessCanvasCallback;
+  protected callback: ProcessImageCallback;
 
-  constructor(
-    track: MediaStreamVideoTrack,
-    imageDataCallback?: ProcessImageDataCallback,
-    canvasCallback?: ProcessCanvasCallback
-  ) {
+  constructor(track: MediaStreamVideoTrack, callback: ProcessImageCallback) {
     this.track = track;
-    this.imageDataCallback = imageDataCallback;
-    this.canvasCallback = canvasCallback;
+    this.callback = callback;
   }
 
   abstract startProcessing(): Promise<MediaStreamVideoTrack>;
@@ -107,12 +84,8 @@ class BreakoutBoxProcessor extends Processor {
   private canvas: OffscreenCanvas;
   private canvasCtx: OffscreenCanvasRenderingContext2D;
 
-  constructor(
-    track: MediaStreamVideoTrack,
-    imageDataCallback?: ProcessImageDataCallback,
-    canvasCallback?: ProcessCanvasCallback
-  ) {
-    super(track, imageDataCallback, canvasCallback);
+  constructor(track: MediaStreamVideoTrack, callback: ProcessImageCallback) {
+    super(track, callback);
 
     // 処理を停止するための AbortController を初期化
     this.abortController = new AbortController();
@@ -153,26 +126,13 @@ class BreakoutBoxProcessor extends Processor {
               this.stopProcessing();
               return;
             }
-            const { displayWidth: width, displayHeight: height, timestamp, duration } = frame;
-            if (this.imageDataCallback !== undefined) {
-              resizeCanvasIfNeed(width, height, this.canvas);
-
-              this.canvasCtx.drawImage(frame, 0, 0);
-              frame.close();
-              const image = this.canvasCtx.getImageData(0, 0, width, height);
-              const processedImage = await this.imageDataCallback(image);
-
-              const bitmap = await createImageBitmap(processedImage);
-              controller.enqueue(new VideoFrame(bitmap, { timestamp, duration } as VideoFrameInit));
-            } else if (this.canvasCallback !== undefined) {
-              const image = await createImageBitmap(frame);
-              frame.close();
-              const processedImage = await this.canvasCallback(image);
-              image.close();
-              controller.enqueue(new VideoFrame(processedImage, { timestamp, duration } as VideoFrameInit));
-            } else {
-              throw new Error("No callback is set");
-            }
+            const { timestamp, duration } = frame;
+            // HTMLVideoElementと等価に扱いつつ、mediapipeに渡す際のパフォーマンスが良いのでImageBitmapを使う。
+            const image = await createImageBitmap(frame);
+            frame.close();
+            const processedImageCanvas = await this.callback(image);
+            image.close();
+            controller.enqueue(new VideoFrame(processedImageCanvas, { timestamp, duration } as VideoFrameInit));
           },
         }),
         { signal }
@@ -207,16 +167,8 @@ class RequestVideoFrameCallbackProcessor extends Processor {
   private canvas: HTMLCanvasElement;
   private canvasCtx: CanvasRenderingContext2D;
 
-  // 処理途中の作業用キャンバス
-  private tmpCanvas: OffscreenCanvas;
-  private tmpCanvasCtx: OffscreenCanvasRenderingContext2D;
-
-  constructor(
-    track: MediaStreamVideoTrack,
-    imageDataCallback?: ProcessImageDataCallback,
-    canvasCallback?: ProcessCanvasCallback
-  ) {
-    super(track, imageDataCallback, canvasCallback);
+  constructor(track: MediaStreamVideoTrack, callback: ProcessImageCallback) {
+    super(track, callback);
 
     // requestVideoFrameCallbackHandle()` はトラックではなくビデオ単位のメソッドなので
     // 内部的に HTMLVideoElement を生成する
@@ -237,14 +189,6 @@ class RequestVideoFrameCallbackProcessor extends Processor {
       throw Error("Failed to create 2D canvas context");
     }
     this.canvasCtx = canvasCtx;
-
-    // 作業用キャンバスを生成する
-    this.tmpCanvas = createOffscreenCanvas(width, height) as OffscreenCanvas;
-    const tmpCanvasCtx = this.tmpCanvas.getContext("2d");
-    if (tmpCanvasCtx === null) {
-      throw Error("Failed to create 2D canvas context");
-    }
-    this.tmpCanvasCtx = tmpCanvasCtx;
   }
 
   static isSupported(): boolean {
@@ -272,37 +216,14 @@ class RequestVideoFrameCallbackProcessor extends Processor {
   private async onFrame() {
     const { videoWidth: width, videoHeight: height } = this.video;
     resizeCanvasIfNeed(width, height, this.canvas);
-    resizeCanvasIfNeed(width, height, this.tmpCanvas);
 
-    if (this.imageDataCallback !== undefined) {
-      this.tmpCanvasCtx.drawImage(this.video, 0, 0);
-      const image = this.tmpCanvasCtx.getImageData(0, 0, width, height);
-      const processedImage = await this.imageDataCallback(image);
-      this.canvasCtx.putImageData(processedImage, 0, 0);
-    } else if (this.canvasCallback !== undefined) {
-      const processedImage = await this.canvasCallback(this.video);
-      this.canvasCtx.drawImage(processedImage, 0, 0);
-    } else {
-      throw new Error("No callback is set");
-    }
+    const processedImageCanvas = await this.callback(this.video);
+    this.canvasCtx.drawImage(processedImageCanvas, 0, 0);
     // @ts-ignore
     // eslint-disable-next-line
     this.requestVideoFrameCallbackHandle = this.video.requestVideoFrameCallback(() => {
       this.onFrame().catch((e) => console.warn("Error: ", e));
     });
-  }
-}
-
-// TODO(sile): Safari 16.4 から OffscreenCanvas に対応したので、そのうちにこの関数は削除する
-function createOffscreenCanvas(width: number, height: number): OffscreenCanvas | HTMLCanvasElement {
-  if (typeof OffscreenCanvas === "undefined") {
-    // OffscreenCanvas が使えない場合には通常の canvas で代替する
-    const canvas = document.createElement("canvas");
-    canvas.width = width;
-    canvas.height = height;
-    return canvas;
-  } else {
-    return new OffscreenCanvas(width, height);
   }
 }
 
@@ -313,4 +234,4 @@ function resizeCanvasIfNeed(width: number, height: number, canvas: OffscreenCanv
   }
 }
 
-export { VideoTrackProcessor, ProcessImageDataCallback };
+export { VideoTrackProcessor, ProcessImageCallback };
