@@ -2,19 +2,17 @@
   "author": "Shiguredo Inc.",
   "license": "Apache-2.0",
   "scripts": {
-    "build": "npm run build --workspaces",
-    "lint": "npm run lint --workspaces",
-    "fmt": "npm run fmt --workspaces",
-    "doc": "npm run doc --workspaces",
-    "start": "npx serve -S -l 8080 ."
+    "build": "pnpm -r --filter=./packages/* build",
+    "lint": "pnpm -r --filter=./packages/* lint",
+    "fmt": "pnpm -r --filter=./packages/* fmt",
+    "doc": "pnpm -r --filter=./packages/* doc",
+    "start": "serve -S -l 8080 ."
   },
   "devDependencies": {
     "serve": "14.2.0"
   },
-  "workspaces": [
-    "packages/video-track-processor",
-    "packages/virtual-background",
-    "packages/light-adjustment",
-    "packages/noise-suppression"
-  ]
+  "packageManager": "pnpm@8.6.5",
+  "engines": {
+    "node": ">=16.20.0"
+  }
 }

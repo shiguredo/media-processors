@@ -28,14 +28,14 @@
     "dist"
   ],
   "dependencies": {
-    "@types/dom-mediacapture-transform": "^0.1.4"
+    "@types/dom-mediacapture-transform": "^0.1.6"
   },
   "devDependencies": {
-    "@shiguredo/video-track-processor": "../video-track-processor/",
     "@mediapipe/selfie_segmentation": "0.1.1675465747",
     "@rollup/plugin-commonjs": "25.0.2",
     "@rollup/plugin-node-resolve": "15.1.0",
     "@rollup/plugin-typescript": "11.1.2",
+    "@shiguredo/video-track-processor": "link:../video-track-processor",
     "@types/offscreencanvas": "2019.7.0",
     "@typescript-eslint/eslint-plugin": "5.60.1",
     "@typescript-eslint/parser": "5.60.1",
