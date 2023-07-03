@@ -3,16 +3,18 @@ name: test
 on:
   push:
     paths-ignore:
-      - '**.md'
-      - 'LICENSE'
-      - 'NOTICE'
+      - "**.md"
+      - "LICENSE"
+      - "NOTICE"
+    branches-ignore:
+      - "feature/pnpm"
 
 jobs:
   test:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node: ['16', '18', '20']
+        node: ["16", "18", "20"]
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
