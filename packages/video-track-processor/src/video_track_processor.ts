@@ -1,8 +1,3 @@
-// [NOTE]
-// ImageData ではなく ImageBitmap の方が効率的な可能性はあるが
-// https://bugs.chromium.org/p/chromium/issues/detail?id=961777 のように特定条件下で処理後の結果が
-// 不正なものになる現象が確認できているので安全のために ImageData にしていたが、
-// CanvasからImageDataを作成する処理がGPU-CPU間のコピーになり重いため、Canvas/ImageDataの両対応にする
 type ProcessImageCallback = (image: ImageBitmap | HTMLVideoElement) => Promise<HTMLCanvasElement | OffscreenCanvas>;
 
 /**
@@ -81,8 +76,6 @@ class BreakoutBoxProcessor extends Processor {
   private abortController: AbortController;
   private generator: MediaStreamVideoTrackGenerator;
   private processor: MediaStreamTrackProcessor<VideoFrame>;
-  private canvas: OffscreenCanvas;
-  private canvasCtx: OffscreenCanvasRenderingContext2D;
 
   constructor(track: MediaStreamVideoTrack, callback: ProcessImageCallback) {
     super(track, callback);
@@ -93,17 +86,6 @@ class BreakoutBoxProcessor extends Processor {
     // generator / processor インスタンスを生成（まだ処理は開始しない）
     this.generator = new MediaStreamTrackGenerator({ kind: "video" });
     this.processor = new MediaStreamTrackProcessor({ track: this.track });
-
-    // 作業用キャンバスを作成
-    const width = track.getSettings().width || 0;
-    const height = track.getSettings().height || 0;
-
-    this.canvas = new OffscreenCanvas(width, height);
-    const canvasCtx = this.canvas.getContext("2d", { desynchronized: true, willReadFrequently: true });
-    if (canvasCtx === null) {
-      throw Error("Failed to get the 2D context of an offscreen canvas");
-    }
-    this.canvasCtx = canvasCtx;
   }
 
   static isSupported(): boolean {
