@@ -158,7 +158,7 @@ class VirtualBackgroundProcessor {
     const canvas = createOffscreenCanvas(initialWidth, initialHeight);
     const canvasCtx = canvas.getContext("2d", {
       desynchronized: true,
-      willReadFrequently: true,
+      willReadFrequently: false, // ここをtrueにするとCPU-GPUメモリ転送が発生して遅くなる
     }) as OffscreenCanvasRenderingContext2D | null;
     if (canvasCtx === null) {
       throw Error("Failed to create 2D canvas context");
@@ -196,13 +196,11 @@ class VirtualBackgroundProcessor {
     });
 
     // 仮想背景処理を開始
-    return this.trackProcessor.startProcessing(track, async (image: ImageData) => {
-      const { width, height } = image;
-
+    return this.trackProcessor.startProcessing(track, async (image: ImageBitmap | HTMLVideoElement) => {
       // @ts-ignore TS2322: 「`image`の型が合っていない」と怒られるけれど、動作はするので一旦無視
       await this.segmentation.send({ image });
 
-      return canvasCtx.getImageData(0, 0, width, height);
+      return canvas;
     });
   }
 
