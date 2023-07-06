@@ -11,6 +11,16 @@
 
 ## develop
 
+- [FIX] Zig の組み込みのキャスト関数xToYがyFromXにリネームされたので対応
+    - @kounoike
+- [FIX] Zig の `@truncate` やキャスト関連に破壊的変更があったため対応
+    - @kounoike
+
+## virtual-background-2023.2.0
+
+- [UPDATE] CPU-GPUの転送を減らして背景ぼかし処理を高速化
+    - @kounoike
+
 - [UPDATE] GitHub Actions に Node 20 を追加
     - @voluntas
 
