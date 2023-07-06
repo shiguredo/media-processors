@@ -197,9 +197,9 @@ const RgbI32 = struct {
 
     fn blend(self: Self, original: Rgb, level: u8) Rgb {
         return .{
-            .r = @truncate(u8, (@intCast(u32, self.r) * level + @intCast(u32, original.r) * (100 - level)) / 100),
-            .g = @truncate(u8, (@intCast(u32, self.g) * level + @intCast(u32, original.g) * (100 - level)) / 100),
-            .b = @truncate(u8, (@intCast(u32, self.b) * level + @intCast(u32, original.b) * (100 - level)) / 100),
+            .r = @as(u8, @truncate((@as(u32, @intCast(self.r)) * level + @as(u32, @intCast(original.r)) * (100 - level)) / 100)),
+            .g = @as(u8, @truncate((@as(u32, @intCast(self.g)) * level + @as(u32, @intCast(original.g)) * (100 - level)) / 100)),
+            .b = @as(u8, @truncate((@as(u32, @intCast(self.b)) * level + @as(u32, @intCast(original.b)) * (100 - level)) / 100)),
         };
     }
 };
@@ -222,7 +222,7 @@ const Agcwd = struct {
         var table: [256][256]u8 = undefined;
         for (0..table.len) |i| {
             for (0..i + 1) |j| {
-                table[i][j] = @truncate(u8, j);
+                table[i][j] = @as(u8, @truncate(j));
             }
         }
         return .{ .table = table };
@@ -244,11 +244,11 @@ const Agcwd = struct {
         const cdf = Cdf.fromPdf(&pdf.toWeightingDistribution(options.alpha));
         const mapping_curve = cdf.toIntensityMappingCurve(options);
         for (0..mapping_curve.len) |intensity| {
-            const processed_intensity = @intCast(u16, mapping_curve[intensity]);
+            const processed_intensity = @as(u16, @intCast(mapping_curve[intensity]));
             for (0..intensity) |pixel_value| {
-                self.table[intensity][pixel_value] = @truncate(u8, pixel_value * processed_intensity / intensity);
+                self.table[intensity][pixel_value] = @as(u8, @truncate(pixel_value * processed_intensity / intensity));
             }
-            self.table[intensity][intensity] = @truncate(u8, processed_intensity);
+            self.table[intensity][intensity] = @as(u8, @truncate(processed_intensity));
         }
     }
 
@@ -289,10 +289,10 @@ const Pdf = struct {
 
         var table: [256]f32 = undefined;
         if (total > 0) {
-            const n = @intToFloat(f32, total);
+            const n = @as(f32, @floatFromInt(total));
 
             for (histogram, 0..) |weight, i| {
-                table[i] = @intToFloat(f32, weight) / n;
+                table[i] = @as(f32, @floatFromInt(weight)) / n;
             }
         }
 
@@ -352,15 +352,15 @@ const Cdf = struct {
 
     fn toIntensityMappingCurve(self: *const Self, options: *const LightAdjustmentOptions) [256]u8 {
         var curve: [256]u8 = undefined;
-        const min: f32 = @intToFloat(f32, options.min_intensity);
-        const max: f32 = @intToFloat(f32, options.max_intensity);
+        const min: f32 = @as(f32, @floatFromInt(options.min_intensity));
+        const max: f32 = @as(f32, @floatFromInt(options.max_intensity));
         const range: f32 = @max(0.0, max - min);
-        const ratio = @intToFloat(f32, options.adjustment_level) / 100.0;
+        const ratio = @as(f32, @floatFromInt(options.adjustment_level)) / 100.0;
 
         for (self.table, 0..) |gamma, i| {
-            const v0: f32 = @intToFloat(f32, i);
+            const v0: f32 = @as(f32, @floatFromInt(i));
             const v1: f32 = range * math.pow(f32, v0 / 255.0, 1.0 - gamma) + min;
-            curve[i] = @floatToInt(u8, math.round(v0 * (1.0 - ratio) + v1 * ratio));
+            curve[i] = @as(u8, @intFromFloat(math.round(v0 * (1.0 - ratio) + v1 * ratio)));
         }
         return curve;
     }
@@ -409,9 +409,9 @@ const Sharpener = struct {
 
                         const f = filter[fy * 3 + fx];
                         const original = self.temp_image.getRgb(((y + fy - 1) * image.width + (x + fx - 1)) * 4);
-                        processed.r += @intCast(i32, original.r) * f;
-                        processed.g += @intCast(i32, original.g) * f;
-                        processed.b += @intCast(i32, original.b) * f;
+                        processed.r += @as(i32, @intCast(original.r)) * f;
+                        processed.g += @as(i32, @intCast(original.g)) * f;
+                        processed.b += @as(i32, @intCast(original.b)) * f;
                     }
                 }
                 processed.clamp();

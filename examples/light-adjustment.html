@@ -11,7 +11,8 @@
             <input id="videoHeight" type="number" min="1" max="2000" value="360">
     &nbsp;
     FPS: <input id="videoFps" type="number" min="1" max="120" value="30">
-    &nbsp;
+    &nbsp; <br />
+    入力カメラデバイス: <select id="videoDevice" size="1"><option>未指定</option></select><br />
     <input type="button" value="設定反映" onclick="start()">
 
     <h3>ライト調整設定</h3>
@@ -68,8 +69,31 @@
               width: document.getElementById("videoWidth").value,
               height: document.getElementById("videoHeight").value,
               frameRate: {ideal: document.getElementById("videoFps").value},
+              deviceId: document.getElementById("videoDevice").value,
           };
-          return navigator.mediaDevices.getUserMedia({video: constraints});
+          return navigator.mediaDevices.getUserMedia({video: constraints}).then((result) => {
+              updateDeviceList();
+              return result;
+          });
+      }
+
+      let isFirst = true;
+      function updateDeviceList() {
+          if (!isFirst) {
+              return;
+          }
+          isFirst = false;
+
+          navigator.mediaDevices.enumerateDevices().then((devices) => {
+              const videoDevices = devices.filter((device) => device.kind === "videoinput" && device.label);
+              const select = document.getElementById("videoDevice");
+              videoDevices.forEach((device) => {
+                  const option = document.createElement("option");
+                  option.value = device.deviceId;
+                  option.text = device.label;
+                  select.appendChild(option);
+              });
+          });
       }
 
       function updateOption(name) {
