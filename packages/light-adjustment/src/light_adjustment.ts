@@ -284,6 +284,20 @@ class LightAdjustmentProcessor {
   resetStats(): void {
     this.stats.reset();
   }
+
+  /**
+   * VideoTrackProcessorで計算したFPSを取得します
+   */
+  getFps(): number {
+    return this.trackProcessor.getFps();
+  }
+
+  /**
+   * VideoTrackProcessorで計算した平均処理時間を取得します
+   */
+  getAverageProcessedTimeMs(): number {
+    return this.trackProcessor.getAverageProcessedTimeMs();
+  }
 }
 
 /**

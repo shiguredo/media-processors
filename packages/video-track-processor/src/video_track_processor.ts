@@ -56,6 +56,14 @@ class VideoTrackProcessor {
   getProcessedTrack(): MediaStreamVideoTrack | undefined {
     return this.processedTrack;
   }
+
+  getFps(): number {
+    return this.trackProcessor?.getFps() ?? 0;
+  }
+
+  getAverageProcessedTimeMs(): number {
+    return this.trackProcessor?.getAverageProcessedTimeMs() ?? 0;
+  }
 }
 
 abstract class Processor {
@@ -70,6 +78,39 @@ abstract class Processor {
   abstract startProcessing(): Promise<MediaStreamVideoTrack>;
 
   abstract stopProcessing(): void;
+
+  // 統計機能
+  private numFramesToRecord = 100;
+  private startTimes: number[] = new Array(this.numFramesToRecord).fill(0);
+  private processTimes: number[] = new Array(this.numFramesToRecord).fill(0);
+  private count = 0;
+  private currentFps = 0;
+  private currentSumProcessedTimeMs = 0;
+
+  getFps(): number {
+    return this.currentFps;
+  }
+  getAverageProcessedTimeMs(): number {
+    return this.currentSumProcessedTimeMs / this.numFramesToRecord;
+  }
+
+  recordStartFrame() {
+    const now = performance.now();
+    const idx = this.count % this.numFramesToRecord;
+    this.currentFps = this.numFramesToRecord / ((now - this.startTimes[idx]) / 1000);
+    this.startTimes[idx] = now;
+  };
+
+  recordStopFrame() {
+    const now = performance.now();
+    const idx = this.count % this.numFramesToRecord;
+    const prevTime = this.processTimes[idx];
+    const startTime = this.startTimes[idx];
+    const processTime = now - startTime;
+    this.currentSumProcessedTimeMs = this.currentSumProcessedTimeMs - prevTime + processTime;
+    this.processTimes[this.count % this.numFramesToRecord] = processTime;
+    this.count++;
+  };
 }
 
 class BreakoutBoxProcessor extends Processor {
@@ -98,6 +139,7 @@ class BreakoutBoxProcessor extends Processor {
       .pipeThrough(
         new TransformStream({
           transform: async (frame, controller) => {
+            this.recordStartFrame();
             if (this.generator.readyState === "ended") {
               // ジェネレータ（ユーザに渡している処理結果トラック）がクローズ済み。
               // この状態で `controller.enqueue()` を呼び出すとエラーが発生するのでスキップする。
@@ -115,6 +157,7 @@ class BreakoutBoxProcessor extends Processor {
             const processedImageCanvas = await this.callback(image);
             image.close();
             controller.enqueue(new VideoFrame(processedImageCanvas, { timestamp, duration } as VideoFrameInit));
+            this.recordStopFrame();
           },
         }),
         { signal }
@@ -179,7 +222,9 @@ class RequestVideoFrameCallbackProcessor extends Processor {
 
   async startProcessing(): Promise<MediaStreamVideoTrack> {
     this.requestVideoFrameCallbackHandle = this.video.requestVideoFrameCallback(() => {
+      this.recordStartFrame();
       this.onFrame().catch((e) => console.warn("Error: ", e));
+      this.recordStopFrame();
     });
     await this.video.play();
 

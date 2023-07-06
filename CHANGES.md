@@ -15,6 +15,8 @@
     - @kounoike
 - [FIX] Zig の `@truncate` やキャスト関連に破壊的変更があったため対応
     - @kounoike
+- [ADD] VideoTrackProcessor に平均処理時間・フレームレートを計算する機能を追加
+    - @kounoike
 
 ## virtual-background-2023.2.0
 
