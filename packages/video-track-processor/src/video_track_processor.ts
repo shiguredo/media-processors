@@ -81,8 +81,8 @@ abstract class Processor {
 
   // 統計機能
   private numFramesToRecord = 100;
-  private startTimes: number[] = new Array(this.numFramesToRecord).fill(0);
-  private processTimes: number[] = new Array(this.numFramesToRecord).fill(0);
+  private startTimes: number[] = new Array(this.numFramesToRecord).fill(0) as number[];
+  private processTimes: number[] = new Array(this.numFramesToRecord).fill(0) as number[];
   private count = 0;
   private currentFps = 0;
   private currentSumProcessedTimeMs = 0;
@@ -99,7 +99,7 @@ abstract class Processor {
     const idx = this.count % this.numFramesToRecord;
     this.currentFps = this.numFramesToRecord / ((now - this.startTimes[idx]) / 1000);
     this.startTimes[idx] = now;
-  };
+  }
 
   recordStopFrame() {
     const now = performance.now();
@@ -110,7 +110,7 @@ abstract class Processor {
     this.currentSumProcessedTimeMs = this.currentSumProcessedTimeMs - prevTime + processTime;
     this.processTimes[this.count % this.numFramesToRecord] = processTime;
     this.count++;
-  };
+  }
 }
 
 class BreakoutBoxProcessor extends Processor {
