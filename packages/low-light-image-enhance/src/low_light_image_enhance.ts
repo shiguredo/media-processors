@@ -131,4 +131,4 @@ function getInputSize(width: number, height: number): { width: number; height: n
   // };
 }
 
-export { OnnxLowLightImageEnhanceProcessor, TfjsLowLightImageEnhanceProcessor as TfliteLowLightImageEnhanceProcessor };
+export { OnnxLowLightImageEnhanceProcessor, TfjsLowLightImageEnhanceProcessor };
