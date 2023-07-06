@@ -27,6 +27,14 @@ export default [
         targets: [{
           src: [
             './model/semantic_guided_llie_HxW.onnx',
+            './node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded.wasm',
+            './node_modules/onnxruntime-web/dist/ort-wasm-simd.wasm',
+            './node_modules/onnxruntime-web/dist/ort-wasm-threaded.wasm',
+            './node_modules/onnxruntime-web/dist/ort-wasm.wasm',
+            '../../node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded.wasm',
+            '../../node_modules/onnxruntime-web/dist/ort-wasm-simd.wasm',
+            '../../node_modules/onnxruntime-web/dist/ort-wasm-threaded.wasm',
+            '../../node_modules/onnxruntime-web/dist/ort-wasm.wasm',
           ],
           dest: 'dist/'
         }]

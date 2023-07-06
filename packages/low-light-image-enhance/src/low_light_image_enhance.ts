@@ -22,13 +22,8 @@ class LowLightImageEnhanceProcessor {
     if (canvasCtx === null) {
       throw new Error("Failed to get canvas context");
     }
-    const canvas2 = new OffscreenCanvas(initialWidth, initialHeight);
-    const canvas2Ctx = canvas2.getContext("2d", {willReadFrequently: true });
-    if (canvas2Ctx === null) {
-      throw new Error("Failed to get canvas context");
-    }
     const model = await (await fetch(this.assetPath + "/semantic_guided_llie_HxW.onnx")).arrayBuffer();
-    const session = await InferenceSession.create(model, { executionProviders: ["webgl"] });
+    const session = await InferenceSession.create(model, { executionProviders: ["wasm"] });
 
     return this.trackProcessor.startProcessing(track, async (image: ImageBitmap | HTMLVideoElement) => {
       const { width: newWidth, height: newHeight } = getInputSize(image.width, image.height);
@@ -36,21 +31,16 @@ class LowLightImageEnhanceProcessor {
         canvas.width = newWidth;
         canvas.height = newHeight;
       }
-      if (canvas2.width !== image.width || canvas2.height !== image.height) {
-        canvas2.width = image.width;
-        canvas2.height = image.height;
-      }
       canvasCtx.drawImage(image, 0, 0, newWidth, newHeight);
       const imageData = canvasCtx.getImageData(0, 0, canvas.width, canvas.height);
       const tensor = createTensorFromImageData(imageData);
       const feeds: Record<string, Tensor> = {};
       feeds[session.inputNames[0]] = tensor;
-      const output = (await session.run(feeds))[session.outputNames[0]];
+      const output = (await session.run(feeds).catch(e => {throw new Error(`inference error: ${e}`)}))[session.outputNames[0]];
       const outputImageData = createImageDataFromTensor(output);
       canvasCtx.putImageData(outputImageData, 0, 0);
-      canvas2Ctx.drawImage(canvas, 0, 0, canvas2.width, canvas2.height);
 
-      return canvas2;
+      return canvas;
     });
   }
 
@@ -81,15 +71,15 @@ function createImageDataFromTensor(tensor: Tensor): ImageData {
     data[i * 4 + 3] = 255;
   }
 
-  console.log(tensor.dims[3], tensor.dims[2]);
   return new ImageData(data, tensor.dims[3], tensor.dims[2]);
 }
 
 function getInputSize(width: number, height: number): { width: number; height: number } {
-  return {
-    width: Math.ceil(width / 32) * 32,
-    height: Math.ceil(height / 32) * 32,
-  };
+  return { width, height }
+  // return {
+  //   width: Math.ceil(width / 32) * 32,
+  //   height: Math.ceil(height / 32) * 32,
+  // };
 }
 
 export { LowLightImageEnhanceProcessor };
