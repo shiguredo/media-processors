@@ -1,0 +1,90 @@
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Media Processors: 低照度補正サンプル</title>
+  </head>
+  <body>
+    <h1>Media Processors: 低照度補正サンプル</h1>
+
+    <h3>入力映像設定</h3>
+    解像度: <input id="videoWidth" type="number" min="1" max="2000" value="480">x
+            <input id="videoHeight" type="number" min="1" max="2000" value="360">
+    &nbsp;
+    FPS: <input id="videoFps" type="number" min="1" max="120" value="30">
+    &nbsp; <br />
+    入力カメラデバイス: <select id="videoDevice" size="1"><option>未指定</option></select><br />
+    <input type="button" value="設定反映" onclick="start()">
+
+    <br />
+
+    <h3>左: 処理映像、右: オリジナル映像</h3>
+
+    フレーム処理時間: <span id="elapsed">0.0</span> 秒<br />
+    <video id="videoProcessed" autoplay playsinline></video>
+    <video id="videoOriginal" autoplay playsinline></video><br />
+
+    <script src="./low-light-image-enhance/low_light_image_enhance.js"></script>
+    <script>
+      if (!Shiguredo.LowLightImageEnhanceProcessor.isSupported()) {
+          alert("Unsupported platform");
+          throw Error("Unsupported platform");
+      }
+
+      const processor = new Shiguredo.LowLightImageEnhanceProcessor("./low-light-image-enhance");
+
+      function getUserMedia() {
+          const constraints = {
+              width: document.getElementById("videoWidth").value,
+              height: document.getElementById("videoHeight").value,
+              frameRate: {ideal: document.getElementById("videoFps").value},
+              deviceId: document.getElementById("videoDevice").value,
+          };
+          return navigator.mediaDevices.getUserMedia({video: constraints}).then((result) => {
+              updateDeviceList();
+              return result;
+          });
+      }
+
+      let isFirst = true;
+      function updateDeviceList() {
+          if (!isFirst) {
+              return;
+          }
+          isFirst = false;
+
+          navigator.mediaDevices.enumerateDevices().then((devices) => {
+              const videoDevices = devices.filter((device) => device.kind === "videoinput" && device.label);
+              const select = document.getElementById("videoDevice");
+              videoDevices.forEach((device) => {
+                  const option = document.createElement("option");
+                  option.value = device.deviceId;
+                  option.text = device.label;
+                  select.appendChild(option);
+              });
+          });
+      }
+
+      function updateOption(name) {
+          var options = {};
+
+          processor.updateOptions(options);
+      }
+
+      function start() {
+        processor.stopProcessing();
+
+        getUserMedia().then((stream) => {
+          document.getElementById('videoOriginal').srcObject = stream;
+
+          const track = stream.getVideoTracks()[0];
+          const options = {
+          };
+          processor.startProcessing(track, options).then((processed_track) => {
+              document.getElementById('videoProcessed').srcObject = new MediaStream([processed_track]);
+          });
+        });
+      }
+      start();
+    </script>
+  </body>
+</html>

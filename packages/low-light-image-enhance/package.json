@@ -1,0 +1,48 @@
+{
+  "name": "@shiguredo/low-light-image-enhance",
+  "version": "2023.2.0",
+  "description": "Low Light Image Enhancement Library",
+  "author": "Shiguredo Inc.",
+  "license": "Apache-2.0",
+  "main": "dist/low_light_image_enhance.js",
+  "module": "dist/low_light_image_enhance.mjs",
+  "types": "dist/low_light_image_enhance.d.ts",
+  "scripts": {
+    "build": "rollup -c ./rollup.config.mjs --bundleConfigAsCjs && tsc --emitDeclarationOnly",
+    "lint": "eslint --ext .ts ./src",
+    "fmt": "prettier --write src",
+    "doc": "typedoc"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/shiguredo/media-processors.git"
+  },
+  "keywords": [],
+  "bugs": {
+    "url": "https://discord.gg/shiguredo"
+  },
+  "homepage": "https://github.com/shiguredo/media-processors#readme",
+  "files": [
+    "dist"
+  ],
+  "devDependencies": {
+    "@rollup/plugin-commonjs": "25.0.2",
+    "@rollup/plugin-node-resolve": "15.1.0",
+    "@rollup/plugin-replace": "5.0.2",
+    "@rollup/plugin-typescript": "11.1.1",
+    "@shiguredo/video-track-processor": "../video-track-processor/",
+    "@types/offscreencanvas": "2019.7.0",
+    "@typescript-eslint/eslint-plugin": "5.60.0",
+    "@typescript-eslint/parser": "5.60.0",
+    "eslint": "8.43.0",
+    "eslint-config-prettier": "8.8.0",
+    "eslint-plugin-prettier": "4.2.1",
+    "onnxruntime-common": "^1.15.1",
+    "onnxruntime-web": "^1.15.1",
+    "rollup": "3.25.2",
+    "rollup-plugin-copy": "3.4.0",
+    "stackblur-canvas": "2.6.0",
+    "typedoc": "0.24.7",
+    "typescript": "5.0.4"
+  }
+}
