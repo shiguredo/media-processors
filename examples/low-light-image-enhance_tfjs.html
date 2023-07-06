@@ -19,7 +19,7 @@
 
     <h3>左: 処理映像、右: オリジナル映像</h3>
 
-    フレーム処理時間: <span id="elapsed">0.0</span> 秒<br />
+    フレーム処理時間: <span id="elapsed">0.0</span> 秒 フレームレート: <span id="fps">0.0</span>FPS<br />
     <video id="videoProcessed" autoplay playsinline></video>
     <video id="videoOriginal" autoplay playsinline></video><br />
 
@@ -31,6 +31,12 @@
       }
 
       const processor = new Shiguredo.TfjsLowLightImageEnhanceProcessor("./low-light-image-enhance");
+      setInterval(() => {
+          const elapsed = processor.getAverageProcessedTimeMs() / 1000;
+          document.getElementById('elapsed').innerText = elapsed.toFixed(4).padStart(4, '0');
+          const fps = processor.getFps();
+          document.getElementById('fps').innerText = fps.toFixed(2).padStart(5, '0');
+      }, 300);
 
       function getUserMedia() {
           const constraints = {

@@ -48,6 +48,14 @@ class TfjsLowLightImageEnhanceProcessor {
   stopProcessing() {
     this.trackProcessor.stopProcessing();
   }
+
+  getFps() {
+    return this.trackProcessor.getFps();
+  }
+
+  getAverageProcessedTimeMs() {
+    return this.trackProcessor.getAverageProcessedTimeMs();
+  }
 }
 
 class OnnxLowLightImageEnhanceProcessor {
@@ -95,6 +103,14 @@ class OnnxLowLightImageEnhanceProcessor {
 
   stopProcessing() {
     this.trackProcessor.stopProcessing();
+  }
+
+  getFps() {
+    return this.trackProcessor.getFps();
+  }
+
+  getAverageProcessedTimeMs() {
+    return this.trackProcessor.getAverageProcessedTimeMs();
   }
 }
 
