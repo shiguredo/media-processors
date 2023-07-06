@@ -16,7 +16,7 @@ if [ ! -d ".venv" ]; then
   python3 -m venv .venv
 fi
 . .venv/bin/activate
-pip install tensorflowjs
+pip install -r requirements.txt
 tensorflowjs_converter \
   --input_format tf_saved_model \
   --output_format tfjs_graph_model \
