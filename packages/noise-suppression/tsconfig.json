@@ -11,7 +11,8 @@
     "experimentalDecorators": true,
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
-    "newLine": "LF"
+    "newLine": "LF",
+    "skipLibCheck": true,
   },
   "include": ["src"]
 }

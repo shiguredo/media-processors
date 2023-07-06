@@ -27,14 +27,20 @@ export default [
         targets: [{
           src: [
             './model/semantic_guided_llie_HxW.onnx',
+            './model/tfjs_model/model.json',
+            './model/tfjs_model/group1-shard1of1.bin',
             './node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded.wasm',
             './node_modules/onnxruntime-web/dist/ort-wasm-simd.wasm',
             './node_modules/onnxruntime-web/dist/ort-wasm-threaded.wasm',
             './node_modules/onnxruntime-web/dist/ort-wasm.wasm',
+            './node_modules/@tensorflow/tfjs-tflite/dist/tflite_web_api_cc_simd_threaded.js',
+            './node_modules/@tensorflow/tfjs-tflite/dist/tflite_web_api_cc_simd_threaded.wasm',
             '../../node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded.wasm',
             '../../node_modules/onnxruntime-web/dist/ort-wasm-simd.wasm',
             '../../node_modules/onnxruntime-web/dist/ort-wasm-threaded.wasm',
             '../../node_modules/onnxruntime-web/dist/ort-wasm.wasm',
+            '../../node_modules/@tensorflow/tfjs-tflite/dist/tflite_web_api_cc_simd_threaded.js',
+            '../../node_modules/@tensorflow/tfjs-tflite/dist/tflite_web_api_cc_simd_threaded.wasm',
           ],
           dest: 'dist/'
         }]

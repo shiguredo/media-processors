@@ -1,7 +1,56 @@
 import { VideoTrackProcessor } from "@shiguredo/video-track-processor";
 import { InferenceSession, Tensor } from "onnxruntime-web";
+import '@tensorflow/tfjs-backend-webgl';
+import * as tf from '@tensorflow/tfjs';
 
-class LowLightImageEnhanceProcessor {
+class TfjsLowLightImageEnhanceProcessor {
+  private trackProcessor: VideoTrackProcessor;
+  private assetPath: string;
+  constructor(assetPath: string) {
+    this.trackProcessor = new VideoTrackProcessor();
+    this.assetPath = assetPath;
+  }
+
+  static isSupported(): boolean {
+    return VideoTrackProcessor.isSupported();
+  }
+
+  async startProcessing(track: MediaStreamVideoTrack): Promise<MediaStreamVideoTrack> {
+    const modelWidth = 1284;
+    const modelHeight = 720;
+    const canvas = document.createElement("canvas");
+    canvas.width = modelWidth;
+    canvas.height = modelHeight;
+    const canvasCtx = canvas.getContext("2d", {willReadFrequently: true});
+    if (canvasCtx === null) {
+      throw new Error("Failed to get canvas context");
+    }
+    await tf.setBackend("webgl");
+    const modelUrl = this.assetPath + "/model.json";
+    const model = await tf.loadGraphModel(modelUrl);
+
+    return this.trackProcessor.startProcessing(track, async (image: ImageBitmap | HTMLVideoElement) => {
+      canvasCtx.drawImage(image, 0, 0, modelWidth, modelHeight);
+      const output = tf.tidy(() => {
+        const img = tf.browser.fromPixels(canvas);
+        const inputTensor = tf.div(tf.expandDims(img), 255.0);
+        const outputTensor = model.predict(inputTensor) as tf.Tensor4D;
+        // tf.browser.draw(outputTensor.squeeze() as tf.Tensor3D, canvas); // WebGLバックエンドだと使えない
+        return outputTensor.squeeze() as tf.Tensor3D;
+      });
+      await tf.browser.toPixels(output, canvas);
+      output.dispose();
+
+      return canvas;
+    });
+  }
+
+  stopProcessing() {
+    this.trackProcessor.stopProcessing();
+  }
+}
+
+class OnnxLowLightImageEnhanceProcessor {
   private trackProcessor: VideoTrackProcessor;
   private assetPath: string;
   constructor(assetPath: string) {
@@ -36,7 +85,7 @@ class LowLightImageEnhanceProcessor {
       const tensor = createTensorFromImageData(imageData);
       const feeds: Record<string, Tensor> = {};
       feeds[session.inputNames[0]] = tensor;
-      const output = (await session.run(feeds).catch(e => {throw new Error(`inference error: ${e}`)}))[session.outputNames[0]];
+      const output = (await session.run(feeds))[session.outputNames[0]];
       const outputImageData = createImageDataFromTensor(output);
       canvasCtx.putImageData(outputImageData, 0, 0);
 
@@ -82,4 +131,4 @@ function getInputSize(width: number, height: number): { width: number; height: n
   // };
 }
 
-export { LowLightImageEnhanceProcessor };
+export { OnnxLowLightImageEnhanceProcessor, TfjsLowLightImageEnhanceProcessor as TfliteLowLightImageEnhanceProcessor };
