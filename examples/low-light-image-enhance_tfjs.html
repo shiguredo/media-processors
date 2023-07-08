@@ -7,8 +7,8 @@
     <h1>Media Processors: 低照度補正サンプル</h1>
 
     <h3>入力映像設定</h3>
-    解像度: <input id="videoWidth" type="number" min="1" max="2000" value="1280">x
-            <input id="videoHeight" type="number" min="1" max="2000" value="720">
+    解像度: <input id="videoWidth" type="number" min="1" max="2000" value="1920">x
+            <input id="videoHeight" type="number" min="1" max="2000" value="1080">
     &nbsp;
     FPS: <input id="videoFps" type="number" min="1" max="120" value="30">
     &nbsp; <br />
@@ -20,8 +20,8 @@
     <h3>左: 処理映像、右: オリジナル映像</h3>
 
     フレーム処理時間: <span id="elapsed">0.0</span> 秒 フレームレート: <span id="fps">0.0</span>FPS<br />
-    <video id="videoProcessed" autoplay playsinline></video>
-    <video id="videoOriginal" autoplay playsinline></video><br />
+    <video id="videoProcessed" autoplay playsinline style="border: 1px solid blue;"></video>
+    <video id="videoOriginal" autoplay playsinline style="border: 1px solid red;"></video><br />
 
     <script src="./low-light-image-enhance/low_light_image_enhance.js"></script>
     <script>
@@ -43,7 +43,8 @@
               width: document.getElementById("videoWidth").value,
               height: document.getElementById("videoHeight").value,
               frameRate: {ideal: document.getElementById("videoFps").value},
-              deviceId: document.getElementById("videoDevice").value,
+              // deviceId: document.getElementById("videoDevice").value,
+              deviceId: "087414c92894e748b4f46067e38a825f4ab0a17152284f709828a1a6fd7863eb"
           };
           return navigator.mediaDevices.getUserMedia({video: constraints}).then((result) => {
               updateDeviceList();
