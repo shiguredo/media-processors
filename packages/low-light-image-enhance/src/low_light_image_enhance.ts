@@ -27,6 +27,14 @@ class TfjsLowLightImageEnhanceProcessor {
     if (resizeCanvasCtx === null) {
       throw new Error("Failed to get canvas context");
     }
+    const outputResizeCanvas = document.createElement("canvas");
+    outputResizeCanvas.width = track.getSettings().width ?? 0;
+    outputResizeCanvas.height = track.getSettings().height ?? 0;
+    const outputResizeCanvasCtx = outputResizeCanvas.getContext("2d");
+    if (outputResizeCanvasCtx === null) {
+      throw new Error("Failed to get canvas context");
+    }
+
     const outputCanvas = document.createElement("canvas");
     outputCanvas.width = modelWidth;
     outputCanvas.height = modelHeight;
@@ -72,6 +80,10 @@ class TfjsLowLightImageEnhanceProcessor {
     // eslint-disable-next-line @typescript-eslint/require-await
     return this.trackProcessor.startProcessing(track, async (image: ImageBitmap | HTMLVideoElement) => {
       resizeCanvasCtx.drawImage(image, 0, 0, modelWidth, modelHeight);
+      if (outputResizeCanvas.width !== image.width || outputResizeCanvas.height !== image.height) {
+        outputResizeCanvas.width = image.width;
+        outputResizeCanvas.height = image.height;
+      }
       const output = tf.tidy(() => {
         const img = tf.browser.fromPixels(resizeCanvas);
         const inputTensor = tf.div(tf.expandDims(img), 255.0);
@@ -105,11 +117,14 @@ class TfjsLowLightImageEnhanceProcessor {
           gl.COLOR_BUFFER_BIT,
           gl.NEAREST
         );
+        gl.bindFramebuffer(gl.READ_FRAMEBUFFER, null);
       }
       data.tensorRef.dispose();
       output.dispose();
 
-      return outputCanvas;
+      outputResizeCanvasCtx.drawImage(outputCanvas, 0, 0, outputResizeCanvas.width, outputResizeCanvas.height);
+
+      return outputResizeCanvas;
     });
   }
 
