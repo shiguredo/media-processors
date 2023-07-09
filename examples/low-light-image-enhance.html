@@ -13,6 +13,25 @@
     FPS: <input id="videoFps" type="number" min="1" max="120" value="30">
     &nbsp; <br />
     入力カメラデバイス: <select id="videoDevice" size="1"><option>未指定</option></select><br />
+    モデル: 
+    <select id="model">
+      <option selected value="semantic_guided_llie_1284x720">Semantic-Guided-Low-Light-Image-Enhancement 1284x720</option>
+      <option value="semantic_guided_llie_648x360">Semantic-Guided-Low-Light-Image-Enhancement 648x360</option>
+      <option value="semantic_guided_llie_648x480">Semantic-Guided-Low-Light-Image-Enhancement 648x480</option>
+      <option value="semantic_guided_llie_324x240">Semantic-Guided-Low-Light-Image-Enhancement 324x240</option>
+      <option value="sci_difficult_1280x720">SCI difficult 1280x720</option>
+      <option value="sci_difficult_640x360">SCI difficult 640x360</option>
+      <option value="sci_difficult_640x480">SCI difficult 640x480</option>
+      <option value="sci_difficult_320x240">SCI difficult 320x240</option>
+      <option value="sci_medium_1280x720">SCI medium 1280x720</option>
+      <option value="sci_medium_640x360">SCI medium 640x360</option>
+      <option value="sci_medium_640x480">SCI medium 640x480</option>
+      <option value="sci_medium_320x240">SCI medium 320x240</option>
+      <option value="sci_easy_1280x720">SCI easy 1280x720</option>
+      <option value="sci_easy_640x360">SCI easy 640x360</option>
+      <option value="sci_easy_640x480">SCI easy 640x480</option>
+      <option value="sci_easy_320x240">SCI easy 320x240</option>
+    </select><br />
     <input type="button" value="設定反映" onclick="start()">
 
     <br />
@@ -30,12 +49,14 @@
           throw Error("Unsupported platform");
       }
 
-      const processor = new Shiguredo.LowLightImageEnhanceProcessor("./low-light-image-enhance", Shiguredo.llieModelNames.semanticGuidedLlie1284x720);
+      let processor = undefined;
       setInterval(() => {
+        if (processor !== undefined) {
           const elapsed = processor.getAverageProcessedTimeMs() / 1000;
           document.getElementById('elapsed').innerText = elapsed.toFixed(4).padStart(4, '0');
           const fps = processor.getFps();
           document.getElementById('fps').innerText = fps.toFixed(2).padStart(5, '0');
+        }
       }, 300);
 
       function getUserMedia() {
@@ -78,7 +99,11 @@
       }
 
       function start() {
-        processor.stopProcessing();
+        if (processor !== undefined) {
+          processor.stopProcessing();
+        }
+        console.log(document.getElementById("model").value);
+        processor = new Shiguredo.LowLightImageEnhanceProcessor("./low-light-image-enhance", document.getElementById("model").value);
 
         getUserMedia().then((stream) => {
           document.getElementById('videoOriginal').srcObject = stream;

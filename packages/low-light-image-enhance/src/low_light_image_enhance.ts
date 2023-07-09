@@ -8,6 +8,7 @@ interface ImageToImageModelOption {
   inputHeight: number;
   outputWidth: number;
   outputHeight: number;
+  outputConverter?: (tensor: tf.Tensor | tf.Tensor[] | tf.NamedTensorMap) => tf.Tensor3D;
 }
 
 const customBackendName = "shiguredo-custom-webgl";
@@ -94,15 +95,18 @@ abstract class ImageToImageVideoProcessor {
       const output = tf.tidy(() => {
         const img = tf.browser.fromPixels(inputResizeCanvas);
         const inputTensor = tf.div(tf.expandDims(img), 255.0);
-        const outputTensor = model.predict(inputTensor) as tf.Tensor4D;
-        // tf.browser.draw(outputTensor.squeeze() as tf.Tensor3D, canvas); // WebGLバックエンドだと使えない
-        const outputRgb = outputTensor.squeeze();
-        const outputA = tf.fill(
-          [this.modelOption.outputHeight, this.modelOption.outputWidth, 1],
-          1.0,
-          "float32"
-        ) as tf.Tensor3D;
-        return tf.concat3d([outputRgb as tf.Tensor3D, outputA], 2);
+        const outputTensor = model.predict(inputTensor);
+        if (this.modelOption.outputConverter !== undefined) {
+          return this.modelOption.outputConverter(outputTensor);
+        } else {
+          const outputRgb = (outputTensor as tf.Tensor4D).squeeze();
+          const outputA = tf.fill(
+            [this.modelOption.outputHeight, this.modelOption.outputWidth, 1],
+            1.0,
+            "float32"
+          ) as tf.Tensor3D;
+          return tf.concat3d([outputRgb as tf.Tensor3D, outputA], 2);
+        }
       });
       const data = output.dataToGPU({ customTexShape: [this.modelOption.outputHeight, this.modelOption.outputWidth] });
       if (data.texture !== undefined) {
@@ -162,7 +166,25 @@ export enum llieModelNames {
   semanticGuidedLlie648x360 = "semantic_guided_llie_648x360",
   semanticGuidedLlie324x240 = "semantic_guided_llie_324x240",
   sciDifficult1280x720 = "sci_difficult_1280x720",
+  sciDifficult640x360 = "sci_difficult_640x360",
+  sciDifficult640x480 = "sci_difficult_640x480",
+  sciDifficult320x240 = "sci_difficult_320x240",
+  sciMedium1280x720 = "sci_medium_1280x720",
+  sciMedium640x360 = "sci_medium_640x360",
+  sciMedium640x480 = "sci_medium_640x480",
+  sciMedium320x240 = "sci_medium_320x240",
+  sciEasy1280x720 = "sci_easy_1280x720",
+  sciEasy640x360 = "sci_easy_640x360",
+  sciEasy640x480 = "sci_easy_640x480",
+  sciEasy320x240 = "sci_easy_320x240",
 }
+
+const outputConverter255 = (outputTensor: tf.Tensor | tf.Tensor[] | tf.NamedTensorMap): tf.Tensor3D => {
+  const outputRgb = tf.div(outputTensor as tf.Tensor4D, 255).squeeze();
+  const shape = outputRgb.shape as [number, number, number];
+  const outputA = tf.fill([shape[0], shape[1], 1], 1.0, "float32");
+  return tf.concat3d([outputRgb, outputA] as tf.Tensor3D[], 2);
+};
 
 const llieModels: { [key: string]: ImageToImageModelOption } = {
   semantic_guided_llie_1284x720: {
@@ -199,6 +221,95 @@ const llieModels: { [key: string]: ImageToImageModelOption } = {
     inputHeight: 720,
     outputWidth: 1280,
     outputHeight: 720,
+    outputConverter: outputConverter255,
+  },
+  sci_difficult_640x360: {
+    modelPath: "tfjs_model_sci_difficult_360x640",
+    inputWidth: 640,
+    inputHeight: 360,
+    outputWidth: 640,
+    outputHeight: 360,
+    outputConverter: outputConverter255,
+  },
+  sci_difficult_640x480: {
+    modelPath: "tfjs_model_sci_difficult_480x640",
+    inputWidth: 640,
+    inputHeight: 480,
+    outputWidth: 640,
+    outputHeight: 480,
+    outputConverter: outputConverter255,
+  },
+  sci_difficult_320x240: {
+    modelPath: "tfjs_model_sci_difficult_240x320",
+    inputWidth: 320,
+    inputHeight: 240,
+    outputWidth: 320,
+    outputHeight: 240,
+    outputConverter: outputConverter255,
+  },
+  sci_medium_1280x720: {
+    modelPath: "tfjs_model_sci_medium_720x1280",
+    inputWidth: 1280,
+    inputHeight: 720,
+    outputWidth: 1280,
+    outputHeight: 720,
+    outputConverter: outputConverter255,
+  },
+  sci_medium_640x360: {
+    modelPath: "tfjs_model_sci_medium_360x640",
+    inputWidth: 640,
+    inputHeight: 360,
+    outputWidth: 640,
+    outputHeight: 360,
+    outputConverter: outputConverter255,
+  },
+  sci_medium_640x480: {
+    modelPath: "tfjs_model_sci_medium_480x640",
+    inputWidth: 640,
+    inputHeight: 480,
+    outputWidth: 640,
+    outputHeight: 480,
+    outputConverter: outputConverter255,
+  },
+  sci_medium_320x240: {
+    modelPath: "tfjs_model_sci_medium_240x320",
+    inputWidth: 320,
+    inputHeight: 240,
+    outputWidth: 320,
+    outputHeight: 240,
+    outputConverter: outputConverter255,
+  },
+  sci_easy_1280x720: {
+    modelPath: "tfjs_model_sci_easy_720x1280",
+    inputWidth: 1280,
+    inputHeight: 720,
+    outputWidth: 1280,
+    outputHeight: 720,
+    outputConverter: outputConverter255,
+  },
+  sci_easy_640x360: {
+    modelPath: "tfjs_model_sci_easy_360x640",
+    inputWidth: 640,
+    inputHeight: 360,
+    outputWidth: 640,
+    outputHeight: 360,
+    outputConverter: outputConverter255,
+  },
+  sci_easy_640x480: {
+    modelPath: "tfjs_model_sci_easy_480x640",
+    inputWidth: 640,
+    inputHeight: 480,
+    outputWidth: 640,
+    outputHeight: 480,
+    outputConverter: outputConverter255,
+  },
+  sci_easy_320x240: {
+    modelPath: "tfjs_model_sci_easy_240x320",
+    inputWidth: 320,
+    inputHeight: 240,
+    outputWidth: 320,
+    outputHeight: 240,
+    outputConverter: outputConverter255,
   },
 };
 
