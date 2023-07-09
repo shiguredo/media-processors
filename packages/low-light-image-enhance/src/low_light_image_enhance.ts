@@ -10,12 +10,11 @@ interface ImageToImageModelOption {
   outputHeight: number;
 }
 
+const customBackendName = "shiguredo-custom-webgl";
+
 abstract class ImageToImageVideoProcessor {
   private trackProcessor: VideoTrackProcessor;
   private modelOption: ImageToImageModelOption;
-  private frameBuffer: WebGLFramebuffer | null = null;
-  private glCanvas: HTMLCanvasElement | null = null;
-  private gl: WebGL2RenderingContext | null = null;
 
   constructor(model: ImageToImageModelOption) {
     this.trackProcessor = new VideoTrackProcessor();
@@ -42,48 +41,41 @@ abstract class ImageToImageVideoProcessor {
       throw new Error("Failed to get canvas context");
     }
 
-    const glCanvas = this.glCanvas ?? document.createElement("canvas");
-    this.glCanvas = glCanvas;
+    const glCanvas = document.createElement("canvas");
     glCanvas.width = this.modelOption.outputWidth;
     glCanvas.height = this.modelOption.outputHeight;
 
-    const gl =
-      this.gl ??
-      glCanvas.getContext("webgl2", {
-        alpha: true,
-        antialias: false,
-        premultipliedAlpha: false,
-        preserveDrawingBuffer: false,
-        depth: false,
-        stencil: false,
-        failIfMajorPerformanceCaveat: true,
-        powerPreference: "low-power",
-      });
-    this.gl = gl;
+    const gl = glCanvas.getContext("webgl2", {
+      alpha: true,
+      antialias: false,
+      premultipliedAlpha: false,
+      preserveDrawingBuffer: false,
+      depth: false,
+      stencil: false,
+      failIfMajorPerformanceCaveat: true,
+      powerPreference: "low-power",
+    });
     if (gl === null) {
       throw new Error("Failed to get canvas/gl context");
     }
 
-    const customBackendName = "custom-webgl";
-
-    if (tf.getBackend() !== customBackendName) {
+    if (tf.getKernelsForBackend(customBackendName).length === 0) {
       const kernels = tf.getKernelsForBackend("webgl");
       kernels.forEach((kernelConfig) => {
         const newKernelConfig = { ...kernelConfig, backendName: customBackendName };
         tf.registerKernel(newKernelConfig);
       });
-
-      tf.registerBackend(customBackendName, () => {
-        return new tf.MathBackendWebGL(new tf.GPGPUContext(gl));
-      });
     }
+    tf.registerBackend(customBackendName, () => {
+      return new tf.MathBackendWebGL(new tf.GPGPUContext(gl));
+    });
 
     await tf.setBackend(customBackendName);
 
     const modelUrl = this.modelOption.modelPath + "/model.json";
     const model = await tf.loadGraphModel(modelUrl);
 
-    this.frameBuffer ??= gl.createFramebuffer();
+    const frameBuffer = gl.createFramebuffer();
 
     // eslint-disable-next-line @typescript-eslint/require-await
     return this.trackProcessor.startProcessing(track, async (image: ImageBitmap | HTMLVideoElement) => {
@@ -116,10 +108,10 @@ abstract class ImageToImageVideoProcessor {
       if (data.texture !== undefined) {
         gl.bindTexture(gl.TEXTURE_2D, data.texture);
         gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
-        gl.bindFramebuffer(gl.FRAMEBUFFER, this.frameBuffer);
+        gl.bindFramebuffer(gl.FRAMEBUFFER, frameBuffer);
         gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, data.texture, 0);
         gl.bindTexture(gl.TEXTURE_2D, null);
-        gl.bindFramebuffer(gl.READ_FRAMEBUFFER, this.frameBuffer);
+        gl.bindFramebuffer(gl.READ_FRAMEBUFFER, frameBuffer);
         gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, null);
         gl.clearBufferfv(gl.COLOR, 0, [0.0, 0.0, 0.0, 1.0]);
         if (gl.checkFramebufferStatus(gl.READ_FRAMEBUFFER) !== gl.FRAMEBUFFER_COMPLETE) {
@@ -150,9 +142,8 @@ abstract class ImageToImageVideoProcessor {
 
   stopProcessing() {
     this.trackProcessor.stopProcessing();
-    if (this.gl !== null) {
-      this.gl.deleteFramebuffer(this.frameBuffer);
-      this.frameBuffer = null;
+    if (tf.getBackend() === customBackendName) {
+      tf.removeBackend(customBackendName);
     }
   }
 
