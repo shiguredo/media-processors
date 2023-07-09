@@ -7,7 +7,7 @@
     <h1>Media Processors: 低照度補正サンプル</h1>
 
     <h3>入力映像設定</h3>
-    解像度: <input id="videoWidth" type="number" min="1" max="2000" value="960">x
+    解像度: <input id="videoWidth" type="number" min="1" max="2000" value="1280">x
             <input id="videoHeight" type="number" min="1" max="2000" value="720">
     &nbsp;
     FPS: <input id="videoFps" type="number" min="1" max="120" value="30">
@@ -19,18 +19,24 @@
 
     <h3>左: 処理映像、右: オリジナル映像</h3>
 
-    フレーム処理時間: <span id="elapsed">0.0</span> 秒<br />
-    <video id="videoProcessed" autoplay playsinline></video>
-    <video id="videoOriginal" autoplay playsinline></video><br />
+    フレーム処理時間: <span id="elapsed">0.0</span> 秒 フレームレート: <span id="fps">0.0</span>FPS<br />
+    <video id="videoProcessed" autoplay playsinline style="border: 1px solid blue;"></video>
+    <video id="videoOriginal" autoplay playsinline style="border: 1px solid red;"></video><br />
 
     <script src="./low-light-image-enhance/low_light_image_enhance.js"></script>
     <script>
-      if (!Shiguredo.OnnxLowLightImageEnhanceProcessor.isSupported()) {
+      if (!Shiguredo.LowLightImageEnhanceProcessor.isSupported()) {
           alert("Unsupported platform");
           throw Error("Unsupported platform");
       }
 
-      const processor = new Shiguredo.OnnxLowLightImageEnhanceProcessor("./low-light-image-enhance");
+      const processor = new Shiguredo.LowLightImageEnhanceProcessor("./low-light-image-enhance", Shiguredo.llieModelNames.semanticGuidedLlie1284x720);
+      setInterval(() => {
+          const elapsed = processor.getAverageProcessedTimeMs() / 1000;
+          document.getElementById('elapsed').innerText = elapsed.toFixed(4).padStart(4, '0');
+          const fps = processor.getFps();
+          document.getElementById('fps').innerText = fps.toFixed(2).padStart(5, '0');
+      }, 300);
 
       function getUserMedia() {
           const constraints = {
@@ -38,6 +44,7 @@
               height: document.getElementById("videoHeight").value,
               frameRate: {ideal: document.getElementById("videoFps").value},
               deviceId: document.getElementById("videoDevice").value,
+              // deviceId: "087414c92894e748b4f46067e38a825f4ab0a17152284f709828a1a6fd7863eb"
           };
           return navigator.mediaDevices.getUserMedia({video: constraints}).then((result) => {
               updateDeviceList();

@@ -40,8 +40,6 @@
     "eslint": "8.43.0",
     "eslint-config-prettier": "8.8.0",
     "eslint-plugin-prettier": "4.2.1",
-    "onnxruntime-common": "^1.15.1",
-    "onnxruntime-web": "^1.15.1",
     "rollup": "3.25.2",
     "rollup-plugin-copy": "3.4.0",
     "stackblur-canvas": "2.6.0",

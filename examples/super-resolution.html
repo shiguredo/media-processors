@@ -1,16 +1,16 @@
 <html>
   <head>
     <meta charset="utf-8">
-    <title>Media Processors: 低照度補正サンプル</title>
+    <title>Media Processors: 超解像サンプル</title>
   </head>
   <body>
-    <h1>Media Processors: 低照度補正サンプル</h1>
+    <h1>Media Processors: 超解像サンプル</h1>
 
     <h3>入力映像設定</h3>
-    解像度: <input id="videoWidth" type="number" min="1" max="2000" value="1920">x
-            <input id="videoHeight" type="number" min="1" max="2000" value="1080">
+    解像度: <input id="videoWidth" type="number" min="1" max="2000" value="320">x
+            <input id="videoHeight" type="number" min="1" max="2000" value="180">
     &nbsp;
-    FPS: <input id="videoFps" type="number" min="1" max="120" value="30">
+    FPS: <input id="videoFps" type="number" min="1" max="120" value="5">
     &nbsp; <br />
     入力カメラデバイス: <select id="videoDevice" size="1"><option>未指定</option></select><br />
     <input type="button" value="設定反映" onclick="start()">
@@ -25,12 +25,12 @@
 
     <script src="./low-light-image-enhance/low_light_image_enhance.js"></script>
     <script>
-      if (!Shiguredo.TfjsLowLightImageEnhanceProcessor.isSupported()) {
+      if (!Shiguredo.SuperResolutionProcessor.isSupported()) {
           alert("Unsupported platform");
           throw Error("Unsupported platform");
       }
 
-      const processor = new Shiguredo.TfjsLowLightImageEnhanceProcessor("./low-light-image-enhance");
+      const processor = new Shiguredo.SuperResolutionProcessor("./low-light-image-enhance", Shiguredo.superResolutionModelNames.rfdn320x180);
       setInterval(() => {
           const elapsed = processor.getAverageProcessedTimeMs() / 1000;
           document.getElementById('elapsed').innerText = elapsed.toFixed(4).padStart(4, '0');
@@ -43,8 +43,8 @@
               width: document.getElementById("videoWidth").value,
               height: document.getElementById("videoHeight").value,
               frameRate: {ideal: document.getElementById("videoFps").value},
-              // deviceId: document.getElementById("videoDevice").value,
-              deviceId: "087414c92894e748b4f46067e38a825f4ab0a17152284f709828a1a6fd7863eb"
+              deviceId: document.getElementById("videoDevice").value,
+              // deviceId: "087414c92894e748b4f46067e38a825f4ab0a17152284f709828a1a6fd7863eb"
           };
           return navigator.mediaDevices.getUserMedia({video: constraints}).then((result) => {
               updateDeviceList();

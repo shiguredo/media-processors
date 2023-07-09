@@ -1,16 +1,25 @@
 import { VideoTrackProcessor } from "@shiguredo/video-track-processor";
-import { InferenceSession, Tensor } from "onnxruntime-web";
 import "@tensorflow/tfjs-backend-webgl";
 import * as tf from "@tensorflow/tfjs";
 
-class TfjsLowLightImageEnhanceProcessor {
+interface ImageToImageModelOption {
+  modelPath: string;
+  inputWidth: number;
+  inputHeight: number;
+  outputWidth: number;
+  outputHeight: number;
+}
+
+abstract class ImageToImageVideoProcessor {
   private trackProcessor: VideoTrackProcessor;
-  private assetPath: string;
+  private modelOption: ImageToImageModelOption;
   private frameBuffer: WebGLFramebuffer | null = null;
+  private glCanvas: HTMLCanvasElement | null = null;
   private gl: WebGL2RenderingContext | null = null;
-  constructor(assetPath: string) {
+
+  constructor(model: ImageToImageModelOption) {
     this.trackProcessor = new VideoTrackProcessor();
-    this.assetPath = assetPath;
+    this.modelOption = model;
   }
 
   static isSupported(): boolean {
@@ -18,13 +27,11 @@ class TfjsLowLightImageEnhanceProcessor {
   }
 
   async startProcessing(track: MediaStreamVideoTrack): Promise<MediaStreamVideoTrack> {
-    const modelWidth = 1284;
-    const modelHeight = 720;
-    const resizeCanvas = document.createElement("canvas");
-    resizeCanvas.width = modelWidth;
-    resizeCanvas.height = modelHeight;
-    const resizeCanvasCtx = resizeCanvas.getContext("2d", { willReadFrequently: true });
-    if (resizeCanvasCtx === null) {
+    const inputResizeCanvas = document.createElement("canvas");
+    inputResizeCanvas.width = this.modelOption.inputWidth;
+    inputResizeCanvas.height = this.modelOption.inputHeight;
+    const inputResizeCanvasCtx = inputResizeCanvas.getContext("2d", { willReadFrequently: true });
+    if (inputResizeCanvasCtx === null) {
       throw new Error("Failed to get canvas context");
     }
     const outputResizeCanvas = document.createElement("canvas");
@@ -35,13 +42,14 @@ class TfjsLowLightImageEnhanceProcessor {
       throw new Error("Failed to get canvas context");
     }
 
-    const outputCanvas = document.createElement("canvas");
-    outputCanvas.width = modelWidth;
-    outputCanvas.height = modelHeight;
+    const glCanvas = this.glCanvas ?? document.createElement("canvas");
+    this.glCanvas = glCanvas;
+    glCanvas.width = this.modelOption.outputWidth;
+    glCanvas.height = this.modelOption.outputHeight;
 
     const gl =
       this.gl ??
-      outputCanvas.getContext("webgl2", {
+      glCanvas.getContext("webgl2", {
         alpha: true,
         antialias: false,
         premultipliedAlpha: false,
@@ -72,33 +80,45 @@ class TfjsLowLightImageEnhanceProcessor {
 
     await tf.setBackend(customBackendName);
 
-    const modelUrl = this.assetPath + "/model.json";
+    const modelUrl = this.modelOption.modelPath + "/model.json";
     const model = await tf.loadGraphModel(modelUrl);
 
     this.frameBuffer ??= gl.createFramebuffer();
 
     // eslint-disable-next-line @typescript-eslint/require-await
     return this.trackProcessor.startProcessing(track, async (image: ImageBitmap | HTMLVideoElement) => {
-      resizeCanvasCtx.drawImage(image, 0, 0, modelWidth, modelHeight);
+      inputResizeCanvasCtx.drawImage(image, 0, 0, this.modelOption.outputWidth, this.modelOption.outputHeight);
       if (outputResizeCanvas.width !== image.width || outputResizeCanvas.height !== image.height) {
         outputResizeCanvas.width = image.width;
         outputResizeCanvas.height = image.height;
       }
+      // if (
+      //   outputResizeCanvas.width !== this.modelOption.outputWidth ||
+      //   outputResizeCanvas.height !== this.modelOption.outputHeight
+      // ) {
+      //   outputResizeCanvas.width = this.modelOption.outputWidth;
+      //   outputResizeCanvas.height = this.modelOption.outputHeight;
+      // }
       const output = tf.tidy(() => {
-        const img = tf.browser.fromPixels(resizeCanvas);
+        const img = tf.browser.fromPixels(inputResizeCanvas);
         const inputTensor = tf.div(tf.expandDims(img), 255.0);
         const outputTensor = model.predict(inputTensor) as tf.Tensor4D;
         // tf.browser.draw(outputTensor.squeeze() as tf.Tensor3D, canvas); // WebGLバックエンドだと使えない
         const outputRgb = outputTensor.squeeze();
-        const outputA = tf.fill([modelHeight, modelWidth, 1], 1.0, "float32") as tf.Tensor3D;
+        const outputA = tf.fill(
+          [this.modelOption.outputHeight, this.modelOption.outputWidth, 1],
+          1.0,
+          "float32"
+        ) as tf.Tensor3D;
         return tf.concat3d([outputRgb as tf.Tensor3D, outputA], 2);
       });
-      const data = output.dataToGPU({ customTexShape: [modelHeight, modelWidth] });
+      const data = output.dataToGPU({ customTexShape: [this.modelOption.outputHeight, this.modelOption.outputWidth] });
       if (data.texture !== undefined) {
         gl.bindTexture(gl.TEXTURE_2D, data.texture);
         gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
         gl.bindFramebuffer(gl.FRAMEBUFFER, this.frameBuffer);
         gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, data.texture, 0);
+        gl.bindTexture(gl.TEXTURE_2D, null);
         gl.bindFramebuffer(gl.READ_FRAMEBUFFER, this.frameBuffer);
         gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, null);
         gl.clearBufferfv(gl.COLOR, 0, [0.0, 0.0, 0.0, 1.0]);
@@ -108,12 +128,12 @@ class TfjsLowLightImageEnhanceProcessor {
         gl.blitFramebuffer(
           0,
           0,
-          modelWidth,
-          modelHeight,
+          this.modelOption.outputWidth,
+          this.modelOption.outputHeight,
           0,
           0,
-          modelWidth,
-          modelHeight,
+          this.modelOption.outputWidth,
+          this.modelOption.outputHeight,
           gl.COLOR_BUFFER_BIT,
           gl.NEAREST
         );
@@ -122,7 +142,7 @@ class TfjsLowLightImageEnhanceProcessor {
       data.tensorRef.dispose();
       output.dispose();
 
-      outputResizeCanvasCtx.drawImage(outputCanvas, 0, 0, outputResizeCanvas.width, outputResizeCanvas.height);
+      outputResizeCanvasCtx.drawImage(glCanvas, 0, 0, outputResizeCanvas.width, outputResizeCanvas.height);
 
       return outputResizeCanvas;
     });
@@ -145,93 +165,78 @@ class TfjsLowLightImageEnhanceProcessor {
   }
 }
 
-class OnnxLowLightImageEnhanceProcessor {
-  private trackProcessor: VideoTrackProcessor;
-  private assetPath: string;
-  constructor(assetPath: string) {
-    this.trackProcessor = new VideoTrackProcessor();
-    this.assetPath = assetPath;
-  }
+export enum llieModelNames {
+  semanticGuidedLlie1284x720 = "semantic_guided_llie_1284x720",
+  semanticGuidedLlie648x480 = "semantic_guided_llie_648x480",
+  semanticGuidedLlie648x360 = "semantic_guided_llie_648x360",
+  semanticGuidedLlie324x240 = "semantic_guided_llie_324x240",
+  sciDifficult1280x720 = "sci_difficult_1280x720",
+}
 
-  static isSupported(): boolean {
-    return VideoTrackProcessor.isSupported();
-  }
+const llieModels: { [key: string]: ImageToImageModelOption } = {
+  semantic_guided_llie_1284x720: {
+    modelPath: "tfjs_model_semantic_guided_llie_720x1284",
+    inputWidth: 1284,
+    inputHeight: 720,
+    outputWidth: 1284,
+    outputHeight: 720,
+  },
+  semantic_guided_llie_648x480: {
+    modelPath: "tfjs_model_semantic_guided_llie_480x648",
+    inputWidth: 648,
+    inputHeight: 480,
+    outputWidth: 648,
+    outputHeight: 480,
+  },
+  semantic_guided_llie_648x360: {
+    modelPath: "tfjs_model_semantic_guided_llie_360x648",
+    inputWidth: 648,
+    inputHeight: 360,
+    outputWidth: 648,
+    outputHeight: 360,
+  },
+  semantic_guided_llie_324x240: {
+    modelPath: "tfjs_model_semantic_guided_llie_240x324",
+    inputWidth: 648,
+    inputHeight: 360,
+    outputWidth: 648,
+    outputHeight: 360,
+  },
+  sci_difficult_1280x720: {
+    modelPath: "tfjs_model_sci_difficult_720x1280",
+    inputWidth: 1280,
+    inputHeight: 720,
+    outputWidth: 1280,
+    outputHeight: 720,
+  },
+};
 
-  async startProcessing(track: MediaStreamVideoTrack): Promise<MediaStreamVideoTrack> {
-    const initialWidth = track.getSettings().width || 0;
-    const initialHeight = track.getSettings().height || 0;
-    const { width: initialNewWidth, height: initialNewHeight } = getInputSize(initialWidth, initialHeight);
-    const canvas = new OffscreenCanvas(initialNewWidth, initialNewHeight);
-    const canvasCtx = canvas.getContext("2d", { willReadFrequently: true });
-    if (canvasCtx === null) {
-      throw new Error("Failed to get canvas context");
-    }
-    const model = await (await fetch(this.assetPath + "/semantic_guided_llie_HxW.onnx")).arrayBuffer();
-    const session = await InferenceSession.create(model, { executionProviders: ["wasm"] });
-
-    return this.trackProcessor.startProcessing(track, async (image: ImageBitmap | HTMLVideoElement) => {
-      const { width: newWidth, height: newHeight } = getInputSize(image.width, image.height);
-      if (canvas.width !== newWidth || canvas.height !== newHeight) {
-        canvas.width = newWidth;
-        canvas.height = newHeight;
-      }
-      canvasCtx.drawImage(image, 0, 0, newWidth, newHeight);
-      const imageData = canvasCtx.getImageData(0, 0, canvas.width, canvas.height);
-      const tensor = createTensorFromImageData(imageData);
-      const feeds: Record<string, Tensor> = {};
-      feeds[session.inputNames[0]] = tensor;
-      const output = (await session.run(feeds))[session.outputNames[0]];
-      const outputImageData = createImageDataFromTensor(output);
-      canvasCtx.putImageData(outputImageData, 0, 0);
-
-      return canvas;
-    });
-  }
-
-  stopProcessing() {
-    this.trackProcessor.stopProcessing();
-  }
-
-  getFps() {
-    return this.trackProcessor.getFps();
-  }
-
-  getAverageProcessedTimeMs() {
-    return this.trackProcessor.getAverageProcessedTimeMs();
+export class LowLightImageEnhanceProcessor extends ImageToImageVideoProcessor {
+  constructor(assetPath: string, modelName: llieModelNames) {
+    const model = llieModels[modelName];
+    model.modelPath = assetPath + "/" + model.modelPath;
+    super(model);
   }
 }
 
-function createTensorFromImageData(imageData: ImageData): Tensor {
-  const length = imageData.data.length / 4;
-  const data = new Float32Array(length * 3);
-  for (let i = 0; i < length; i++) {
-    data[i] = imageData.data[i * 4] / 255.0;
-    data[length + i] = imageData.data[i * 4 + 1] / 255.0;
-    data[length * 2 + i] = imageData.data[i * 4 + 2] / 255.0;
+export enum superResolutionModelNames {
+  rfdn320x180 = "rfdn_320x180",
+}
+
+const superResolutionModels: { [key: string]: ImageToImageModelOption } = {
+  rfdn_320x180: {
+    modelPath: "tfjs_model_rfdn_180x320",
+    inputWidth: 320,
+    inputHeight: 180,
+    outputWidth: 1280,
+    outputHeight: 720,
+  },
+};
+
+export class SuperResolutionProcessor extends ImageToImageVideoProcessor {
+  constructor(assetPath: string, modelName: superResolutionModelNames) {
+    const model = superResolutionModels[modelName];
+    model.modelPath = assetPath + "/" + model.modelPath;
+    super(model);
   }
-  return new Tensor("float32", data, [1, 3, imageData.height, imageData.width]);
 }
-
-function createImageDataFromTensor(tensor: Tensor): ImageData {
-  const inputData = tensor.data as Float32Array;
-  const length = tensor.data.length / 3;
-  const data = new Uint8ClampedArray(length * 4);
-  for (let i = 0; i < length; i++) {
-    data[i * 4] = inputData[i] * 255;
-    data[i * 4 + 1] = inputData[length + i] * 255;
-    data[i * 4 + 2] = inputData[length * 2 + i] * 255;
-    data[i * 4 + 3] = 255;
-  }
-
-  return new ImageData(data, tensor.dims[3], tensor.dims[2]);
-}
-
-function getInputSize(width: number, height: number): { width: number; height: number } {
-  return { width, height };
-  // return {
-  //   width: Math.ceil(width / 32) * 32,
-  //   height: Math.ceil(height / 32) * 32,
-  // };
-}
-
-export { OnnxLowLightImageEnhanceProcessor, TfjsLowLightImageEnhanceProcessor };
