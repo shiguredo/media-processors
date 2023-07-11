@@ -7,6 +7,8 @@
     <h1>Media Processors: ライト調整 + 仮想背景</h1>
 
     <h2>左: 処理後の映像、右: オリジナル映像</h2>    
+    ライト調整: フレーム処理時間: <span id="elapsed0">0.0</span> 秒 フレームレート: <span id="fps0">0.0</span>FPS<br />
+    仮想背景: フレーム処理時間: <span id="elapsed1">0.0</span> 秒 フレームレート: <span id="fps1">0.0</span>FPS<br />
     <video id="processedVideo" muted autoplay playsinline></video>
     <video id="originalVideo" muted autoplay playsinline></video>
 
@@ -17,6 +19,18 @@
         alert("Unsupported platform");
         throw Error("Unsupported platform");
       }
+      const lightAdjustmentProcessor = new Shiguredo.LightAdjustmentProcessor();
+      const virtualBackgroundProcessor = new Shiguredo.VirtualBackgroundProcessor("./virtual-background/");
+      setInterval(() => {
+          const elapsed0 = lightAdjustmentProcessor.getAverageProcessedTimeMs() / 1000;
+          document.getElementById('elapsed0').innerText = elapsed0.toFixed(4).padStart(4, '0');
+          const fps0 = lightAdjustmentProcessor.getFps();
+          document.getElementById('fps0').innerText = fps0.toFixed(2).padStart(5, '0');
+          const elapsed1 = virtualBackgroundProcessor.getAverageProcessedTimeMs() / 1000;
+          document.getElementById('elapsed1').innerText = elapsed1.toFixed(4).padStart(4, '0');
+          const fps1 = virtualBackgroundProcessor.getFps();
+          document.getElementById('fps1').innerText = fps1.toFixed(2).padStart(5, '0');
+      }, 300);
 
       function getUserMedia() {
         const constraints = {
@@ -27,8 +41,6 @@
       }
 
       getUserMedia().then(async (stream) => {
-        const lightAdjustmentProcessor = new Shiguredo.LightAdjustmentProcessor();
-        const virtualBackgroundProcessor = new Shiguredo.VirtualBackgroundProcessor("./virtual-background/");
 
         const originalTrack = stream.getVideoTracks()[0];
         const processedTrack0 = await lightAdjustmentProcessor.startProcessing(originalTrack);
