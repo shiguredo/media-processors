@@ -8,7 +8,9 @@ interface ImageToImageModelOption {
   inputHeight: number;
   outputWidth: number;
   outputHeight: number;
+  inputConverter?: (tensor: tf.Tensor3D) => tf.Tensor<tf.Rank> | tf.NamedTensorMap | tf.Tensor<tf.Rank>[];
   outputConverter?: (tensor: tf.Tensor | tf.Tensor[] | tf.NamedTensorMap) => tf.Tensor3D;
+  outputSizeIsModelOutputSize?: boolean;
 }
 
 const customBackendName = "shiguredo-custom-webgl";
@@ -16,10 +18,16 @@ const customBackendName = "shiguredo-custom-webgl";
 abstract class ImageToImageVideoProcessor {
   private trackProcessor: VideoTrackProcessor;
   private modelOption: ImageToImageModelOption;
+  private alpha: number;
 
-  constructor(model: ImageToImageModelOption) {
+  constructor(model: ImageToImageModelOption, alpha: number) {
     this.trackProcessor = new VideoTrackProcessor();
     this.modelOption = model;
+    this.alpha = alpha;
+  }
+
+  setAlpha(alpha: number): void {
+    this.alpha = alpha;
   }
 
   static isSupported(): boolean {
@@ -35,8 +43,13 @@ abstract class ImageToImageVideoProcessor {
       throw new Error("Failed to get canvas context");
     }
     const outputResizeCanvas = document.createElement("canvas");
-    outputResizeCanvas.width = track.getSettings().width ?? 0;
-    outputResizeCanvas.height = track.getSettings().height ?? 0;
+    if (this.modelOption.outputSizeIsModelOutputSize) {
+      outputResizeCanvas.width = this.modelOption.outputWidth;
+      outputResizeCanvas.height = this.modelOption.outputHeight;
+    } else {
+      outputResizeCanvas.width = track.getSettings().width ?? 0;
+      outputResizeCanvas.height = track.getSettings().height ?? 0;
+    }
     const outputResizeCanvasCtx = outputResizeCanvas.getContext("2d");
     if (outputResizeCanvasCtx === null) {
       throw new Error("Failed to get canvas context");
@@ -80,8 +93,21 @@ abstract class ImageToImageVideoProcessor {
 
     // eslint-disable-next-line @typescript-eslint/require-await
     return this.trackProcessor.startProcessing(track, async (image: ImageBitmap | HTMLVideoElement) => {
-      inputResizeCanvasCtx.drawImage(image, 0, 0, this.modelOption.outputWidth, this.modelOption.outputHeight);
-      if (outputResizeCanvas.width !== image.width || outputResizeCanvas.height !== image.height) {
+      inputResizeCanvasCtx.drawImage(
+        image,
+        0,
+        0,
+        image.width,
+        image.height,
+        0,
+        0,
+        this.modelOption.inputWidth,
+        this.modelOption.inputHeight
+      );
+      if (
+        !this.modelOption.outputSizeIsModelOutputSize &&
+        (outputResizeCanvas.width !== image.width || outputResizeCanvas.height !== image.height)
+      ) {
         outputResizeCanvas.width = image.width;
         outputResizeCanvas.height = image.height;
       }
@@ -92,9 +118,10 @@ abstract class ImageToImageVideoProcessor {
       //   outputResizeCanvas.width = this.modelOption.outputWidth;
       //   outputResizeCanvas.height = this.modelOption.outputHeight;
       // }
+      const inputConverter = this.modelOption.inputConverter ?? ((img) => tf.div(tf.expandDims(img), 255.0));
       const output = tf.tidy(() => {
         const img = tf.browser.fromPixels(inputResizeCanvas);
-        const inputTensor = tf.div(tf.expandDims(img), 255.0);
+        const inputTensor = inputConverter(img);
         const outputTensor = model.predict(inputTensor);
         if (this.modelOption.outputConverter !== undefined) {
           return this.modelOption.outputConverter(outputTensor);
@@ -102,7 +129,7 @@ abstract class ImageToImageVideoProcessor {
           const outputRgb = (outputTensor as tf.Tensor4D).squeeze();
           const outputA = tf.fill(
             [this.modelOption.outputHeight, this.modelOption.outputWidth, 1],
-            1.0,
+            this.alpha,
             "float32"
           ) as tf.Tensor3D;
           return tf.concat3d([outputRgb as tf.Tensor3D, outputA], 2);
@@ -118,9 +145,9 @@ abstract class ImageToImageVideoProcessor {
         gl.bindFramebuffer(gl.READ_FRAMEBUFFER, frameBuffer);
         gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, null);
         gl.clearBufferfv(gl.COLOR, 0, [0.0, 0.0, 0.0, 1.0]);
-        if (gl.checkFramebufferStatus(gl.READ_FRAMEBUFFER) !== gl.FRAMEBUFFER_COMPLETE) {
-          throw new Error(`invalid framebuffer status: ${gl.checkFramebufferStatus(gl.READ_FRAMEBUFFER)}`);
-        }
+        // if (gl.checkFramebufferStatus(gl.READ_FRAMEBUFFER) !== gl.FRAMEBUFFER_COMPLETE) {
+        //   throw new Error(`invalid framebuffer status: ${gl.checkFramebufferStatus(gl.READ_FRAMEBUFFER)}`);
+        // }
         gl.blitFramebuffer(
           0,
           0,
@@ -138,9 +165,13 @@ abstract class ImageToImageVideoProcessor {
       data.tensorRef.dispose();
       output.dispose();
 
-      outputResizeCanvasCtx.drawImage(glCanvas, 0, 0, outputResizeCanvas.width, outputResizeCanvas.height);
-
-      return outputResizeCanvas;
+      if (this.modelOption.outputSizeIsModelOutputSize) {
+        return glCanvas;
+      } else {
+        outputResizeCanvasCtx.drawImage(image, 0, 0);
+        outputResizeCanvasCtx.drawImage(glCanvas, 0, 0, outputResizeCanvas.width, outputResizeCanvas.height);
+        return outputResizeCanvas;
+      }
     });
   }
 
@@ -177,6 +208,7 @@ export enum llieModelNames {
   sciEasy640x360 = "sci_easy_640x360",
   sciEasy640x480 = "sci_easy_640x480",
   sciEasy320x240 = "sci_easy_320x240",
+  pmn1280x736 = "pmn_1280x736",
 }
 
 const outputConverter255 = (outputTensor: tf.Tensor | tf.Tensor[] | tf.NamedTensorMap): tf.Tensor3D => {
@@ -184,6 +216,15 @@ const outputConverter255 = (outputTensor: tf.Tensor | tf.Tensor[] | tf.NamedTens
   const shape = outputRgb.shape as [number, number, number];
   const outputA = tf.fill([shape[0], shape[1], 1], 1.0, "float32");
   return tf.concat3d([outputRgb, outputA] as tf.Tensor3D[], 2);
+};
+
+const inputConverterPmn: (img: tf.Tensor3D) => tf.Tensor4D = (img) => {
+  const imgA = tf.fill([img.shape[0], img.shape[1], 1], 1.0, "float32") as tf.Tensor3D;
+  return tf.expandDims(tf.concat3d([tf.div(img, 255), imgA] as tf.Tensor3D[], 2));
+};
+
+const outputConverterPmn = (outputTensor: tf.Tensor | tf.Tensor[] | tf.NamedTensorMap): tf.Tensor3D => {
+  return (outputTensor as tf.Tensor4D).squeeze();
 };
 
 const llieModels: { [key: string]: ImageToImageModelOption } = {
@@ -311,18 +352,36 @@ const llieModels: { [key: string]: ImageToImageModelOption } = {
     outputHeight: 240,
     outputConverter: outputConverter255,
   },
+  pmn_1280x736: {
+    modelPath: "tfjs_model_pmn_736x1280",
+    inputWidth: 1280,
+    inputHeight: 736,
+    outputWidth: 1280,
+    outputHeight: 736,
+    inputConverter: inputConverterPmn,
+    outputConverter: outputConverterPmn,
+  },
+  pmn_640x384: {
+    modelPath: "tfjs_model_pmn_384x640",
+    inputWidth: 640,
+    inputHeight: 384,
+    outputWidth: 640,
+    outputHeight: 384,
+    inputConverter: inputConverterPmn,
+    outputConverter: outputConverterPmn,
+  },
 };
 
 export class LowLightImageEnhanceProcessor extends ImageToImageVideoProcessor {
-  constructor(assetPath: string, modelName: llieModelNames) {
+  constructor(assetPath: string, modelName: llieModelNames, alpha: number) {
     const model = llieModels[modelName];
-    model.modelPath = assetPath + "/" + model.modelPath;
-    super(model);
+    super(Object.assign({}, model, { modelPath: assetPath + model.modelPath }), alpha);
   }
 }
 
 export enum superResolutionModelNames {
   rfdn320x180 = "rfdn_320x180",
+  fastSrgan180x120 = "fast_srgan_180x120",
 }
 
 const superResolutionModels: { [key: string]: ImageToImageModelOption } = {
@@ -332,13 +391,21 @@ const superResolutionModels: { [key: string]: ImageToImageModelOption } = {
     inputHeight: 180,
     outputWidth: 1280,
     outputHeight: 720,
+    outputSizeIsModelOutputSize: true,
+  },
+  fast_srgan_180x120: {
+    modelPath: "tfjs_model_Fast-SRGAN-120x160",
+    inputWidth: 160,
+    inputHeight: 120,
+    outputWidth: 640,
+    outputHeight: 480,
+    outputSizeIsModelOutputSize: true,
   },
 };
 
 export class SuperResolutionProcessor extends ImageToImageVideoProcessor {
   constructor(assetPath: string, modelName: superResolutionModelNames) {
     const model = superResolutionModels[modelName];
-    model.modelPath = assetPath + "/" + model.modelPath;
-    super(model);
+    super(Object.assign({}, model, { modelPath: assetPath + model.modelPath }), 1.0);
   }
 }

@@ -7,10 +7,10 @@
     <h1>Media Processors: 超解像サンプル</h1>
 
     <h3>入力映像設定</h3>
-    解像度: <input id="videoWidth" type="number" min="1" max="2000" value="320">x
-            <input id="videoHeight" type="number" min="1" max="2000" value="180">
+    解像度: <input id="videoWidth" type="number" min="1" max="2000" value="160">x
+            <input id="videoHeight" type="number" min="1" max="2000" value="120">
     &nbsp;
-    FPS: <input id="videoFps" type="number" min="1" max="120" value="5">
+    FPS: <input id="videoFps" type="number" min="1" max="120" value="30">
     &nbsp; <br />
     入力カメラデバイス: <select id="videoDevice" size="1"><option>未指定</option></select><br />
     <input type="button" value="設定反映" onclick="start()">
@@ -30,7 +30,7 @@
           throw Error("Unsupported platform");
       }
 
-      const processor = new Shiguredo.SuperResolutionProcessor("./low-light-image-enhance", Shiguredo.superResolutionModelNames.rfdn320x180);
+      const processor = new Shiguredo.SuperResolutionProcessor("./low-light-image-enhance/", Shiguredo.superResolutionModelNames.fastSrgan180x120);
       setInterval(() => {
           const elapsed = processor.getAverageProcessedTimeMs() / 1000;
           document.getElementById('elapsed').innerText = elapsed.toFixed(4).padStart(4, '0');

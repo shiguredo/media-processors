@@ -7,16 +7,16 @@
     <h1>Media Processors: 低照度補正サンプル</h1>
 
     <h3>入力映像設定</h3>
-    解像度: <input id="videoWidth" type="number" min="1" max="2000" value="1280">x
-            <input id="videoHeight" type="number" min="1" max="2000" value="720">
+    解像度: <input id="videoWidth" type="number" min="1" max="2000" value="640">x
+            <input id="videoHeight" type="number" min="1" max="2000" value="360">
     &nbsp;
-    FPS: <input id="videoFps" type="number" min="1" max="120" value="30">
+    FPS: <input id="videoFps" type="number" min="1" max="120" value="15">
     &nbsp; <br />
     入力カメラデバイス: <select id="videoDevice" size="1"><option>未指定</option></select><br />
     モデル: 
     <select id="model">
-      <option selected value="semantic_guided_llie_1284x720">Semantic-Guided-Low-Light-Image-Enhancement 1284x720</option>
-      <option value="semantic_guided_llie_648x360">Semantic-Guided-Low-Light-Image-Enhancement 648x360</option>
+      <option value="semantic_guided_llie_1284x720">Semantic-Guided-Low-Light-Image-Enhancement 1284x720</option>
+      <option selected value="semantic_guided_llie_648x360">Semantic-Guided-Low-Light-Image-Enhancement 648x360</option>
       <option value="semantic_guided_llie_648x480">Semantic-Guided-Low-Light-Image-Enhancement 648x480</option>
       <option value="semantic_guided_llie_324x240">Semantic-Guided-Low-Light-Image-Enhancement 324x240</option>
       <option value="sci_difficult_1280x720">SCI difficult 1280x720</option>
@@ -31,7 +31,12 @@
       <option value="sci_easy_640x360">SCI easy 640x360</option>
       <option value="sci_easy_640x480">SCI easy 640x480</option>
       <option value="sci_easy_320x240">SCI easy 320x240</option>
-    </select><br />
+      <option value="pmn_1280x736">PMN 1280x736</option>
+      <option value="pmn_640x384">PMN 640x384</option>
+    </select>
+    アルファ: <input id="alpha" type="range" min="0.0" max="1.0" value="0.5" step="0.05">
+    <output id="alphaValue">0.5</output>
+    <br />
     <input type="button" value="設定反映" onclick="start()">
 
     <br />
@@ -92,10 +97,11 @@
           });
       }
 
-      function updateOption(name) {
-          var options = {};
-
-          processor.updateOptions(options);
+      function updateAlpha(event) {
+        if (processor !== undefined) {
+          processor.setAlpha(event.target.value);
+        }
+        document.getElementById("alphaValue").textContent = event.target.value;
       }
 
       function start() {
@@ -103,7 +109,7 @@
           processor.stopProcessing();
         }
         console.log(document.getElementById("model").value);
-        processor = new Shiguredo.LowLightImageEnhanceProcessor("./low-light-image-enhance", document.getElementById("model").value);
+        processor = new Shiguredo.LowLightImageEnhanceProcessor("./low-light-image-enhance/", document.getElementById("model").value, document.getElementById("alpha").value);
 
         getUserMedia().then((stream) => {
           document.getElementById('videoOriginal').srcObject = stream;
@@ -115,6 +121,8 @@
               document.getElementById('videoProcessed').srcObject = new MediaStream([processed_track]);
           });
         });
+
+        document.getElementById("alpha").addEventListener("change", updateAlpha);
       }
       start();
     </script>
