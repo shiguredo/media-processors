@@ -2,3 +2,5 @@
 !.gitignore
 !download.sh
 !requirements.txt
+!tfjs_model_*
+!tfjs_model_*/*
