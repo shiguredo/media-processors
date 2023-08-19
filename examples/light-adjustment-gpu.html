@@ -20,8 +20,8 @@
       <option value="semantic_guided_llie_648x480">Semantic-Guided-Low-Light-Image-Enhancement 648x480</option>
       <option value="semantic_guided_llie_324x240">Semantic-Guided-Low-Light-Image-Enhancement 324x240</option>
     </select>
-    アルファ: <input id="alpha" type="range" min="0.0" max="1.0" value="0.5" step="0.05">
-    <output id="alphaValue">0.5</output>
+    効果強度: <input id="strength" type="range" min="0.0" max="1.0" value="0.5" step="0.05">
+    <output id="strengthValue">0.5</output>
     <br />
     <input type="button" value="設定反映" onclick="start()">
 
@@ -83,11 +83,11 @@
           });
       }
 
-      function updateAlpha(event) {
+      function updateStrength(event) {
         if (processor !== undefined) {
-          processor.setAlpha(event.target.value);
+          processor.setStrength(event.target.value);
         }
-        document.getElementById("alphaValue").textContent = event.target.value;
+        document.getElementById("strengthValue").textContent = event.target.value;
       }
 
       function start() {
@@ -95,7 +95,7 @@
           processor.stopProcessing();
         }
         console.log(document.getElementById("model").value);
-        processor = new Shiguredo.LightAdjustmentGpuProcessor("./light-adjustment-gpu/", document.getElementById("model").value, document.getElementById("alpha").value);
+        processor = new Shiguredo.LightAdjustmentGpuProcessor("./light-adjustment-gpu/", document.getElementById("model").value, document.getElementById("strength").value);
 
         getUserMedia().then((stream) => {
           document.getElementById('videoOriginal').srcObject = stream;
@@ -108,7 +108,7 @@
           });
         });
 
-        document.getElementById("alpha").addEventListener("change", updateAlpha);
+        document.getElementById("strength").addEventListener("change", updateStrength);
       }
       start();
     </script>

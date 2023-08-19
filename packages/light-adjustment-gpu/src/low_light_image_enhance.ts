@@ -21,16 +21,16 @@ const customBackendName = "shiguredo-custom-webgl";
 abstract class ImageToImageVideoProcessor {
   private trackProcessor: VideoTrackProcessor;
   private modelOption: ImageToImageModelOption;
-  private alpha: number;
+  private strength: number;
 
-  constructor(model: ImageToImageModelOption, alpha: number) {
+  constructor(model: ImageToImageModelOption, strength: number) {
     this.trackProcessor = new VideoTrackProcessor();
     this.modelOption = model;
-    this.alpha = alpha;
+    this.strength = strength;
   }
 
-  setAlpha(alpha: number): void {
-    this.alpha = alpha;
+  setStrength(strength: number): void {
+    this.strength = strength;
   }
 
   static isSupported(): boolean {
@@ -125,7 +125,7 @@ abstract class ImageToImageVideoProcessor {
           const outputRgb = (outputTensor as tf.Tensor4D).squeeze();
           const outputA = tf.fill(
             [this.modelOption.outputHeight, this.modelOption.outputWidth, 1],
-            this.alpha,
+            this.strength,
             "float32"
           ) as tf.Tensor3D;
           return tf.concat3d([outputRgb as tf.Tensor3D, outputA], 2);
