@@ -1,1 +1,1 @@
-# @shiguredo/low-light-image-enhance
+# @shiguredo/light-adjustment-gpu

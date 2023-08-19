@@ -1,7 +1,7 @@
 {
-  "name": "@shiguredo/low-light-image-enhance",
+  "name": "@shiguredo/light-adjustment-gpu",
   "version": "2023.2.0",
-  "description": "Low Light Image Enhancement Library",
+  "description": "Low Light Image Enhancement(GPU) Library",
   "author": "Shiguredo Inc.",
   "license": "Apache-2.0",
   "main": "dist/low_light_image_enhance.js",
