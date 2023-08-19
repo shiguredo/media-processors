@@ -27,16 +27,8 @@ export default [
         targets: [
           {
             src: [
-              "./node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded.wasm",
-              "./node_modules/onnxruntime-web/dist/ort-wasm-simd.wasm",
-              "./node_modules/onnxruntime-web/dist/ort-wasm-threaded.wasm",
-              "./node_modules/onnxruntime-web/dist/ort-wasm.wasm",
               "./node_modules/@tensorflow/tfjs-tflite/dist/tflite_web_api_cc_simd_threaded.js",
               "./node_modules/@tensorflow/tfjs-tflite/dist/tflite_web_api_cc_simd_threaded.wasm",
-              "../../node_modules/onnxruntime-web/dist/ort-wasm-simd-threaded.wasm",
-              "../../node_modules/onnxruntime-web/dist/ort-wasm-simd.wasm",
-              "../../node_modules/onnxruntime-web/dist/ort-wasm-threaded.wasm",
-              "../../node_modules/onnxruntime-web/dist/ort-wasm.wasm",
               "../../node_modules/@tensorflow/tfjs-tflite/dist/tflite_web_api_cc_simd_threaded.js",
               "../../node_modules/@tensorflow/tfjs-tflite/dist/tflite_web_api_cc_simd_threaded.wasm",
               "./model/tfjs_model_*",
