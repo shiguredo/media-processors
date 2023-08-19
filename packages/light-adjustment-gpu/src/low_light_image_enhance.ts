@@ -372,7 +372,7 @@ const llieModels: { [key: string]: ImageToImageModelOption } = {
   },
 };
 
-export class LowLightImageEnhanceProcessor extends ImageToImageVideoProcessor {
+export class LightAdjustmentGpuProcessor extends ImageToImageVideoProcessor {
   constructor(assetPath: string, modelName: llieModelNames, alpha: number) {
     const model = llieModels[modelName];
     super(Object.assign({}, model, { modelPath: assetPath + model.modelPath }), alpha);

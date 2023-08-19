@@ -1,10 +1,10 @@
 <html>
   <head>
     <meta charset="utf-8">
-    <title>Media Processors: 低照度補正サンプル</title>
+    <title>Media Processors: ライト調整(GPU)サンプル</title>
   </head>
   <body>
-    <h1>Media Processors: 低照度補正サンプル</h1>
+    <h1>Media Processors: ライト調整(GPU)サンプル</h1>
 
     <h3>入力映像設定</h3>
     解像度: <input id="videoWidth" type="number" min="1" max="2000" value="640">x
@@ -47,9 +47,9 @@
     <video id="videoProcessed" autoplay playsinline style="border: 1px solid blue;"></video>
     <video id="videoOriginal" autoplay playsinline style="border: 1px solid red;"></video><br />
 
-    <script src="./low-light-image-enhance/low_light_image_enhance.js"></script>
+    <script src="./light-adjustment-gpu/low_light_image_enhance.js"></script>
     <script>
-      if (!Shiguredo.LowLightImageEnhanceProcessor.isSupported()) {
+      if (!Shiguredo.LightAdjustmentGpuProcessor.isSupported()) {
           alert("Unsupported platform");
           throw Error("Unsupported platform");
       }
@@ -109,7 +109,7 @@
           processor.stopProcessing();
         }
         console.log(document.getElementById("model").value);
-        processor = new Shiguredo.LowLightImageEnhanceProcessor("./low-light-image-enhance/", document.getElementById("model").value, document.getElementById("alpha").value);
+        processor = new Shiguredo.LightAdjustmentGpuProcessor("./light-adjustment-gpu/", document.getElementById("model").value, document.getElementById("alpha").value);
 
         getUserMedia().then((stream) => {
           document.getElementById('videoOriginal').srcObject = stream;
