@@ -16,5 +16,8 @@
     "packages/virtual-background",
     "packages/light-adjustment",
     "packages/noise-suppression"
-  ]
+  ],
+  "engines": {
+    "node": ">=18.17.1"
+  }
 }
