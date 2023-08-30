@@ -11,6 +11,8 @@
 
 ## develop
 
+- [CHANGE] tsconfig の共通化
+  - @voluntas
 - [CHANGE] tsconfig.json の compilerOptions の lib を es2015 から es2020 に変更する
   - @voluntas
 - [CHANGE] pnpm 化
@@ -18,7 +20,7 @@
   - @voluntas
 - [UPDATE] engines でノードのバージョンを 18.17.1 以上にする
   - @voluntas
-- [FIX] Zig の組み込みのキャスト関数xToYがyFromXにリネームされたので対応
+- [FIX] Zig の組み込みのキャスト関数 xToY が yFromX にリネームされたので対応
   - @kounoike
 - [FIX] Zig の `@truncate` やキャスト関連に破壊的変更があったため対応
   - @kounoike
@@ -27,7 +29,7 @@
 
 ## virtual-background-2023.2.0
 
-- [UPDATE] CPU-GPUの転送を減らして背景ぼかし処理を高速化
+- [UPDATE] CPU-GPU の転送を減らして背景ぼかし処理を高速化
   - @kounoike
 - [UPDATE] GitHub Actions に Node 20 を追加
   - @voluntas
@@ -103,30 +105,30 @@
 
 ## noise-suppression-2022.4.1
 
-- [FIX] 公開APIに含まれる型を定義しているパッケージをdependenciesに追加
+- [FIX] 公開 API に含まれる型を定義しているパッケージを dependencies に追加
   - https://github.com/shiguredo/media-processors/pull/26
   - @sile
 
 ## virtual-background-2022.4.1
 
-- [FIX] 公開APIに含まれる型を定義しているパッケージをdependenciesに追加
+- [FIX] 公開 API に含まれる型を定義しているパッケージを dependencies に追加
   - https://github.com/shiguredo/media-processors/pull/26
   - @sile
 
 ## noise-suppression-2022.4.0
 
-- [ADD] RNNoiseモデルの差し替えに対応
+- [ADD] RNNoise モデルの差し替えに対応
 
   - https://github.com/shiguredo/media-processors/pull/15
   - @sile
 
-- [ADD] 処理適用前後のメディアトラックを取得するためのAPIを追加
+- [ADD] 処理適用前後のメディアトラックを取得するための API を追加
   - https://github.com/shiguredo/media-processors/pull/25
   - @sile
 
 ## virtual-background-2022.4.0
 
-- [ADD] 処理適用前後のメディアトラックを取得するためのAPIを追加
+- [ADD] 処理適用前後のメディアトラックを取得するための API を追加
   - https://github.com/shiguredo/media-processors/pull/25
   - @sile
 
