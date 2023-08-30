@@ -11,6 +11,9 @@
 
 ## develop
 
+- [ADD] prettier を導入
+  - 設定はあったが仕組みが入ってなかった
+  - @voluntas
 - [CHANGE] tsconfig の共通化
   - @voluntas
 - [CHANGE] tsconfig.json の compilerOptions の lib を es2015 から es2020 に変更する
