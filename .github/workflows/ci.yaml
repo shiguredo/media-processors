@@ -1,4 +1,4 @@
-name: test
+name: ci
 
 on:
   push:
@@ -10,24 +10,27 @@ on:
       - "feature/pnpm"
 
 jobs:
-  test:
+  ci:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node: ["16", "18", "20"]
+        node: ["18", "20"]
     steps:
       - uses: actions/checkout@v3
       - uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node }}
-          cache: npm
-      - run: npm --version
+      - uses: pnpm/action-setup@v2
+        name: Install pnpm
+        with:
+          version: 8
+      - run: pnpm --version
       - uses: goto-bus-stop/setup-zig@v2
       - run: zig version
-      - run: npm install
-      - run: npm run build
-      - run: npm run lint
-      - run: npm run doc
+      - run: pnpm install
+      - run: pnpm run build
+      - run: pnpm run lint
+      - run: pnpm run doc
       - run: cd packages/light-adjustment/zig/ && zig build test
       - name: Slack Notification
         if: failure()
