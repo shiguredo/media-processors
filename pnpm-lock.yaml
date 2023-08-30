@@ -61,7 +61,7 @@ importers:
         specifier: 5.0.2
         version: 5.0.2(rollup@3.28.1)
       '@shiguredo/video-track-processor':
-        specifier: link:../video-track-processor
+        specifier: workspace:*
         version: link:../video-track-processor
       '@types/offscreencanvas':
         specifier: 2019.7.0
@@ -88,7 +88,7 @@ importers:
         specifier: 0.1.1675465747
         version: 0.1.1675465747
       '@shiguredo/video-track-processor':
-        specifier: link:../video-track-processor
+        specifier: workspace:*
         version: link:../video-track-processor
       '@types/offscreencanvas':
         specifier: 2019.7.0
