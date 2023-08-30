@@ -12,6 +12,5 @@
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "newLine": "LF"
-  },
-  "include": ["src"]
+  }
 }
