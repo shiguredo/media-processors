@@ -17,6 +17,8 @@ jobs:
         node: ["18", "20"]
     steps:
       - uses: actions/checkout@v3
+      - uses: goto-bus-stop/setup-zig@v2
+      - run: zig version
       - uses: actions/setup-node@v3
         with:
           node-version: ${{ matrix.node }}
@@ -25,8 +27,6 @@ jobs:
         with:
           version: 8
       - run: pnpm --version
-      - uses: goto-bus-stop/setup-zig@v2
-      - run: zig version
       - run: pnpm install
       - run: pnpm run build
       - run: pnpm run lint
