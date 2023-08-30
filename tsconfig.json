@@ -3,7 +3,6 @@
     "lib": ["es2020", "dom"],
     "target": "esnext",
     "module": "commonjs",
-    "outDir": "dist",
     "strict": true,
     "declaration": true,
     "strictNullChecks": true,
