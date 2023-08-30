@@ -17,9 +17,6 @@ importers:
       '@rollup/plugin-typescript':
         specifier: 11.1.3
         version: 11.1.3(rollup@3.28.1)(typescript@5.2.2)
-      '@types/offscreencanvas':
-        specifier: 2019.7.0
-        version: 2019.7.0
       '@typescript-eslint/eslint-plugin':
         specifier: 6.5.0
         version: 6.5.0(@typescript-eslint/parser@6.5.0)(eslint@8.48.0)(typescript@5.2.2)
@@ -60,45 +57,15 @@ importers:
       '@mediapipe/selfie_segmentation':
         specifier: 0.1.1675465747
         version: 0.1.1675465747
-      '@rollup/plugin-commonjs':
-        specifier: 25.0.4
-        version: 25.0.4(rollup@3.28.1)
-      '@rollup/plugin-node-resolve':
-        specifier: 15.2.1
-        version: 15.2.1(rollup@3.28.1)
       '@rollup/plugin-replace':
         specifier: 5.0.2
         version: 5.0.2(rollup@3.28.1)
-      '@rollup/plugin-typescript':
-        specifier: 11.1.3
-        version: 11.1.3(rollup@3.28.1)(typescript@5.2.2)
       '@shiguredo/video-track-processor':
         specifier: link:../video-track-processor
         version: link:../video-track-processor
       '@types/offscreencanvas':
         specifier: 2019.7.0
         version: 2019.7.0
-      '@typescript-eslint/eslint-plugin':
-        specifier: 6.5.0
-        version: 6.5.0(@typescript-eslint/parser@6.5.0)(eslint@8.48.0)(typescript@5.2.2)
-      '@typescript-eslint/parser':
-        specifier: 6.5.0
-        version: 6.5.0(eslint@8.48.0)(typescript@5.2.2)
-      eslint:
-        specifier: 8.48.0
-        version: 8.48.0
-      eslint-config-prettier:
-        specifier: 9.0.0
-        version: 9.0.0(eslint@8.48.0)
-      eslint-plugin-prettier:
-        specifier: 5.0.0
-        version: 5.0.0(eslint-config-prettier@9.0.0)(eslint@8.48.0)(prettier@3.0.3)
-      rollup:
-        specifier: 3.28.1
-        version: 3.28.1
-      rollup-plugin-copy:
-        specifier: 3.4.0
-        version: 3.4.0
       stackblur-canvas:
         specifier: 2.6.0
         version: 2.6.0
@@ -109,33 +76,9 @@ importers:
         specifier: ^0.1.6
         version: 0.1.6
     devDependencies:
-      '@rollup/plugin-commonjs':
-        specifier: 25.0.4
-        version: 25.0.4(rollup@3.28.1)
-      '@rollup/plugin-node-resolve':
-        specifier: 15.2.1
-        version: 15.2.1(rollup@3.28.1)
-      '@rollup/plugin-typescript':
-        specifier: 11.1.3
-        version: 11.1.3(rollup@3.28.1)(typescript@5.2.2)
       '@shiguredo/rnnoise-wasm':
         specifier: 2022.2.0
         version: 2022.2.0
-      '@typescript-eslint/eslint-plugin':
-        specifier: 6.5.0
-        version: 6.5.0(@typescript-eslint/parser@6.5.0)(eslint@8.48.0)(typescript@5.2.2)
-      '@typescript-eslint/parser':
-        specifier: 6.5.0
-        version: 6.5.0(eslint@8.48.0)(typescript@5.2.2)
-      eslint:
-        specifier: 8.48.0
-        version: 8.48.0
-      eslint-config-prettier:
-        specifier: 9.0.0
-        version: 9.0.0(eslint@8.48.0)
-      eslint-plugin-prettier:
-        specifier: 5.0.0
-        version: 5.0.0(eslint-config-prettier@9.0.0)(eslint@8.48.0)(prettier@3.0.3)
 
   packages/video-track-processor:
     dependencies:
@@ -143,33 +86,9 @@ importers:
         specifier: ^0.1.6
         version: 0.1.6
     devDependencies:
-      '@rollup/plugin-commonjs':
-        specifier: 25.0.4
-        version: 25.0.4(rollup@3.28.1)
-      '@rollup/plugin-node-resolve':
-        specifier: 15.2.1
-        version: 15.2.1(rollup@3.28.1)
-      '@rollup/plugin-typescript':
-        specifier: 11.1.3
-        version: 11.1.3(rollup@3.28.1)(typescript@5.2.2)
       '@types/offscreencanvas':
         specifier: 2019.7.0
         version: 2019.7.0
-      '@typescript-eslint/eslint-plugin':
-        specifier: 6.5.0
-        version: 6.5.0(@typescript-eslint/parser@6.5.0)(eslint@8.48.0)(typescript@5.2.2)
-      '@typescript-eslint/parser':
-        specifier: 6.5.0
-        version: 6.5.0(eslint@8.48.0)(typescript@5.2.2)
-      eslint:
-        specifier: 8.48.0
-        version: 8.48.0
-      eslint-config-prettier:
-        specifier: 9.0.0
-        version: 9.0.0(eslint@8.48.0)
-      eslint-plugin-prettier:
-        specifier: 5.0.0
-        version: 5.0.0(eslint-config-prettier@9.0.0)(eslint@8.48.0)(prettier@3.0.3)
 
   packages/virtual-background:
     dependencies:
@@ -180,36 +99,12 @@ importers:
       '@mediapipe/selfie_segmentation':
         specifier: 0.1.1675465747
         version: 0.1.1675465747
-      '@rollup/plugin-commonjs':
-        specifier: 25.0.4
-        version: 25.0.4(rollup@3.28.1)
-      '@rollup/plugin-node-resolve':
-        specifier: 15.2.1
-        version: 15.2.1(rollup@3.28.1)
-      '@rollup/plugin-typescript':
-        specifier: 11.1.3
-        version: 11.1.3(rollup@3.28.1)(typescript@5.2.2)
       '@shiguredo/video-track-processor':
         specifier: link:../video-track-processor
         version: link:../video-track-processor
       '@types/offscreencanvas':
         specifier: 2019.7.0
         version: 2019.7.0
-      '@typescript-eslint/eslint-plugin':
-        specifier: 6.5.0
-        version: 6.5.0(@typescript-eslint/parser@6.5.0)(eslint@8.48.0)(typescript@5.2.2)
-      '@typescript-eslint/parser':
-        specifier: 6.5.0
-        version: 6.5.0(eslint@8.48.0)(typescript@5.2.2)
-      eslint:
-        specifier: 8.48.0
-        version: 8.48.0
-      eslint-config-prettier:
-        specifier: 9.0.0
-        version: 9.0.0(eslint@8.48.0)
-      eslint-plugin-prettier:
-        specifier: 5.0.0
-        version: 5.0.0(eslint-config-prettier@9.0.0)(eslint@8.48.0)(prettier@3.0.3)
       stackblur-canvas:
         specifier: 2.6.0
         version: 2.6.0
