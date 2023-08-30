@@ -7,6 +7,10 @@ settings:
 importers:
 
   .:
+    dependencies:
+      '@types/dom-mediacapture-transform':
+        specifier: 0.1.6
+        version: 0.1.6
     devDependencies:
       '@rollup/plugin-commonjs':
         specifier: 25.0.4
@@ -49,10 +53,6 @@ importers:
         version: 5.2.2
 
   packages/light-adjustment:
-    dependencies:
-      '@types/dom-mediacapture-transform':
-        specifier: ^0.1.6
-        version: 0.1.6
     devDependencies:
       '@mediapipe/selfie_segmentation':
         specifier: 0.1.1675465747
@@ -71,30 +71,18 @@ importers:
         version: 2.6.0
 
   packages/noise-suppression:
-    dependencies:
-      '@types/dom-mediacapture-transform':
-        specifier: ^0.1.6
-        version: 0.1.6
     devDependencies:
       '@shiguredo/rnnoise-wasm':
         specifier: 2022.2.0
         version: 2022.2.0
 
   packages/video-track-processor:
-    dependencies:
-      '@types/dom-mediacapture-transform':
-        specifier: ^0.1.6
-        version: 0.1.6
     devDependencies:
       '@types/offscreencanvas':
         specifier: 2019.7.0
         version: 2019.7.0
 
   packages/virtual-background:
-    dependencies:
-      '@types/dom-mediacapture-transform':
-        specifier: ^0.1.6
-        version: 0.1.6
     devDependencies:
       '@mediapipe/selfie_segmentation':
         specifier: 0.1.1675465747

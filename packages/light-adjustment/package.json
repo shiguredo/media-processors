@@ -25,9 +25,6 @@
   "files": [
     "dist"
   ],
-  "dependencies": {
-    "@types/dom-mediacapture-transform": "^0.1.6"
-  },
   "devDependencies": {
     "@mediapipe/selfie_segmentation": "0.1.1675465747",
     "@rollup/plugin-replace": "5.0.2",
