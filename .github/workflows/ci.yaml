@@ -6,8 +6,8 @@ on:
       - "**.md"
       - "LICENSE"
       - "NOTICE"
-    branches-ignore:
-      - "feature/pnpm"
+    # branches-ignore:
+    #   - "feature/pnpm"
 
 jobs:
   ci:
