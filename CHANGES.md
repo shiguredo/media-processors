@@ -11,6 +11,11 @@
 
 ## develop
 
+- [CHANGE] tsconfig.json の compilerOptions の lib を es2015 から es2020 に変更する
+  - @voluntas
+- [CHANGE] pnpm 化
+  - pnpm-workspace に切り替え
+  - @voluntas
 - [UPDATE] engines でノードのバージョンを 18.17.1 以上にする
   - @voluntas
 - [FIX] Zig の組み込みのキャスト関数xToYがyFromXにリネームされたので対応

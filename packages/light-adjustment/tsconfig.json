@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "lib": ["es2015", "dom"],
+    "lib": ["es2020", "dom"],
     "target": "esnext",
     "module": "commonjs",
     "outDir": "dist",
@@ -11,9 +11,7 @@
     "experimentalDecorators": true,
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
-    "newLine": "LF",
+    "newLine": "LF"
   },
-  "include": [
-    "src"
-  ]
+  "include": ["src"]
 }
