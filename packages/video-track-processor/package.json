@@ -25,6 +25,6 @@
     "dist"
   ],
   "devDependencies": {
-    "@types/offscreencanvas": "2019.7.0"
+    "@types/offscreencanvas": "2019.7.1"
   }
 }
