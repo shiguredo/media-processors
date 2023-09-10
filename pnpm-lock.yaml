@@ -49,8 +49,8 @@ importers:
         specifier: 2.6.2
         version: 2.6.2
       typedoc:
-        specifier: 0.25.0
-        version: 0.25.0(typescript@5.2.2)
+        specifier: 0.25.1
+        version: 0.25.1(typescript@5.2.2)
       typescript:
         specifier: 5.2.2
         version: 5.2.2
@@ -67,8 +67,8 @@ importers:
         specifier: workspace:*
         version: link:../video-track-processor
       '@types/offscreencanvas':
-        specifier: 2019.7.0
-        version: 2019.7.0
+        specifier: 2019.7.1
+        version: 2019.7.1
       stackblur-canvas:
         specifier: 2.6.0
         version: 2.6.0
@@ -82,8 +82,8 @@ importers:
   packages/video-track-processor:
     devDependencies:
       '@types/offscreencanvas':
-        specifier: 2019.7.0
-        version: 2019.7.0
+        specifier: 2019.7.1
+        version: 2019.7.1
 
   packages/virtual-background:
     devDependencies:
@@ -94,8 +94,8 @@ importers:
         specifier: workspace:*
         version: link:../video-track-processor
       '@types/offscreencanvas':
-        specifier: 2019.7.0
-        version: 2019.7.0
+        specifier: 2019.7.1
+        version: 2019.7.1
       stackblur-canvas:
         specifier: 2.6.0
         version: 2.6.0
@@ -333,8 +333,8 @@ packages:
     resolution: {integrity: sha512-dP7f3LdZIysZnmvP3ANJYTSwg+wLLl8p7RqniVlV7j+oXSXAbt9h0WIBFmJy5inWZoX9wZN6eXx+YXd9Rh3RBA==}
     dev: true
 
-  /@types/offscreencanvas@2019.7.0:
-    resolution: {integrity: sha512-PGcyveRIpL1XIqK8eBsmRBt76eFgtzuPiSTyKHZxnGemp2yzGzWpjYKAfK3wIMiU7eH+851yEpiuP8JZerTmWg==}
+  /@types/offscreencanvas@2019.7.1:
+    resolution: {integrity: sha512-+HSrJgjBW77ALieQdMJvXhRZUIRN1597L+BKvsyeiIlHHERnqjcuOLyodK3auJ3Y3zRezNKtKAhuQWYJfEgFHQ==}
     dev: true
 
   /@types/resolve@1.20.2:
@@ -1950,8 +1950,8 @@ packages:
     engines: {node: '>=12.20'}
     dev: true
 
-  /typedoc@0.25.0(typescript@5.2.2):
-    resolution: {integrity: sha512-FvCYWhO1n5jACE0C32qg6b3dSfQ8f2VzExnnRboowHtqUD6ARzM2r8YJeZFYXhcm2hI4C2oCRDgNPk/yaQUN9g==}
+  /typedoc@0.25.1(typescript@5.2.2):
+    resolution: {integrity: sha512-c2ye3YUtGIadxN2O6YwPEXgrZcvhlZ6HlhWZ8jQRNzwLPn2ylhdGqdR8HbyDRyALP8J6lmSANILCkkIdNPFxqA==}
     engines: {node: '>= 16'}
     hasBin: true
     peerDependencies:
