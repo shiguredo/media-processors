@@ -18,7 +18,7 @@ const banner = `/**
 
 export default [
   {
-    input: "src/low_light_image_enhance.ts",
+    input: "src/light_adjustment_gpu.ts",
     plugins: [
       typescript({ module: "esnext" }),
       commonjs(),
@@ -26,13 +26,7 @@ export default [
       copy({
         targets: [
           {
-            src: [
-              "./node_modules/@tensorflow/tfjs-tflite/dist/tflite_web_api_cc_simd_threaded.js",
-              "./node_modules/@tensorflow/tfjs-tflite/dist/tflite_web_api_cc_simd_threaded.wasm",
-              "../../node_modules/@tensorflow/tfjs-tflite/dist/tflite_web_api_cc_simd_threaded.js",
-              "../../node_modules/@tensorflow/tfjs-tflite/dist/tflite_web_api_cc_simd_threaded.wasm",
-              "./model/tfjs_model_*",
-            ],
+            src: ["./model/tfjs_model_*"],
             dest: "dist/",
           },
         ],
@@ -40,7 +34,7 @@ export default [
     ],
     output: {
       sourcemap: false,
-      file: "./dist/low_light_image_enhance.js",
+      file: "./dist/light_adjustment_gpu.js",
       format: "umd",
       name: "Shiguredo",
       extend: true,
@@ -48,11 +42,11 @@ export default [
     },
   },
   {
-    input: "src/low_light_image_enhance.ts",
+    input: "src/light_adjustment_gpu.ts",
     plugins: [typescript({ module: "esnext" }), commonjs(), resolve()],
     output: {
       sourcemap: false,
-      file: "./dist/low_light_image_enhance.mjs",
+      file: "./dist/light_adjustment_gpu.mjs",
       format: "module",
       name: "Shiguredo",
       extend: true,
