@@ -49,7 +49,7 @@ export class LightAdjustmentGpuProcessor extends ImageToImageVideoProcessor {
   /**
    * {@link LightAdjustmentGpuProcessor} インスタンスを生成します
    *
-   * @param assetsPath tfjsのwasm 等のファイルの配置先ディレクトリパスないしURL
+   * @param assetsPath モデルファイルの配置先ディレクトリパスないしURL
    * @param modelName {@link llieModelNames} のいずれか
    * @param strength 補正の強さ。0.0 から 1.0 の範囲で指定します
    */
