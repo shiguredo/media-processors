@@ -55,6 +55,30 @@ importers:
         specifier: 5.2.2
         version: 5.2.2
 
+  packages/image-to-image-video-processor:
+    devDependencies:
+      '@shiguredo/video-track-processor':
+        specifier: workspace:*
+        version: link:../video-track-processor
+      '@tensorflow/tfjs':
+        specifier: ^4.8.0
+        version: 4.8.0(seedrandom@3.0.5)
+      '@tensorflow/tfjs-backend-webgl':
+        specifier: ^4.8.0
+        version: 4.8.0(@tensorflow/tfjs-core@4.8.0)
+      '@tensorflow/tfjs-backend-webgpu':
+        specifier: ^4.8.0
+        version: 4.8.0(@tensorflow/tfjs-core@4.8.0)
+      '@types/offscreencanvas':
+        specifier: 2019.7.1
+        version: 2019.7.1
+      '@typescript-eslint/eslint-plugin':
+        specifier: 5.60.0
+        version: 5.60.0(@typescript-eslint/parser@5.60.0)(eslint@8.49.0)(typescript@5.2.2)
+      '@typescript-eslint/parser':
+        specifier: 5.60.0
+        version: 5.60.0(eslint@8.49.0)(typescript@5.2.2)
+
   packages/light-adjustment:
     devDependencies:
       '@mediapipe/selfie_segmentation':
@@ -78,27 +102,9 @@ importers:
       '@rollup/plugin-replace':
         specifier: 5.0.2
         version: 5.0.2(rollup@3.29.1)
-      '@shiguredo/video-track-processor':
+      '@shiguredo/image-to-image-video-processor':
         specifier: workspace:*
-        version: link:../video-track-processor
-      '@tensorflow/tfjs':
-        specifier: ^4.8.0
-        version: 4.8.0(seedrandom@3.0.5)
-      '@tensorflow/tfjs-backend-webgl':
-        specifier: ^4.8.0
-        version: 4.8.0(@tensorflow/tfjs-core@4.8.0)
-      '@tensorflow/tfjs-backend-webgpu':
-        specifier: ^4.8.0
-        version: 4.8.0(@tensorflow/tfjs-core@4.8.0)
-      '@types/offscreencanvas':
-        specifier: 2019.7.0
-        version: 2019.7.0
-      '@typescript-eslint/eslint-plugin':
-        specifier: 5.60.0
-        version: 5.60.0(@typescript-eslint/parser@5.60.0)(eslint@8.49.0)(typescript@5.2.2)
-      '@typescript-eslint/parser':
-        specifier: 5.60.0
-        version: 5.60.0(eslint@8.49.0)(typescript@5.2.2)
+        version: link:../image-to-image-video-processor
 
   packages/noise-suppression:
     devDependencies:
@@ -474,10 +480,6 @@ packages:
 
   /@types/offscreencanvas@2019.3.0:
     resolution: {integrity: sha512-esIJx9bQg+QYF0ra8GnvfianIY8qWB0GBx54PK5Eps6m+xTj86KLavHv6qDhzKcu5UUOgNfJ2pWaIIV7TRUd9Q==}
-    dev: true
-
-  /@types/offscreencanvas@2019.7.0:
-    resolution: {integrity: sha512-PGcyveRIpL1XIqK8eBsmRBt76eFgtzuPiSTyKHZxnGemp2yzGzWpjYKAfK3wIMiU7eH+851yEpiuP8JZerTmWg==}
     dev: true
 
   /@types/offscreencanvas@2019.7.1:

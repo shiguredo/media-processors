@@ -1,0 +1,36 @@
+{
+  "name": "@shiguredo/image-to-image-video-processor",
+  "version": "0.0.0",
+  "description": "Unpublished internal utility package for iamge to image video track processing",
+  "author": "Shiguredo Inc.",
+  "license": "Apache-2.0",
+  "module": "dist/image_to_image_video_processor.mjs",
+  "types": "dist/image_to_image_video_processor.d.ts",
+  "scripts": {
+    "build": "rollup -c ./rollup.config.mjs --bundleConfigAsCjs && tsc --emitDeclarationOnly",
+    "lint": "eslint --ext .ts ./src",
+    "fmt": "prettier --write src",
+    "doc": "typedoc"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/shiguredo/media-processors.git"
+  },
+  "keywords": [],
+  "bugs": {
+    "url": "https://discord.gg/shiguredo"
+  },
+  "homepage": "https://github.com/shiguredo/media-processors#readme",
+  "files": [
+    "dist"
+  ],
+  "devDependencies": {
+    "@shiguredo/video-track-processor": "workspace:*",
+    "@types/offscreencanvas": "2019.7.1",
+    "@tensorflow/tfjs": "^4.8.0",
+    "@tensorflow/tfjs-backend-webgl": "^4.8.0",
+    "@tensorflow/tfjs-backend-webgpu": "^4.8.0",
+    "@typescript-eslint/eslint-plugin": "5.60.0",
+    "@typescript-eslint/parser": "5.60.0"
+  }
+}

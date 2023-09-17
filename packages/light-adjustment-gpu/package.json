@@ -27,12 +27,6 @@
   ],
   "devDependencies": {
     "@rollup/plugin-replace": "5.0.2",
-    "@shiguredo/video-track-processor": "workspace:*",
-    "@tensorflow/tfjs": "^4.8.0",
-    "@tensorflow/tfjs-backend-webgl": "^4.8.0",
-    "@tensorflow/tfjs-backend-webgpu": "^4.8.0",
-    "@types/offscreencanvas": "2019.7.0",
-    "@typescript-eslint/eslint-plugin": "5.60.0",
-    "@typescript-eslint/parser": "5.60.0"
+    "@shiguredo/image-to-image-video-processor": "workspace:*"
   }
 }
