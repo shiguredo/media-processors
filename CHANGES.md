@@ -11,6 +11,8 @@
 
 ## develop
 
+- [ADD] 推論ベースの Low-Light-Image-Enhancement を行う light-adjustment-gpu を追加
+  - @kounoike
 - [CHANGE] tsconfig.json の compilerOptions の lib を es2015 から es2020 に変更する
   - @voluntas
 - [CHANGE] pnpm 化
