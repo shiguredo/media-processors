@@ -2,6 +2,9 @@ import { VideoTrackProcessor } from "@shiguredo/video-track-processor";
 import "@tensorflow/tfjs-backend-webgl";
 import * as tf from "@tensorflow/tfjs";
 
+/**
+ * ImageToImageVideoProcessor で使うモデルのオプション
+ */
 export interface ImageToImageModelOption {
   modelPath: string;
   inputWidth: number;
@@ -18,6 +21,11 @@ export interface ImageToImageModelOption {
 
 const customBackendName = "shiguredo-custom-webgl";
 
+/**
+ * 動画ストリームに対して、画像から画像への変換を行う推論処理をtfjsで行う際の処理を共通化したユーティリティクラス
+ * 利用側はモデルファイルのパスと解像度などの情報(ImageToImageModelOption)を渡すだけで良い
+ * WebGLを使いCPUを介さずにGPU上で推論結果の描画・エンコーダへの受け渡しを行う
+ */
 export abstract class ImageToImageVideoProcessor {
   private trackProcessor: VideoTrackProcessor;
   private modelOption: ImageToImageModelOption;
