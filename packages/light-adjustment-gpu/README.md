@@ -4,7 +4,7 @@
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
 ブラウザで映像のライト調整機能を実現するためのライブラリです。
-@shiguredo/light-adjustmentと違いGPUを利用して推論処理を行います。
+@shiguredo/light-adjustment と違い GPU を利用して推論処理を行います。
 
 光量が不足している画像のコントラストを改善したり、逆光で暗くなっている人物を明るくすることができます。
 明るくする度合いの調整をすることができます。
