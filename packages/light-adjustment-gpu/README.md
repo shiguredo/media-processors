@@ -58,7 +58,7 @@ TypeScript での使用方法は次のようになります:
 import { LightAdjustmentGpuProcessor, llieModelNames } from "@shiguredo/light-adjustment";
 
 const assetsPath = "https://cdn.jsdelivr.net/npm/@shiguredo/light-adjustment-gpu@latest/dist";
-const model = llieModelNames.semanticGuidedLlie1284x720; // モデル（処理する解像度）の指定
+const model = llieModelNames.semanticGuidedLlie1284x720; // モデル（処理する解像度）の指定。
 const strength = 0.5; // 明るさの調整度合い
 const processor = new LightAdjustmentGpuProcessor();
 const processed_video_track = await processor.startProcessing(original_video_track);
@@ -67,6 +67,9 @@ const processed_video_track = await processor.startProcessing(original_video_tra
 
 processor.stopProcessing();
 ```
+
+入力解像度とモデル解像度が違う場合は、内部的に一度モデル解像度にリサイズして推論を行い、結果をリサイズして元の入力解像度に戻します。
+モデル解像度が大きいほど処理負荷が大きくなります。
 
 ## サポートブラウザ
 
@@ -80,7 +83,7 @@ processor.stopProcessing();
 [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0)
 
 ```
-Copyright 2023-2023, Takeru Ohta (Original Author)
+Copyright 2023-2023, Yuusuke KOUNOIKE (Original Author)
 Copyright 2023-2023, Shiguredo Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");

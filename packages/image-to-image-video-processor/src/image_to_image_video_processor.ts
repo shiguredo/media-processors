@@ -27,8 +27,17 @@ const customBackendName = "shiguredo-custom-webgl";
  * WebGLを使いCPUを介さずにGPU上で推論結果の描画・エンコーダへの受け渡しを行う
  */
 export abstract class ImageToImageVideoProcessor {
+  /**
+   * 内部で使用するVideoTrackProcessorのインスタンスです
+   */
   private trackProcessor: VideoTrackProcessor;
+  /**
+   * 使用するモデルのオプションです
+   */
   private modelOption: ImageToImageModelOption;
+  /*
+   * 補正の強さ。元画像と補正画像をブレンディングする際の比率を0.0 から 1.0 の範囲で指定します
+   */
   private strength: number;
 
   constructor(model: ImageToImageModelOption, strength: number) {

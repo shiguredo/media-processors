@@ -10,7 +10,7 @@
 [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0)
 
 ```
-Copyright 2023-2023, Takeru Ohta (Original Author)
+Copyright 2023-2023, Yuusuke KOUNOIKE (Original Author)
 Copyright 2023-2023, Shiguredo Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");

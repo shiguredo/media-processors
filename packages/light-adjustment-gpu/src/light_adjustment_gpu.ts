@@ -1,7 +1,7 @@
 import { ImageToImageVideoProcessor, ImageToImageModelOption } from "@shiguredo/image-to-image-video-processor";
 
 /**
- * 使用するLLIEのモデル名
+ * 使用するLow Light Image Enhancementのモデル名
  * 現時点ではすべて SemanticGuidedLLIE なので、処理解像度のみの違い
  */
 export enum llieModelNames {
