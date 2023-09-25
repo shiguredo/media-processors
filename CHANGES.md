@@ -11,7 +11,15 @@
 
 ## develop
 
-- [ADD] 推論ベースの Low-Light-Image-Enhancement を行う light-adjustment-gpu を追加
+- [ADD] 推論ベースの Low-Light-Image-Enhancement を行う @shiguredo/light-adjustment-gpu パッケージを追加
+  - 暗い画像に対してコントラストを改善したり、逆光で暗くなっている人物を明るくすることができる
+  - 内部的には @shiguredo/image-to-image-video-processor を利用する
+  - https://github.com/PINTO0309/PINTO_model_zoo/tree/main/370_Semantic-Guided-Low-Light-Image-Enhancement のモデルをtfjsに変換して使用する
+  - @kounoike
+- [ADD] 画像→画像の推論を行う際に使える @shiguredo/image-to-image-video-processor パッケージを追加する
+  - Tensorflow.jsを使い、画像→画像の何らかの推論を行う
+  - 推論前後のリサイズ処理を入力解像度に合わせて自動的に行う
+  - Low Light Image Enhancementのような明るさ補正、超解像、ノイズ除去などの推論で使われることを想定している
   - @kounoike
 - [CHANGE] tsconfig.json の compilerOptions の lib を es2015 から es2020 に変更する
   - @voluntas
