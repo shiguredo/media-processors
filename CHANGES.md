@@ -16,7 +16,7 @@
 - [CHANGE] pnpm 化
   - pnpm-workspace に切り替え
   - @voluntas
-- [UPDATE] engines でノードのバージョンを 18.17.1 以上にする
+- [UPDATE] engines でノードのバージョンを 18.17 以上にする
   - @voluntas
 - [FIX] Zig の組み込みのキャスト関数xToYがyFromXにリネームされたので対応
   - @kounoike
