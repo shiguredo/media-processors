@@ -231,7 +231,7 @@ const Agcwd = struct {
     fn isStateObsolete(self: *const Self, image: *const RgbaImage, options: *const LightAdjustmentOptions) bool {
         const pdf = Pdf.fromImage(image);
         const entropy = pdf.entropy();
-        return @fabs(self.entropy - entropy) > options.entropy_threshold;
+        return @abs(self.entropy - entropy) > options.entropy_threshold;
     }
 
     fn updateState(self: *Self, image: *const RgbaImage, mask: *const FocusMask, options: *const LightAdjustmentOptions) void {
