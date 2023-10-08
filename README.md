@@ -61,7 +61,7 @@ GitHub Pages にサンプルを用意しています。完全にクライアン�
 
 最新の状況などは Discord で共有しています。質問や相談も Discord でのみ受け付けています。
 
-https://discord.gg/shiguredo
+https://discord.gg/shiguredo の `#media-processors` チャネルをご利用ください。
 
 ### バグ報告
 
