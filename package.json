@@ -12,7 +12,7 @@
     "@types/dom-mediacapture-transform": "0.1.7"
   },
   "devDependencies": {
-    "@rollup/plugin-commonjs": "25.0.5",
+    "@rollup/plugin-commonjs": "25.0.7",
     "@rollup/plugin-node-resolve": "15.2.3",
     "@rollup/plugin-typescript": "11.1.5",
     "@typescript-eslint/eslint-plugin": "6.7.5",
