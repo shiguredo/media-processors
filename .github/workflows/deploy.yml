@@ -33,6 +33,8 @@ jobs:
           cp -r packages/virtual-background/dist/ _site/examples/virtual-background
           rm _site/examples/light-adjustment
           cp -r packages/light-adjustment/dist/ _site/examples/light-adjustment
+          rm _site/examples/light-adjustment-gpu
+          cp -r packages/light-adjustment-gpu/dist/ _site/examples/light-adjustment-gpu
           rm _site/examples/noise-suppression
           cp -r packages/noise-suppression/dist/ _site/examples/noise-suppression
       - name: Upload files
