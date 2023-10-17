@@ -26,7 +26,6 @@
   ],
   "devDependencies": {
     "@shiguredo/video-track-processor": "workspace:*",
-    "@types/offscreencanvas": "2019.7.1",
     "@tensorflow/tfjs": "^4.8.0",
     "@tensorflow/tfjs-backend-webgl": "^4.8.0",
     "@tensorflow/tfjs-backend-webgpu": "^4.8.0",
