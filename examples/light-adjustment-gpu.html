@@ -56,7 +56,6 @@
               height: document.getElementById("videoHeight").value,
               frameRate: {ideal: document.getElementById("videoFps").value},
               deviceId: document.getElementById("videoDevice").value,
-              // deviceId: "087414c92894e748b4f46067e38a825f4ab0a17152284f709828a1a6fd7863eb"
           };
           return navigator.mediaDevices.getUserMedia({video: constraints}).then((result) => {
               updateDeviceList();
