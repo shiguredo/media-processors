@@ -11,6 +11,15 @@
 
 ## develop
 
+- [FIX] Zig の組み込みのキャスト関数xToYがyFromXにリネームされたので対応
+  - @kounoike
+- [FIX] Zig の `@truncate` やキャスト関連に破壊的変更があったため対応
+  - @kounoike
+
+## light-adjustment-gpu-2023.1.0
+
+**初リリース**
+
 - [ADD] 推論ベースの Low-Light-Image-Enhancement を行う @shiguredo/light-adjustment-gpu パッケージを追加
   - 暗い画像に対してコントラストを改善したり、逆光で暗くなっている人物を明るくすることができる
   - 内部的には @shiguredo/image-to-image-video-processor を利用する
@@ -28,10 +37,6 @@
   - @voluntas
 - [UPDATE] engines でノードのバージョンを 18.17 以上にする
   - @voluntas
-- [FIX] Zig の組み込みのキャスト関数xToYがyFromXにリネームされたので対応
-  - @kounoike
-- [FIX] Zig の `@truncate` やキャスト関連に破壊的変更があったため対応
-  - @kounoike
 - [ADD] VideoTrackProcessor に平均処理時間・フレームレートを計算する機能を追加
   - @kounoike
 
