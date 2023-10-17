@@ -22,9 +22,6 @@
     "@typescript-eslint",
     "prettier"
   ],
-  "globals": {
-    "SORA_JS_SDK_VERSION": true
-  },
   "rules": {
     "@typescript-eslint/ban-ts-comment": "off",
     "@typescript-eslint/no-empty-function": "off",
