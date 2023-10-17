@@ -1,4 +1,4 @@
-import { ImageToImageVideoProcessor, ImageToImageModelOption } from "@shiguredo/image-to-image-video-processor";
+import { ImageToImageVideoProcessor, ImageToImageModelOptions } from "@shiguredo/image-to-image-video-processor";
 
 /**
  * 使用するLow Light Image Enhancementのモデル名
@@ -11,7 +11,7 @@ export enum llieModelNames {
   semanticGuidedLlie324x240 = "semantic_guided_llie_324x240",
 }
 
-const llieModels: { [key: string]: ImageToImageModelOption } = {
+const llieModels: { [key: string]: ImageToImageModelOptions } = {
   semantic_guided_llie_1284x720: {
     modelPath: "tfjs_model_semantic_guided_llie_720x1284",
     inputWidth: 1284,
