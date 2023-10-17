@@ -26,7 +26,6 @@
     "dist"
   ],
   "devDependencies": {
-    "@rollup/plugin-replace": "5.0.2",
     "@shiguredo/image-to-image-video-processor": "workspace:*"
   }
 }

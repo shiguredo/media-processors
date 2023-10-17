@@ -4,7 +4,6 @@ import typescript from "@rollup/plugin-typescript";
 import pkg from "./package.json";
 import commonjs from "@rollup/plugin-commonjs";
 import resolve from "@rollup/plugin-node-resolve";
-import replace from "@rollup/plugin-replace";
 import copy from "rollup-plugin-copy";
 
 const banner = `/**
