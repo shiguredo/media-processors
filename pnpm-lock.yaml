@@ -69,9 +69,6 @@ importers:
       '@tensorflow/tfjs-backend-webgpu':
         specifier: ^4.8.0
         version: 4.8.0(@tensorflow/tfjs-core@4.8.0)
-      '@types/offscreencanvas':
-        specifier: 2019.7.1
-        version: 2019.7.1
       '@typescript-eslint/eslint-plugin':
         specifier: 5.60.0
         version: 5.60.0(@typescript-eslint/parser@5.60.0)(eslint@8.50.0)(typescript@5.2.2)
