@@ -1,7 +1,7 @@
 {
   "name": "@shiguredo/image-to-image-video-processor",
   "version": "0.0.0",
-  "description": "Unpublished internal utility package for iamge to image video track processing",
+  "description": "Unpublished internal utility package for image to image video track processing",
   "author": "Shiguredo Inc.",
   "license": "Apache-2.0",
   "module": "dist/image_to_image_video_processor.mjs",
