@@ -12,22 +12,22 @@
     "@types/dom-mediacapture-transform": "0.1.7"
   },
   "devDependencies": {
-    "@rollup/plugin-commonjs": "25.0.4",
-    "@rollup/plugin-node-resolve": "15.2.1",
-    "@rollup/plugin-typescript": "11.1.4",
-    "@typescript-eslint/eslint-plugin": "6.7.3",
-    "@typescript-eslint/parser": "6.7.3",
-    "eslint": "8.50.0",
+    "@rollup/plugin-commonjs": "25.0.7",
+    "@rollup/plugin-node-resolve": "15.2.3",
+    "@rollup/plugin-typescript": "11.1.5",
+    "@typescript-eslint/eslint-plugin": "6.7.5",
+    "@typescript-eslint/parser": "6.7.5",
+    "eslint": "8.51.0",
     "eslint-config-prettier": "9.0.0",
-    "eslint-plugin-prettier": "5.0.0",
-    "rollup": "3.29.4",
+    "eslint-plugin-prettier": "5.0.1",
+    "rollup": "4.1.4",
     "rollup-plugin-copy": "3.5.0",
     "serve": "14.2.1",
     "tslib": "2.6.2",
-    "typedoc": "0.25.1",
+    "typedoc": "0.25.2",
     "typescript": "5.2.2"
   },
-  "packageManager": "pnpm@8.7.6",
+  "packageManager": "pnpm@8.9.2",
   "engines": {
     "node": ">=18.17"
   }
