@@ -20,6 +20,7 @@ JavaScript/TypeScriptで仮想背景機能を実現するためのライブラ�
 
 背景ぼかしを行う場合は、以下のようなコードになります:
 ```html
+<video id="outputVideo" autoplay></video>
 <script>
     const assetsPath = "https://cdn.jsdelivr.net/npm/@shiguredo/virtual-background@latest/dist";
     const processor = new Shiguredo.VirtualBackgroundProcessor(assetsPath);

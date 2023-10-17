@@ -252,6 +252,28 @@ class VirtualBackgroundProcessor {
     return this.trackProcessor.getProcessedTrack();
   }
 
+  /**
+   * 平均フレームレートを返します
+   *
+   * 処理開始直後は実際の値と異なる値が返されます
+   *
+   * @returns 平均フレームレート
+   */
+  getFps(): number {
+    return this.trackProcessor.getFps();
+  }
+
+  /**
+   * フレームの平均処理時間を返します
+   *
+   * 処理開始直後は実際の値と異なる値が返されます
+   *
+   * @returns 平均処理時間 (ミリ秒)
+   */
+  getAverageProcessedTimeMs(): number {
+    return this.trackProcessor.getAverageProcessedTimeMs();
+  }
+
   private updateOffscreenCanvas(
     segmentationResults: SelfieSegmentationResults,
     canvasCtx: OffscreenCanvasRenderingContext2D,

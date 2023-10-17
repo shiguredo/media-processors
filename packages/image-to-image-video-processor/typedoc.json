@@ -1,0 +1,10 @@
+{
+  "entryPoints": ["src/image_to_image_video_processor.ts"],
+  "tsconfig": "./tsconfig.json",
+  "disableSources": true,
+  "excludePrivate": true,
+  "excludeProtected": true,
+  "excludeInternal": true,
+  "readme": "./README.md",
+  "out": "apidoc"
+}

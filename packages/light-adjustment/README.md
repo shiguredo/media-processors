@@ -20,6 +20,7 @@
 
 デフォルト設定でライト調整を行うコードは以下のようになります:
 ```html
+<video id="outputVideo" autoplay></video>
 <script>
     const processor = new Shiguredo.LightAdjustmentProcessor();
 
