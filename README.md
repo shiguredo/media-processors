@@ -24,12 +24,14 @@ Please read https://github.com/shiguredo/oss/blob/master/README.en.md before use
 - [仮想背景 / 背景ぼかし](https://github.com/shiguredo/media-processors/tree/develop/packages/virtual-background)
 - [ノイズ抑制](https://github.com/shiguredo/media-processors/tree/develop/packages/noise-suppression)
 - [ライト調整](https://github.com/shiguredo/media-processors/tree/develop/packages/light-adjustment)
+- [ライト調整（GPU版）](https://github.com/shiguredo/media-processors/tree/develop/packages/light-adjustment-gpu)
 
 ## npm
 
 - [@shiguredo/virtual\-background \- npm](https://www.npmjs.com/package/@shiguredo/virtual-background)
 - [@shiguredo/noise\-suppression \- npm](https://www.npmjs.com/package/@shiguredo/noise-suppression)
 - [@shiguredo/light\-adjustment \- npm](https://www.npmjs.com/package/@shiguredo/light-adjustment)
+- [@shiguredo/light\-adjustment\-gpu \- npm](https://www.npmjs.com/package/@shiguredo/light-adjustment-gpu)
 
 ## サンプル
 
@@ -38,6 +40,7 @@ GitHub Pages にサンプルを用意しています。完全にクライアン�
 - [仮想背景 / 背景ぼかし](https://shiguredo.github.io/media-processors/examples/virtual-background.html)
 - [ノイズ抑制](https://shiguredo.github.io/media-processors/examples/noise-suppression.html)
 - [ライト調整](https://shiguredo.github.io/media-processors/examples/light-adjustment)
+- [ライト調整（GPU版）](https://shiguredo.github.io/media-processors/examples/light-adjustment-gpu)
 
 ## 優先実装
 
