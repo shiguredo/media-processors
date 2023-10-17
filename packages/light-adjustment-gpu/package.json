@@ -1,0 +1,31 @@
+{
+  "name": "@shiguredo/light-adjustment-gpu",
+  "version": "2023.1.0",
+  "description": "Low Light Image Enhancement(GPU) Library",
+  "author": "Shiguredo Inc.",
+  "license": "Apache-2.0",
+  "main": "dist/low_light_image_enhance.js",
+  "module": "dist/low_light_image_enhance.mjs",
+  "types": "dist/low_light_image_enhance.d.ts",
+  "scripts": {
+    "build": "rollup -c ./rollup.config.mjs --bundleConfigAsCjs && tsc --emitDeclarationOnly",
+    "lint": "eslint --ext .ts ./src",
+    "fmt": "prettier --write src",
+    "doc": "typedoc"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/shiguredo/media-processors.git"
+  },
+  "keywords": [],
+  "bugs": {
+    "url": "https://discord.gg/shiguredo"
+  },
+  "homepage": "https://github.com/shiguredo/media-processors#readme",
+  "files": [
+    "dist"
+  ],
+  "devDependencies": {
+    "@shiguredo/image-to-image-video-processor": "workspace:*"
+  }
+}
