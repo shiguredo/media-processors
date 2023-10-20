@@ -16,8 +16,13 @@ Please read https://github.com/shiguredo/oss/blob/master/README.en.md before use
 
 ## 方針
 
-- 動作するブラウザは最新の Chrome または Edge のみです。それ以外のブラウザでは動作しません
-    - iOS の Chrome や Edge では動作しません
+対応ブラウザは最新の Chrome または Edge です。それ以外のブラウザでは動作しません。
+
+ただし、以下の機能は Safari でも動作します。
+
+- 仮想背景 / 背景ぼかし
+- ライト調整
+- ライト調整（GPU版）
 
 ## 機能
 
