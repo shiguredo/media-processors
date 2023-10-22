@@ -1,4 +1,4 @@
-absl-py==1.4.0
+absl-py==2.0.0
 astunparse==1.6.3
 cachetools==5.3.1
 certifi==2023.7.22
