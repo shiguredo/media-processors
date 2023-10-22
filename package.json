@@ -9,7 +9,7 @@
     "start": "serve -S -l 8080 ."
   },
   "dependencies": {
-    "@types/dom-mediacapture-transform": "0.1.7"
+    "@types/dom-mediacapture-transform": "0.1.8"
   },
   "devDependencies": {
     "@rollup/plugin-commonjs": "25.0.7",
