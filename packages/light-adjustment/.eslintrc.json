@@ -18,23 +18,27 @@
     "sourceType": "module",
     "project": ["./tsconfig.json"]
   },
-  "plugins": [
-    "@typescript-eslint",
-    "prettier"
-  ],
+  "plugins": ["@typescript-eslint", "prettier"],
   "rules": {
     "@typescript-eslint/ban-ts-comment": "off",
     "@typescript-eslint/no-empty-function": "off",
-    "@typescript-eslint/no-unused-vars": ["error", {
-      "vars": "all",
-      "args": "all",
-      "argsIgnorePattern": "^_"
-    }],
+    "@typescript-eslint/no-unused-vars": [
+      "error",
+      {
+        "vars": "all",
+        "args": "all",
+        "argsIgnorePattern": "^_"
+      }
+    ],
     "@typescript-eslint/naming-convention": [
       "error",
       {
         "selector": "default",
         "format": ["camelCase"]
+      },
+      {
+        "selector": "import",
+        "format": ["camelCase", "UPPER_CASE", "PascalCase"]
       },
       {
         "selector": "class",
