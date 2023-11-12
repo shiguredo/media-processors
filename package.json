@@ -9,7 +9,7 @@
     "start": "serve -S -l 8080 ."
   },
   "dependencies": {
-    "@types/dom-mediacapture-transform": "0.1.8"
+    "@types/dom-mediacapture-transform": "0.1.9"
   },
   "devDependencies": {
     "@rollup/plugin-commonjs": "25.0.7",
@@ -27,7 +27,7 @@
     "typedoc": "0.25.3",
     "typescript": "5.2.2"
   },
-  "packageManager": "pnpm@8.10.2",
+  "packageManager": "pnpm@8.10.3",
   "engines": {
     "node": ">=18.17"
   }
