@@ -29,7 +29,7 @@
     "@tensorflow/tfjs": "^4.8.0",
     "@tensorflow/tfjs-backend-webgl": "^4.8.0",
     "@tensorflow/tfjs-backend-webgpu": "^4.8.0",
-    "@typescript-eslint/eslint-plugin": "5.62.0",
-    "@typescript-eslint/parser": "5.62.0"
+    "@typescript-eslint/eslint-plugin": "6.11.0",
+    "@typescript-eslint/parser": "6.11.0"
   }
 }
