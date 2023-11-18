@@ -9,8 +9,8 @@
   "types": "dist/low_light_image_enhance.d.ts",
   "scripts": {
     "build": "rollup -c ./rollup.config.mjs --bundleConfigAsCjs && tsc --emitDeclarationOnly",
-    "lint": "eslint --ext .ts ./src",
-    "fmt": "prettier --write src",
+    "lint": "biome lint ./src",
+    "fmt": "biome format --write src",
     "doc": "typedoc"
   },
   "repository": {
