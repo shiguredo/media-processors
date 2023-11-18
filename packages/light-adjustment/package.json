@@ -9,8 +9,8 @@
   "types": "dist/light_adjustment.d.ts",
   "scripts": {
     "build": "./build-wasm.sh && rollup -c ./rollup.config.mjs --bundleConfigAsCjs && tsc --emitDeclarationOnly",
-    "lint": "eslint --ext .ts ./src",
-    "fmt": "prettier --write src",
+    "lint": "biome lint ./src",
+    "fmt": "biome format --write src",
     "doc": "typedoc"
   },
   "repository": {
