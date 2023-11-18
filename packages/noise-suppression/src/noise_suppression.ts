@@ -174,7 +174,6 @@ class TrackProcessor {
       .pipeThrough(
         new TransformStream({
           transform: (frame, controller) => {
-            // eslint-disable-next-line  @typescript-eslint/no-unsafe-argument
             this.transform(frame, controller)
           },
         }),

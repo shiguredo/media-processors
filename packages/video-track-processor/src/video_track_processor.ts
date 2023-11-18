@@ -257,7 +257,6 @@ class RequestVideoFrameCallbackProcessor extends Processor {
     const processedImageCanvas = await this.callback(this.video)
     this.canvasCtx.drawImage(processedImageCanvas, 0, 0)
     // @ts-ignore
-    // eslint-disable-next-line
     this.requestVideoFrameCallbackHandle = this.video.requestVideoFrameCallback(() => {
       this.onFrame().catch((e) => console.warn('Error: ', e))
     })
