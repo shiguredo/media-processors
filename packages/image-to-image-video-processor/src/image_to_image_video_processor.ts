@@ -113,7 +113,6 @@ export abstract class ImageToImageVideoProcessor {
 
     const frameBuffer = gl.createFramebuffer()
 
-    // eslint-disable-next-line @typescript-eslint/require-await
     return this.trackProcessor.startProcessing(
       track,
       async (image: ImageBitmap | HTMLVideoElement) => {
