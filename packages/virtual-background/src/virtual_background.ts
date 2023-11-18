@@ -1,10 +1,10 @@
-import { VideoTrackProcessor } from "@shiguredo/video-track-processor";
 import {
+  Results as SelfieSegmentationResults,
   SelfieSegmentation,
   SelfieSegmentationConfig,
-  Results as SelfieSegmentationResults,
-} from "@mediapipe/selfie_segmentation";
-import * as StackBlur from "stackblur-canvas";
+} from '@mediapipe/selfie_segmentation'
+import { VideoTrackProcessor } from '@shiguredo/video-track-processor'
+import * as StackBlur from 'stackblur-canvas'
 
 /**
  * {@link VirtualBackgroundProcessor.startProcessing} メソッドに指定可能なオプション
@@ -15,7 +15,12 @@ interface VirtualBackgroundProcessorOptions {
    *
    * 省略された場合には、元々の背景が使用されます
    */
-  backgroundImage?: HTMLImageElement | HTMLVideoElement | HTMLCanvasElement | ImageBitmap | OffscreenCanvas;
+  backgroundImage?:
+    | HTMLImageElement
+    | HTMLVideoElement
+    | HTMLCanvasElement
+    | ImageBitmap
+    | OffscreenCanvas
 
   /**
    * 背景ぼかし効果の半径（pixel）
@@ -23,7 +28,7 @@ interface VirtualBackgroundProcessorOptions {
    * 値が大きいほど、ぼかしが強くなります。
    * デフォルトではぼかしは無効で、これは値として0を指定した場合の挙動と等しいです。
    */
-  blurRadius?: number;
+  blurRadius?: number
 
   /**
    * セグメンテーションに使用するモデル
@@ -33,7 +38,7 @@ interface VirtualBackgroundProcessorOptions {
    * [MediaPipe Selfie Segmentation](https://google.github.io/mediapipe/solutions/selfie_segmentation.html)
    * を参照してください。
    */
-  segmentationModel?: "selfie-landscape" | "selfie-general";
+  segmentationModel?: 'selfie-landscape' | 'selfie-general'
 
   /**
    * 背景画像のどの領域を使用するかを決定する関数
@@ -42,25 +47,25 @@ interface VirtualBackgroundProcessorOptions {
    *
    * デフォルトでは、背景画像のアスペクト比を維持したまま中央部分を切り抜く {@link cropBackgroundImageCenter} が使われます
    */
-  backgroundImageRegion?: (videoFrame: ImageSize, backgroundImage: ImageSize) => ImageRegion;
+  backgroundImageRegion?: (videoFrame: ImageSize, backgroundImage: ImageSize) => ImageRegion
 }
 
 /**
  * 画像の幅と高さ
  */
 interface ImageSize {
-  width: number;
-  height: number;
+  width: number
+  height: number
 }
 
 /**
  * 画像の領域（始点とサイズ）
  */
 interface ImageRegion {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
+  x: number
+  y: number
+  width: number
+  height: number
 }
 
 /**
@@ -69,24 +74,24 @@ interface ImageRegion {
  * これは {@link VirtualBackgroundProcessorOptions.backgroundImageRegion} オプションのデフォルトの挙動です
  */
 function cropBackgroundImageCenter(videoFrame: ImageSize, backgroundImage: ImageSize): ImageRegion {
-  let x = 0;
-  let y = 0;
-  let width = backgroundImage.width;
-  let height = backgroundImage.height;
+  let x = 0
+  let y = 0
+  let width = backgroundImage.width
+  let height = backgroundImage.height
 
-  const videoFrameRatio = videoFrame.width / videoFrame.height;
-  const backgroundImageRatio = backgroundImage.width / backgroundImage.height;
+  const videoFrameRatio = videoFrame.width / videoFrame.height
+  const backgroundImageRatio = backgroundImage.width / backgroundImage.height
   if (backgroundImageRatio < videoFrameRatio) {
-    const newHeight = videoFrame.height * (backgroundImage.width / videoFrame.width);
-    y = Math.round((height - newHeight) / 2);
-    height = Math.round(newHeight);
+    const newHeight = videoFrame.height * (backgroundImage.width / videoFrame.width)
+    y = Math.round((height - newHeight) / 2)
+    height = Math.round(newHeight)
   } else if (backgroundImageRatio > videoFrameRatio) {
-    const newWidth = videoFrame.width * (backgroundImage.height / videoFrame.height);
-    x = Math.round((width - newWidth) / 2);
-    width = Math.round(newWidth);
+    const newWidth = videoFrame.width * (backgroundImage.height / videoFrame.height)
+    x = Math.round((width - newWidth) / 2)
+    width = Math.round(newWidth)
   }
 
-  return { x, y, width, height };
+  return { x, y, width, height }
 }
 
 /**
@@ -96,15 +101,15 @@ function cropBackgroundImageCenter(videoFrame: ImageSize, backgroundImage: Image
  * 背景画像と処理対象映像のアスペクト比が異なる場合には、背景画像が映像に合わせて引き伸ばされます
  */
 function fillBackgroundImage(_videoFrame: ImageSize, backgroundImage: ImageSize): ImageRegion {
-  return { x: 0, y: 0, width: backgroundImage.width, height: backgroundImage.height };
+  return { x: 0, y: 0, width: backgroundImage.width, height: backgroundImage.height }
 }
 
 /**
  * 映像トラックに仮想背景処理を適用するためのプロセッサ
  */
 class VirtualBackgroundProcessor {
-  private trackProcessor: VideoTrackProcessor;
-  private segmentation: SelfieSegmentation;
+  private trackProcessor: VideoTrackProcessor
+  private segmentation: SelfieSegmentation
 
   /**
    * {@link VirtualBackgroundProcessor} インスタンスを生成します
@@ -112,15 +117,15 @@ class VirtualBackgroundProcessor {
    * @param assetsPath wasm 等のファイルの配置先ディレクトリパスないしURL
    */
   constructor(assetsPath: string) {
-    this.trackProcessor = new VideoTrackProcessor();
+    this.trackProcessor = new VideoTrackProcessor()
 
     // セグメンテーションモデルのロード準備
-    const config: SelfieSegmentationConfig = {};
-    assetsPath = trimLastSlash(assetsPath);
+    const config: SelfieSegmentationConfig = {}
+    const trimmedAssetsPath = trimLastSlash(assetsPath)
     config.locateFile = (file: string) => {
-      return `${assetsPath}/${file}`;
-    };
-    this.segmentation = new SelfieSegmentation(config);
+      return `${trimmedAssetsPath}/${file}`
+    }
+    this.segmentation = new SelfieSegmentation(config)
   }
 
   /**
@@ -133,7 +138,7 @@ class VirtualBackgroundProcessor {
    * @returns サポートされているかどうか
    */
   static isSupported(): boolean {
-    return VideoTrackProcessor.isSupported();
+    return VideoTrackProcessor.isSupported()
   }
 
   /**
@@ -151,57 +156,60 @@ class VirtualBackgroundProcessor {
    */
   async startProcessing(
     track: MediaStreamVideoTrack,
-    options: VirtualBackgroundProcessorOptions = {}
+    options: VirtualBackgroundProcessorOptions = {},
   ): Promise<MediaStreamVideoTrack> {
-    const initialWidth = track.getSettings().width || 0;
-    const initialHeight = track.getSettings().height || 0;
-    const canvas = createOffscreenCanvas(initialWidth, initialHeight);
-    const canvasCtx = canvas.getContext("2d", {
+    const initialWidth = track.getSettings().width || 0
+    const initialHeight = track.getSettings().height || 0
+    const canvas = createOffscreenCanvas(initialWidth, initialHeight)
+    const canvasCtx = canvas.getContext('2d', {
       desynchronized: true,
       willReadFrequently: false, // ここをtrueにするとCPU-GPUメモリ転送が発生して遅くなる
-    }) as OffscreenCanvasRenderingContext2D | null;
+    }) as OffscreenCanvasRenderingContext2D | null
     if (canvasCtx === null) {
-      throw Error("Failed to create 2D canvas context");
+      throw Error('Failed to create 2D canvas context')
     }
 
     // Safari での背景ぼかし用に一時作業用の canvas を作っておく
     //
     // TODO(sile): Safari が filter に対応したらこの分岐は削除する
-    let blurCanvasCtx: OffscreenCanvasRenderingContext2D | undefined;
-    if (options.blurRadius !== undefined && browser() === "safari") {
-      const ctx = createOffscreenCanvas(initialWidth, initialHeight).getContext("2d", {
+    let blurCanvasCtx: OffscreenCanvasRenderingContext2D | undefined
+    if (options.blurRadius !== undefined && browser() === 'safari') {
+      const ctx = createOffscreenCanvas(initialWidth, initialHeight).getContext('2d', {
         desynchronized: true,
         willReadFrequently: true,
-      });
+      })
       if (ctx === null) {
-        throw Error("Failed to create 2D canvas context");
+        throw Error('Failed to create 2D canvas context')
       }
-      blurCanvasCtx = ctx as OffscreenCanvasRenderingContext2D;
+      blurCanvasCtx = ctx as OffscreenCanvasRenderingContext2D
     }
 
     // セグメンテーションモデルを準備
-    await this.segmentation.initialize();
-    let modelSelection = 1; // `1` means "selfie-landscape".
-    if (options.segmentationModel && options.segmentationModel === "selfie-general") {
-      modelSelection = 0;
+    await this.segmentation.initialize()
+    let modelSelection = 1 // `1` means "selfie-landscape".
+    if (options.segmentationModel && options.segmentationModel === 'selfie-general') {
+      modelSelection = 0
     }
-    this.segmentation.setOptions({ modelSelection });
+    this.segmentation.setOptions({ modelSelection })
     this.segmentation.onResults((results) => {
-      const { width, height } = results.segmentationMask;
-      resizeCanvasIfNeed(width, height, canvas);
+      const { width, height } = results.segmentationMask
+      resizeCanvasIfNeed(width, height, canvas)
       if (blurCanvasCtx !== undefined) {
-        resizeCanvasIfNeed(width, height, blurCanvasCtx.canvas);
+        resizeCanvasIfNeed(width, height, blurCanvasCtx.canvas)
       }
-      this.updateOffscreenCanvas(results, canvasCtx, blurCanvasCtx, options);
-    });
+      this.updateOffscreenCanvas(results, canvasCtx, blurCanvasCtx, options)
+    })
 
     // 仮想背景処理を開始
-    return this.trackProcessor.startProcessing(track, async (image: ImageBitmap | HTMLVideoElement) => {
-      // @ts-ignore TS2322: 「`image`の型が合っていない」と怒られるけれど、動作はするので一旦無視
-      await this.segmentation.send({ image });
+    return this.trackProcessor.startProcessing(
+      track,
+      async (image: ImageBitmap | HTMLVideoElement) => {
+        // @ts-ignore TS2322: 「`image`の型が合っていない」と怒られるけれど、動作はするので一旦無視
+        await this.segmentation.send({ image })
 
-      return canvas;
-    });
+        return canvas
+      },
+    )
   }
 
   /**
@@ -211,8 +219,8 @@ class VirtualBackgroundProcessor {
    * 必要であれば、別途呼び出し側で対処する必要があります
    */
   stopProcessing() {
-    this.trackProcessor.stopProcessing();
-    this.segmentation.onResults(() => {});
+    this.trackProcessor.stopProcessing()
+    this.segmentation.onResults(() => {})
   }
 
   /**
@@ -221,7 +229,7 @@ class VirtualBackgroundProcessor {
    * @returns 実行中であれば `true` 、そうでなければ `false`
    */
   isProcessing(): boolean {
-    return this.trackProcessor.isProcessing();
+    return this.trackProcessor.isProcessing()
   }
 
   /**
@@ -235,7 +243,7 @@ class VirtualBackgroundProcessor {
    * @returns 処理適用中の場合は映像トラック、それ以外なら `undefined`
    */
   getOriginalTrack(): MediaStreamVideoTrack | undefined {
-    return this.trackProcessor.getOriginalTrack();
+    return this.trackProcessor.getOriginalTrack()
   }
 
   /**
@@ -249,7 +257,7 @@ class VirtualBackgroundProcessor {
    * @returns 処理適用中の場合は映像トラック、それ以外なら `undefined`
    */
   getProcessedTrack(): MediaStreamVideoTrack | undefined {
-    return this.trackProcessor.getProcessedTrack();
+    return this.trackProcessor.getProcessedTrack()
   }
 
   /**
@@ -260,7 +268,7 @@ class VirtualBackgroundProcessor {
    * @returns 平均フレームレート
    */
   getFps(): number {
-    return this.trackProcessor.getFps();
+    return this.trackProcessor.getFps()
   }
 
   /**
@@ -271,42 +279,42 @@ class VirtualBackgroundProcessor {
    * @returns 平均処理時間 (ミリ秒)
    */
   getAverageProcessedTimeMs(): number {
-    return this.trackProcessor.getAverageProcessedTimeMs();
+    return this.trackProcessor.getAverageProcessedTimeMs()
   }
 
   private updateOffscreenCanvas(
     segmentationResults: SelfieSegmentationResults,
     canvasCtx: OffscreenCanvasRenderingContext2D,
     blurCanvasCtx: OffscreenCanvasRenderingContext2D | undefined,
-    options: VirtualBackgroundProcessorOptions
+    options: VirtualBackgroundProcessorOptions,
   ) {
-    const { width, height } = segmentationResults.image;
+    const { width, height } = segmentationResults.image
 
-    canvasCtx.save();
-    canvasCtx.clearRect(0, 0, width, height);
-    canvasCtx.drawImage(segmentationResults.segmentationMask, 0, 0, width, height);
+    canvasCtx.save()
+    canvasCtx.clearRect(0, 0, width, height)
+    canvasCtx.drawImage(segmentationResults.segmentationMask, 0, 0, width, height)
 
-    canvasCtx.globalCompositeOperation = "source-in";
-    canvasCtx.drawImage(segmentationResults.image, 0, 0, width, height);
+    canvasCtx.globalCompositeOperation = 'source-in'
+    canvasCtx.drawImage(segmentationResults.image, 0, 0, width, height)
 
     // NOTE: mediapipeの例 (https://google.github.io/mediapipe/solutions/selfie_segmentation.html) では、
     //       "destination-atop"が使われているけれど、背景画像にアルファチャンネルが含まれている場合には、
     //       "destination-atop"だと透過部分と人物が重なる領域が除去されてしまうので、
     //       "destination-over"にしている。
-    canvasCtx.globalCompositeOperation = "destination-over";
+    canvasCtx.globalCompositeOperation = 'destination-over'
 
-    let tmpCanvasCtx = canvasCtx;
+    let tmpCanvasCtx = canvasCtx
     if (options.blurRadius !== undefined) {
       if (blurCanvasCtx !== undefined) {
-        tmpCanvasCtx = blurCanvasCtx;
+        tmpCanvasCtx = blurCanvasCtx
       } else {
-        tmpCanvasCtx.filter = `blur(${options.blurRadius}px)`;
+        tmpCanvasCtx.filter = `blur(${options.blurRadius}px)`
       }
     }
 
     if (options.backgroundImage !== undefined) {
-      const decideRegion = options.backgroundImageRegion || cropBackgroundImageCenter;
-      const region = decideRegion({ width, height }, options.backgroundImage);
+      const decideRegion = options.backgroundImageRegion || cropBackgroundImageCenter
+      const region = decideRegion({ width, height }, options.backgroundImage)
       tmpCanvasCtx.drawImage(
         options.backgroundImage,
         region.x,
@@ -316,63 +324,67 @@ class VirtualBackgroundProcessor {
         0,
         0,
         width,
-        height
-      );
+        height,
+      )
     } else {
-      tmpCanvasCtx.drawImage(segmentationResults.image, 0, 0);
+      tmpCanvasCtx.drawImage(segmentationResults.image, 0, 0)
     }
 
     if (blurCanvasCtx !== undefined) {
       // @ts-ignore
-      StackBlur.canvasRGB(tmpCanvasCtx.canvas, 0, 0, width, height, options.blurRadius);
-      canvasCtx.drawImage(tmpCanvasCtx.canvas, 0, 0, width, height);
+      StackBlur.canvasRGB(tmpCanvasCtx.canvas, 0, 0, width, height, options.blurRadius)
+      canvasCtx.drawImage(tmpCanvasCtx.canvas, 0, 0, width, height)
     }
 
-    canvasCtx.restore();
+    canvasCtx.restore()
   }
 }
 
-function resizeCanvasIfNeed(width: number, height: number, canvas: OffscreenCanvas | HTMLCanvasElement) {
+function resizeCanvasIfNeed(
+  width: number,
+  height: number,
+  canvas: OffscreenCanvas | HTMLCanvasElement,
+) {
   if (canvas.width !== width || canvas.height !== height) {
-    canvas.width = width;
-    canvas.height = height;
+    canvas.width = width
+    canvas.height = height
   }
 }
 
 function trimLastSlash(s: string): string {
-  if (s.slice(-1) === "/") {
-    return s.slice(0, -1);
+  if (s.slice(-1) === '/') {
+    return s.slice(0, -1)
   }
-  return s;
+  return s
 }
 
 // TODO(sile): Safari 16.4 から OffscreenCanvas に対応したので、そのうちにこの関数は削除する
 function createOffscreenCanvas(width: number, height: number): OffscreenCanvas | HTMLCanvasElement {
-  if (typeof OffscreenCanvas === "undefined") {
+  if (typeof OffscreenCanvas === 'undefined') {
     // OffscreenCanvas が使えない場合には通常の canvas で代替する
-    const canvas = document.createElement("canvas");
-    canvas.width = width;
-    canvas.height = height;
-    return canvas;
+    const canvas = document.createElement('canvas')
+    canvas.width = width
+    canvas.height = height
+    return canvas
   } else {
-    return new OffscreenCanvas(width, height);
+    return new OffscreenCanvas(width, height)
   }
 }
 
 function browser(): string {
-  const ua = window.navigator.userAgent.toLocaleLowerCase();
-  if (ua.indexOf("edge") !== -1) {
-    return "edge";
-  } else if (ua.indexOf("chrome") !== -1 && ua.indexOf("edge") === -1) {
-    return "chrome";
-  } else if (ua.indexOf("safari") !== -1 && ua.indexOf("chrome") === -1) {
-    return "safari";
-  } else if (ua.indexOf("opera") !== -1) {
-    return "opera";
-  } else if (ua.indexOf("firefox") !== -1) {
-    return "firefox";
+  const ua = window.navigator.userAgent.toLocaleLowerCase()
+  if (ua.indexOf('edge') !== -1) {
+    return 'edge'
+  } else if (ua.indexOf('chrome') !== -1 && ua.indexOf('edge') === -1) {
+    return 'chrome'
+  } else if (ua.indexOf('safari') !== -1 && ua.indexOf('chrome') === -1) {
+    return 'safari'
+  } else if (ua.indexOf('opera') !== -1) {
+    return 'opera'
+  } else if (ua.indexOf('firefox') !== -1) {
+    return 'firefox'
   }
-  return "unknown";
+  return 'unknown'
 }
 
 export {
@@ -382,4 +394,4 @@ export {
   ImageSize,
   cropBackgroundImageCenter,
   fillBackgroundImage,
-};
+}
