@@ -26,8 +26,8 @@
   ],
   "devDependencies": {
     "@shiguredo/video-track-processor": "workspace:*",
-    "@tensorflow/tfjs": "4.8.0",
-    "@tensorflow/tfjs-backend-webgl": "4.8.0",
-    "@tensorflow/tfjs-backend-webgpu": "4.8.0"
+    "@tensorflow/tfjs": "4.13.0",
+    "@tensorflow/tfjs-backend-webgl": "4.13.0",
+    "@tensorflow/tfjs-backend-webgpu": "4.13.0"
   }
 }
