@@ -330,9 +330,8 @@ class LightAdjustmentProcessorStats {
   getAverageProcessedTimeMs(): number {
     if (this.totalProcessedFrames === 0) {
       return 0
-    } else {
-      return this.totalProcessedTimeMs / this.totalProcessedFrames
     }
+    return this.totalProcessedTimeMs / this.totalProcessedFrames
   }
 
   /**
@@ -642,9 +641,8 @@ function createOffscreenCanvas(width: number, height: number): OffscreenCanvas |
     canvas.width = width
     canvas.height = height
     return canvas
-  } else {
-    return new OffscreenCanvas(width, height)
   }
+  return new OffscreenCanvas(width, height)
 }
 
 function resizeCanvasIfNeed(

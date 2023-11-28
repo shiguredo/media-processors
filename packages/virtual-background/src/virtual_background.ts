@@ -366,22 +366,25 @@ function createOffscreenCanvas(width: number, height: number): OffscreenCanvas |
     canvas.width = width
     canvas.height = height
     return canvas
-  } else {
-    return new OffscreenCanvas(width, height)
   }
+  return new OffscreenCanvas(width, height)
 }
 
 function browser(): string {
   const ua = window.navigator.userAgent.toLocaleLowerCase()
   if (ua.indexOf('edge') !== -1) {
     return 'edge'
-  } else if (ua.indexOf('chrome') !== -1 && ua.indexOf('edge') === -1) {
+  }
+  if (ua.indexOf('chrome') !== -1 && ua.indexOf('edge') === -1) {
     return 'chrome'
-  } else if (ua.indexOf('safari') !== -1 && ua.indexOf('chrome') === -1) {
+  }
+  if (ua.indexOf('safari') !== -1 && ua.indexOf('chrome') === -1) {
     return 'safari'
-  } else if (ua.indexOf('opera') !== -1) {
+  }
+  if (ua.indexOf('opera') !== -1) {
     return 'opera'
-  } else if (ua.indexOf('firefox') !== -1) {
+  }
+  if (ua.indexOf('firefox') !== -1) {
     return 'firefox'
   }
   return 'unknown'

@@ -142,15 +142,14 @@ export abstract class ImageToImageVideoProcessor {
           const outputTensor = model.predict(inputTensor)
           if (this.modelOptions.outputConverter !== undefined) {
             return this.modelOptions.outputConverter(outputTensor)
-          } else {
-            const outputRgb = (outputTensor as tf.Tensor4D).squeeze()
-            const outputA = tf.fill(
-              [this.modelOptions.outputHeight, this.modelOptions.outputWidth, 1],
-              this.strength,
-              'float32',
-            ) as tf.Tensor3D
-            return tf.concat3d([outputRgb as tf.Tensor3D, outputA], 2)
           }
+          const outputRgb = (outputTensor as tf.Tensor4D).squeeze()
+          const outputA = tf.fill(
+            [this.modelOptions.outputHeight, this.modelOptions.outputWidth, 1],
+            this.strength,
+            'float32',
+          ) as tf.Tensor3D
+          return tf.concat3d([outputRgb as tf.Tensor3D, outputA], 2)
         })
         const data = output.dataToGPU({
           customTexShape: [this.modelOptions.outputHeight, this.modelOptions.outputWidth],
@@ -189,17 +188,16 @@ export abstract class ImageToImageVideoProcessor {
 
         if (this.modelOptions.outputSizeIsModelOutputSize) {
           return glCanvas
-        } else {
-          outputResizeCanvasCtx.drawImage(image, 0, 0)
-          outputResizeCanvasCtx.drawImage(
-            glCanvas,
-            0,
-            0,
-            outputResizeCanvas.width,
-            outputResizeCanvas.height,
-          )
-          return outputResizeCanvas
         }
+        outputResizeCanvasCtx.drawImage(image, 0, 0)
+        outputResizeCanvasCtx.drawImage(
+          glCanvas,
+          0,
+          0,
+          outputResizeCanvas.width,
+          outputResizeCanvas.height,
+        )
+        return outputResizeCanvas
       },
     )
   }
