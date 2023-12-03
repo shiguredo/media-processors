@@ -17,7 +17,7 @@ google-pasta==0.2.0
 grpcio==1.59.3
 h5py==3.10.0
 idna==3.6
-importlib-metadata==6.8.0
+importlib-metadata==7.0.0
 importlib-resources==5.13.0
 jax==0.4.20
 jaxlib==0.4.20
