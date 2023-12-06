@@ -21,7 +21,7 @@ importlib-metadata==6.8.0
 importlib-resources==5.13.0
 jax==0.4.20
 jaxlib==0.4.20
-keras==2.15.0
+keras==3.0.1
 kiwisolver==1.4.5
 libclang==16.0.6
 Markdown==3.5.1
