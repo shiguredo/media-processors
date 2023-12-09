@@ -392,7 +392,7 @@ const Sharpener = struct {
         }
 
         const filter = [_]i8{ 0, -1, 0, -1, 5, -1, 0, -1, 0 };
-        std.mem.copy(u8, self.temp_image.data, image.data);
+        @memcpy(self.temp_image.data, image.data);
 
         for (0..image.height) |y| {
             for (0..image.width) |x| {
@@ -428,8 +428,8 @@ test "Process image" {
     var la = try LightAdjustment.init(test_allocator, 2, 2);
     defer la.deinit();
 
-    std.mem.copy(u8, la.image.data, &[_]u8{ 1, 2, 3, 255, 4, 5, 6, 255, 7, 8, 9, 255, 10, 11, 12, 255 });
-    std.mem.copy(u8, la.mask.data, &[_]u8{ 0, 255, 10, 200 });
+    @memcpy(la.image.data, &[_]u8{ 1, 2, 3, 255, 4, 5, 6, 255, 7, 8, 9, 255, 10, 11, 12, 255 });
+    @memcpy(la.mask.data, &[_]u8{ 0, 255, 10, 200 });
 
     // 最初は常に状態の更新が必要
     try expect(la.isStateObsolete());
