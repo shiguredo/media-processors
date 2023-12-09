@@ -11,6 +11,8 @@
 
 ## develop
 
+- [FIX] image-to-image-video-processor だけ TypeScript 5.2.2 に固定する
+  - @voluntas
 - [FIX] Zig の組み込みのキャスト関数 xToY が yFromX にリネームされたので対応
   - @kounoike
 - [FIX] Zig の `@truncate` やキャスト関連に破壊的変更があったため対応
