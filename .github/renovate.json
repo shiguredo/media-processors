@@ -11,6 +11,9 @@
     "schedule:weekly"
   ],
   "dependencyDashboard": false,
+  "ignorePaths": [
+    "**/packages/light-adjustment-gpu/model/**"
+  ],
   "packageRules": [
     {
       "matchUpdateTypes": [
