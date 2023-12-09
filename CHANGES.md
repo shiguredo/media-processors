@@ -11,6 +11,9 @@
 
 ## develop
 
+- [FIX] zig で std.mem.copy ではなく @memcpy を使うようにする
+  - https://github.com/ziglang/zig/pull/18143
+  - @voluntas
 - [FIX] image-to-image-video-processor だけ TypeScript 5.2.2 に固定する
   - @voluntas
 - [FIX] Zig の組み込みのキャスト関数 xToY が yFromX にリネームされたので対応
