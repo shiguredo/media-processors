@@ -58,8 +58,8 @@ importers:
         specifier: 4.14.0
         version: 4.14.0(@tensorflow/tfjs-core@4.14.0)
       typescript:
-        specifier: 5.2.2
-        version: 5.2.2
+        specifier: 5.3.3
+        version: 5.3.3
 
   packages/light-adjustment:
     devDependencies:
@@ -1588,12 +1588,6 @@ packages:
       minimatch: 9.0.3
       shiki: 0.14.6
       typescript: 5.3.3
-    dev: true
-
-  /typescript@5.2.2:
-    resolution: {integrity: sha512-mI4WrpHsbCIcwT9cF4FZvr80QUeKvsUsUvKDoR+X/7XHQH98xYD8YHZg7ANtz2GtZt/CBq2QJ0thkGJMHfqc1w==}
-    engines: {node: '>=14.17'}
-    hasBin: true
     dev: true
 
   /typescript@5.3.3:
