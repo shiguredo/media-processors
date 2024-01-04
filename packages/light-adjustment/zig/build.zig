@@ -19,8 +19,10 @@ pub fn build(b: *std.Build) void {
     // set a preferred release mode, allowing the user to decide how to optimize.
     const optimize = b.standardOptimizeOption(.{});
 
-    // wasm をビルドするためには addStaticLibrary() ではなく addSharedLibrary() を使う必要がある
-    var lib = b.addSharedLibrary(.{
+    // wasm をビルドするためには addExecutable() を使う必要がある
+    // 以前は addSharedLibrary() だったが2024/01/04現在の master では変更されている
+    // https://ziglang.org/documentation/master/#Freestanding
+    var lib = b.addExecutable(.{
         .name = "light_adjustment",
         // In this case the main source file is merely a path, however, in more
         // complicated build scripts, this could be a generated file.
@@ -29,6 +31,7 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize,
     });
     lib.rdynamic = true;
+    lib.entry = .disabled;
 
     // This declares intent for the library to be installed into the standard
     // location when the user invokes the "install" step (the default step when
