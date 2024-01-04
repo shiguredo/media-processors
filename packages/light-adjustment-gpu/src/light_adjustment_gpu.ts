@@ -38,10 +38,10 @@ const llieModels: { [key: string]: ImageToImageModelOptions } = {
   },
   semantic_guided_llie_324x240: {
     modelPath: 'tfjs_model_semantic_guided_llie_240x324',
-    inputWidth: 648,
-    inputHeight: 360,
-    outputWidth: 648,
-    outputHeight: 360,
+    inputWidth: 324,
+    inputHeight: 240,
+    outputWidth: 324,
+    outputHeight: 240,
   },
 }
 
