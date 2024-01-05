@@ -11,6 +11,8 @@
 
 ## develop
 
+- [FIX] ライト調整 GPU 版の semantic_guided_llie_324x240 のパラメータが間違っていたのを修正
+  - @kounoike
 - [FIX] zig で std.mem.copy ではなく @memcpy を使うようにする
   - https://github.com/ziglang/zig/pull/18143
   - @voluntas
