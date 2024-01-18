@@ -7,4 +7,4 @@ zig build -Doptimize=ReleaseFast -Dtarget=wasm32-freestanding
 cd ..
 
 mkdir -p dist/
-cp zig/zig-out/lib/light_adjustment.wasm dist/
+cp zig/zig-out/bin/light_adjustment.wasm dist/
