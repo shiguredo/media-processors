@@ -11,6 +11,10 @@
 
 ## develop
 
+- [FIX] Zig の WebAssembly ビルドで addSharedLibrary から addBinary を使うよう変更になったので対応
+  - https://ziglang.org/documentation/master/#Freestanding
+  - https://github.com/ziglang/zig/pull/17815
+  - @kounoike
 - [FIX] zig で std.mem.copy ではなく @memcpy を使うようにする
   - https://github.com/ziglang/zig/pull/18143
   - @voluntas
