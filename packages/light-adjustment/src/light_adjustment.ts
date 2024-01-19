@@ -1,11 +1,11 @@
-import { VideoTrackProcessor } from "@shiguredo/video-track-processor";
 import {
+  Results as SelfieSegmentationResults,
   SelfieSegmentation,
   SelfieSegmentationConfig,
-  Results as SelfieSegmentationResults,
-} from "@mediapipe/selfie_segmentation";
+} from '@mediapipe/selfie_segmentation'
+import { VideoTrackProcessor } from '@shiguredo/video-track-processor'
 
-const LIGHT_ADJUSTMENT_WASM = "__LIGHT_ADJUSTMENT_WASM__";
+const LIGHT_ADJUSTMENT_WASM = '__LIGHT_ADJUSTMENT_WASM__'
 
 /**
  * {@link LightAdjustmentProcessor} に指定可能なオプション
@@ -18,7 +18,7 @@ interface LightAdjustmentProcessorOptions {
    *
    * デフォルト値は 0.5
    */
-  alpha?: number;
+  alpha?: number
 
   /**
    * ライト調整処理の度合い。
@@ -28,7 +28,7 @@ interface LightAdjustmentProcessorOptions {
    *
    * デフォルト値は 50
    */
-  adjustmentLevel?: number;
+  adjustmentLevel?: number
 
   /**
    * AGCWD によるライト調整後に画像に適用するシャープネス処理の度合い。
@@ -40,21 +40,21 @@ interface LightAdjustmentProcessorOptions {
    *
    * デフォルト値は 20
    */
-  sharpnessLevel?: number;
+  sharpnessLevel?: number
 
   /**
    * 処理後の画像の最低の明るさ (HSV の V の値、 0 ~ 255 の整数）。
    *
    * デフォルト値は 0
    */
-  minIntensity?: number;
+  minIntensity?: number
 
   /**
    * 処理後の画像の最大の明るさ (HSV の V の値、 0 ~ 255 の整数）。
    *
    * デフォルト値は 255
    */
-  maxIntensity?: number;
+  maxIntensity?: number
 
   /**
    * AGCWD の論文に登場する、映像のフレーム間の差異を検知する際の閾値（0.0 ~ 1.0 の数値）
@@ -69,7 +69,7 @@ interface LightAdjustmentProcessorOptions {
    *
    * デフォルト値は 0.05
    */
-  entropyThreshold?: number;
+  entropyThreshold?: number
 
   /**
    * ライト調整の際に基準とする画像領域を指定するマスクの取得方法。
@@ -87,7 +87,7 @@ interface LightAdjustmentProcessorOptions {
    * マスク取得は毎フレームではなく、最後にマスクを取得したフレームに対して、
    * {@link LightAdjustmentProcessorOptions.entropyThreshold} の閾値を超える変化が検知された時にのみ行われる。
    */
-  focusMask?: FocusMask;
+  focusMask?: FocusMask
 }
 
 /**
@@ -97,19 +97,19 @@ interface LightAdjustmentProcessorOptions {
  * アルゴリズムをベースにしています
  */
 class LightAdjustmentProcessor {
-  private trackProcessor: VideoTrackProcessor;
-  private stats: LightAdjustmentProcessorStats;
-  private wasm?: WasmLightAdjustment;
-  private focusMask: FocusMask;
-  private isOptionsUpdated = false;
+  private trackProcessor: VideoTrackProcessor
+  private stats: LightAdjustmentProcessorStats
+  private wasm?: WasmLightAdjustment
+  private focusMask: FocusMask
+  private isOptionsUpdated = false
 
   /**
    * {@link LightAdjustmentProcessor} インスタンスを生成します
    */
   constructor() {
-    this.trackProcessor = new VideoTrackProcessor();
-    this.stats = new LightAdjustmentProcessorStats();
-    this.focusMask = new UniformFocusMask();
+    this.trackProcessor = new VideoTrackProcessor()
+    this.stats = new LightAdjustmentProcessorStats()
+    this.focusMask = new UniformFocusMask()
   }
 
   /**
@@ -122,7 +122,7 @@ class LightAdjustmentProcessor {
    * @returns サポートされているかどうか
    */
   static isSupported(): boolean {
-    return VideoTrackProcessor.isSupported();
+    return VideoTrackProcessor.isSupported()
   }
 
   /**
@@ -140,65 +140,68 @@ class LightAdjustmentProcessor {
    */
   async startProcessing(
     track: MediaStreamVideoTrack,
-    options: LightAdjustmentProcessorOptions = {}
+    options: LightAdjustmentProcessorOptions = {},
   ): Promise<MediaStreamVideoTrack> {
-    const initialWidth = track.getSettings().width || 0;
-    const initialHeight = track.getSettings().height || 0;
+    const initialWidth = track.getSettings().width || 0
+    const initialHeight = track.getSettings().height || 0
 
-    const canvas = createOffscreenCanvas(initialWidth, initialHeight);
-    const canvasCtx = canvas.getContext("2d", {
+    const canvas = createOffscreenCanvas(initialWidth, initialHeight)
+    const canvasCtx = canvas.getContext('2d', {
       desynchronized: true,
       willReadFrequently: false, // ここをtrueにするとCPU-GPUメモリ転送が発生して遅くなる
-    }) as OffscreenCanvasRenderingContext2D | null;
+    }) as OffscreenCanvasRenderingContext2D | null
     if (canvasCtx === null) {
-      throw Error("Failed to create 2D canvas context");
+      throw Error('Failed to create 2D canvas context')
     }
 
     const wasmResults = await WebAssembly.instantiateStreaming(
-      fetch("data:application/wasm;base64," + LIGHT_ADJUSTMENT_WASM),
-      {}
-    );
-    this.wasm = new WasmLightAdjustment(wasmResults.instance, track);
-    this.focusMask = new UniformFocusMask();
-    this.updateOptions(options);
+      fetch(`data:application/wasm;base64,${LIGHT_ADJUSTMENT_WASM}`),
+      {},
+    )
+    this.wasm = new WasmLightAdjustment(wasmResults.instance, track)
+    this.focusMask = new UniformFocusMask()
+    this.updateOptions(options)
 
-    this.resetStats();
-    return this.trackProcessor.startProcessing(track, async (image: ImageBitmap | HTMLVideoElement) => {
-      const { width, height } = image;
-      resizeCanvasIfNeed(width, height, canvas);
-      canvasCtx.drawImage(image, 0, 0);
-      const imageData = canvasCtx.getImageData(0, 0, width, height);
-      await this.processImage(imageData);
-      canvasCtx.putImageData(imageData, 0, 0);
-      return canvas;
-    });
+    this.resetStats()
+    return this.trackProcessor.startProcessing(
+      track,
+      async (image: ImageBitmap | HTMLVideoElement) => {
+        const { width, height } = image
+        resizeCanvasIfNeed(width, height, canvas)
+        canvasCtx.drawImage(image, 0, 0)
+        const imageData = canvasCtx.getImageData(0, 0, width, height)
+        await this.processImage(imageData)
+        canvasCtx.putImageData(imageData, 0, 0)
+        return canvas
+      },
+    )
   }
 
   private async processImage(image: ImageData): Promise<void> {
     if (this.wasm === undefined) {
-      return;
+      return
     }
 
-    const start = performance.now();
+    const start = performance.now()
 
-    this.wasm.setImageData(image);
+    this.wasm.setImageData(image)
     if (this.isOptionsUpdated || this.wasm.isStateObsolete()) {
       // TODO(sile): SelfieSegmentationFocusMask の場合には、一番最初にファイルのダウンロードや初期化処理が入るので、
       //             ここに await を入れると少し映像が止まることがある。
       //             マスク更新は必須の処理という訳ではないので `await` ではなく `.then()` で繋いだ方が
       //             ユーザの体験としては良くなるかもしれない。
-      const mask = await this.focusMask.getFocusMask(image);
-      this.wasm.setFocusMaskData(mask);
-      this.wasm.updateState();
-      this.stats.totalUpdateStateCount += 1;
-      this.isOptionsUpdated = false;
+      const mask = await this.focusMask.getFocusMask(image)
+      this.wasm.setFocusMaskData(mask)
+      this.wasm.updateState()
+      this.stats.totalUpdateStateCount += 1
+      this.isOptionsUpdated = false
     }
-    this.wasm.processImage();
-    this.wasm.copyProcessedImageData(image);
+    this.wasm.processImage()
+    this.wasm.copyProcessedImageData(image)
 
-    const elapsed = performance.now() - start;
-    this.stats.totalProcessedTimeMs += elapsed;
-    this.stats.totalProcessedFrames += 1;
+    const elapsed = performance.now() - start
+    this.stats.totalProcessedTimeMs += elapsed
+    this.stats.totalProcessedFrames += 1
   }
 
   /**
@@ -208,10 +211,10 @@ class LightAdjustmentProcessor {
    * 必要であれば、別途呼び出し側で対処する必要があります
    */
   stopProcessing() {
-    this.trackProcessor.stopProcessing();
+    this.trackProcessor.stopProcessing()
     if (this.wasm !== undefined) {
-      this.wasm.destroy();
-      this.wasm = undefined;
+      this.wasm.destroy()
+      this.wasm = undefined
     }
   }
 
@@ -221,7 +224,7 @@ class LightAdjustmentProcessor {
    * @returns 実行中であれば `true` 、そうでなければ `false`
    */
   isProcessing(): boolean {
-    return this.trackProcessor.isProcessing();
+    return this.trackProcessor.isProcessing()
   }
 
   /**
@@ -235,7 +238,7 @@ class LightAdjustmentProcessor {
    * @returns 処理適用中の場合は映像トラック、それ以外なら `undefined`
    */
   getOriginalTrack(): MediaStreamVideoTrack | undefined {
-    return this.trackProcessor.getOriginalTrack();
+    return this.trackProcessor.getOriginalTrack()
   }
 
   /**
@@ -249,7 +252,7 @@ class LightAdjustmentProcessor {
    * @returns 処理適用中の場合は映像トラック、それ以外なら `undefined`
    */
   getProcessedTrack(): MediaStreamVideoTrack | undefined {
-    return this.trackProcessor.getProcessedTrack();
+    return this.trackProcessor.getProcessedTrack()
   }
 
   /**
@@ -261,11 +264,11 @@ class LightAdjustmentProcessor {
    */
   updateOptions(options: LightAdjustmentProcessorOptions): void {
     if (this.wasm !== undefined) {
-      this.wasm.updateOptions(options);
+      this.wasm.updateOptions(options)
       if (options.focusMask !== undefined) {
-        this.focusMask = options.focusMask;
+        this.focusMask = options.focusMask
       }
-      this.isOptionsUpdated = true;
+      this.isOptionsUpdated = true
     }
   }
 
@@ -275,28 +278,28 @@ class LightAdjustmentProcessor {
    * @returns 統計値オブジェクト
    */
   getStats(): LightAdjustmentProcessorStats {
-    return this.stats;
+    return this.stats
   }
 
   /**
    * 統計値を初期化します
    */
   resetStats(): void {
-    this.stats.reset();
+    this.stats.reset()
   }
 
   /**
    * VideoTrackProcessorで計算したFPSを取得します
    */
   getFps(): number {
-    return this.trackProcessor.getFps();
+    return this.trackProcessor.getFps()
   }
 
   /**
    * VideoTrackProcessorで計算した平均処理時間を取得します
    */
   getAverageProcessedTimeMs(): number {
-    return this.trackProcessor.getAverageProcessedTimeMs();
+    return this.trackProcessor.getAverageProcessedTimeMs()
   }
 }
 
@@ -307,17 +310,17 @@ class LightAdjustmentProcessorStats {
   /**
    * 処理した映像フレームの合計数
    */
-  totalProcessedFrames = 0;
+  totalProcessedFrames = 0
 
   /**
    * 映像フレームの処理に要した合計時間（ミリ秒単位）
    */
-  totalProcessedTimeMs = 0;
+  totalProcessedTimeMs = 0
 
   /**
    * ライト調整用の変換テーブルを更新した数
    */
-  totalUpdateStateCount = 0;
+  totalUpdateStateCount = 0
 
   /**
    * 映像フレームの処理に要した時間の平均値を取得します
@@ -326,144 +329,182 @@ class LightAdjustmentProcessorStats {
    */
   getAverageProcessedTimeMs(): number {
     if (this.totalProcessedFrames === 0) {
-      return 0;
-    } else {
-      return this.totalProcessedTimeMs / this.totalProcessedFrames;
+      return 0
     }
+    return this.totalProcessedTimeMs / this.totalProcessedFrames
   }
 
   /**
    * 統計値を初期化します
    */
   reset(): void {
-    this.totalProcessedFrames = 0;
-    this.totalProcessedTimeMs = 0;
-    this.totalUpdateStateCount = 0;
+    this.totalProcessedFrames = 0
+    this.totalProcessedTimeMs = 0
+    this.totalUpdateStateCount = 0
   }
 }
 
 class WasmLightAdjustment {
-  private wasm: WebAssembly.Instance;
-  private memory: WebAssembly.Memory;
-  private lightAdjustmentPtr: number;
-  private imageDataPtr: number;
-  private maskDataPtr: number;
-  private imageWidth: number;
-  private imageHeight: number;
+  private wasm: WebAssembly.Instance
+  private memory: WebAssembly.Memory
+  private lightAdjustmentPtr: number
+  private imageDataPtr: number
+  private maskDataPtr: number
+  private imageWidth: number
+  private imageHeight: number
 
   constructor(wasm: WebAssembly.Instance, track: MediaStreamVideoTrack) {
-    this.wasm = wasm;
-    this.memory = wasm.exports.memory as WebAssembly.Memory;
+    this.wasm = wasm
+    this.memory = wasm.exports.memory as WebAssembly.Memory
 
-    const width = track.getSettings().width || 0;
-    const height = track.getSettings().height || 0;
-    this.imageWidth = width;
-    this.imageHeight = height;
+    const width = track.getSettings().width || 0
+    const height = track.getSettings().height || 0
+    this.imageWidth = width
+    this.imageHeight = height
 
-    const lightAdjustmentPtr = (wasm.exports.new as CallableFunction)(width, height) as number;
+    const lightAdjustmentPtr = (wasm.exports.new as CallableFunction)(width, height) as number
     if (lightAdjustmentPtr === 0) {
-      throw new Error("Failed to create WebAssembly LightAdjustment instance.");
+      throw new Error('Failed to create WebAssembly LightAdjustment instance.')
     }
-    this.lightAdjustmentPtr = lightAdjustmentPtr;
-    this.imageDataPtr = (wasm.exports.getImageData as CallableFunction)(lightAdjustmentPtr) as number;
-    this.maskDataPtr = (wasm.exports.getFocusMaskData as CallableFunction)(lightAdjustmentPtr) as number;
+    this.lightAdjustmentPtr = lightAdjustmentPtr
+    this.imageDataPtr = (wasm.exports.getImageData as CallableFunction)(
+      lightAdjustmentPtr,
+    ) as number
+    this.maskDataPtr = (wasm.exports.getFocusMaskData as CallableFunction)(
+      lightAdjustmentPtr,
+    ) as number
   }
 
   destroy(): void {
-    (this.wasm.exports.free as CallableFunction)(this.lightAdjustmentPtr);
+    ;(this.wasm.exports.free as CallableFunction)(this.lightAdjustmentPtr)
   }
 
   setImageData(image: ImageData): void {
-    this.resizeIfNeed(image);
-    new Uint8Array(this.memory.buffer, this.imageDataPtr, this.imageWidth * this.imageHeight * 4).set(image.data);
+    this.resizeIfNeed(image)
+    new Uint8Array(
+      this.memory.buffer,
+      this.imageDataPtr,
+      this.imageWidth * this.imageHeight * 4,
+    ).set(image.data)
   }
 
   copyProcessedImageData(image: ImageData): void {
-    image.data.set(new Uint8Array(this.memory.buffer, this.imageDataPtr, this.imageWidth * this.imageHeight * 4));
+    image.data.set(
+      new Uint8Array(this.memory.buffer, this.imageDataPtr, this.imageWidth * this.imageHeight * 4),
+    )
   }
 
   setFocusMaskData(data: Uint8Array): void {
-    new Uint8Array(this.memory.buffer, this.maskDataPtr, this.imageWidth * this.imageHeight).set(data);
+    new Uint8Array(this.memory.buffer, this.maskDataPtr, this.imageWidth * this.imageHeight).set(
+      data,
+    )
   }
 
   isStateObsolete(): boolean {
-    return (this.wasm.exports.isStateObsolete as CallableFunction)(this.lightAdjustmentPtr) as boolean;
+    return (this.wasm.exports.isStateObsolete as CallableFunction)(
+      this.lightAdjustmentPtr,
+    ) as boolean
   }
 
   updateState(): boolean {
-    return (this.wasm.exports.updateState as CallableFunction)(this.lightAdjustmentPtr) as boolean;
+    return (this.wasm.exports.updateState as CallableFunction)(this.lightAdjustmentPtr) as boolean
   }
 
   processImage(): boolean {
-    return (this.wasm.exports.processImage as CallableFunction)(this.lightAdjustmentPtr) as boolean;
+    return (this.wasm.exports.processImage as CallableFunction)(this.lightAdjustmentPtr) as boolean
   }
 
   updateOptions(options: LightAdjustmentProcessorOptions): void {
     if (options.alpha !== undefined) {
-      if (options.alpha < 0 || !isFinite(options.alpha)) {
-        throw new Error(`Invaild alpha value: ${options.alpha} (must be a non-negative number)`);
+      if (options.alpha < 0 || !Number.isFinite(options.alpha)) {
+        throw new Error(`Invalid alpha value: ${options.alpha} (must be a non-negative number)`)
       }
-      (this.wasm.exports.setAlpha as CallableFunction)(this.lightAdjustmentPtr, options.alpha);
+      ;(this.wasm.exports.setAlpha as CallableFunction)(this.lightAdjustmentPtr, options.alpha)
     }
 
     if (options.adjustmentLevel !== undefined) {
       if (!(0 <= options.adjustmentLevel && options.adjustmentLevel <= 100)) {
-        throw new Error(`Invaild fusion value: ${options.adjustmentLevel} (must be an integer between 0 and 100)`);
+        throw new Error(
+          `Invalid fusion value: ${options.adjustmentLevel} (must be an integer between 0 and 100)`,
+        )
       }
-      (this.wasm.exports.setAdjustmentLevel as CallableFunction)(this.lightAdjustmentPtr, options.adjustmentLevel);
+      ;(this.wasm.exports.setAdjustmentLevel as CallableFunction)(
+        this.lightAdjustmentPtr,
+        options.adjustmentLevel,
+      )
     }
 
     if (options.sharpnessLevel !== undefined) {
       if (!(0 <= options.sharpnessLevel && options.sharpnessLevel <= 100)) {
         throw new Error(
-          `Invaild sharpen level value: ${options.sharpnessLevel} (must be an integer between 0 and 100)`
-        );
+          `Invaild sharpen level value: ${options.sharpnessLevel} (must be an integer between 0 and 100)`,
+        )
       }
-      (this.wasm.exports.setSharpnessLevel as CallableFunction)(this.lightAdjustmentPtr, options.sharpnessLevel);
+      ;(this.wasm.exports.setSharpnessLevel as CallableFunction)(
+        this.lightAdjustmentPtr,
+        options.sharpnessLevel,
+      )
     }
 
     if (options.entropyThreshold !== undefined) {
       if (!(0.0 <= options.entropyThreshold && options.entropyThreshold <= 1.0)) {
         throw new Error(
-          `Invaild entropyThreshold value: ${options.entropyThreshold} (must be a number between 0.0 and 1.0)`
-        );
+          `Invaild entropyThreshold value: ${options.entropyThreshold} (must be a number between 0.0 and 1.0)`,
+        )
       }
-      (this.wasm.exports.setEntropyThreshold as CallableFunction)(this.lightAdjustmentPtr, options.entropyThreshold);
+      ;(this.wasm.exports.setEntropyThreshold as CallableFunction)(
+        this.lightAdjustmentPtr,
+        options.entropyThreshold,
+      )
     }
 
     if (options.minIntensity !== undefined) {
       if (!(0 <= options.minIntensity && options.minIntensity <= 255)) {
-        throw new Error(`Invaild minIntensity value: ${options.minIntensity} (must be an integer between 0 and 255)`);
+        throw new Error(
+          `Invaild minIntensity value: ${options.minIntensity} (must be an integer between 0 and 255)`,
+        )
       }
-      (this.wasm.exports.setMinIntensity as CallableFunction)(this.lightAdjustmentPtr, options.minIntensity);
+      ;(this.wasm.exports.setMinIntensity as CallableFunction)(
+        this.lightAdjustmentPtr,
+        options.minIntensity,
+      )
     }
 
     if (options.maxIntensity !== undefined) {
       if (!(0 <= options.maxIntensity && options.maxIntensity <= 255)) {
-        throw new Error(`Invaild maxIntensity value: ${options.maxIntensity} (must be an integer between 0 and 255)`);
+        throw new Error(
+          `Invaild maxIntensity value: ${options.maxIntensity} (must be an integer between 0 and 255)`,
+        )
       }
-      (this.wasm.exports.setMaxIntensity as CallableFunction)(this.lightAdjustmentPtr, options.maxIntensity);
+      ;(this.wasm.exports.setMaxIntensity as CallableFunction)(
+        this.lightAdjustmentPtr,
+        options.maxIntensity,
+      )
     }
   }
 
   private resizeIfNeed(image: ImageData): void {
     if (image.width === this.imageWidth && image.height === this.imageHeight) {
-      return;
+      return
     }
 
     const succeeded = (this.wasm.exports.resize as CallableFunction)(
       this.lightAdjustmentPtr,
       image.width,
-      image.height
-    ) as boolean;
+      image.height,
+    ) as boolean
     if (!succeeded) {
-      throw new Error("Failed to resize WebAssembly image data.");
+      throw new Error('Failed to resize WebAssembly image data.')
     }
 
-    this.imageDataPtr = (this.wasm.exports.getImageData as CallableFunction)(this.lightAdjustmentPtr) as number;
-    this.maskDataPtr = (this.wasm.exports.getFocusMaskData as CallableFunction)(this.lightAdjustmentPtr) as number;
-    this.imageWidth = image.width;
-    this.imageHeight = image.height;
+    this.imageDataPtr = (this.wasm.exports.getImageData as CallableFunction)(
+      this.lightAdjustmentPtr,
+    ) as number
+    this.maskDataPtr = (this.wasm.exports.getFocusMaskData as CallableFunction)(
+      this.lightAdjustmentPtr,
+    ) as number
+    this.imageWidth = image.width
+    this.imageHeight = image.height
   }
 }
 
@@ -483,22 +524,22 @@ interface FocusMask {
    * @param options 処理対象となる入力画像
    * @returns フォーカス領域を示すバイト列
    */
-  getFocusMask(image: ImageData): Promise<Uint8Array>;
+  getFocusMask(image: ImageData): Promise<Uint8Array>
 }
 
 /**
  * 画像全体を均等に扱うフォーカスマスク。
  */
 class UniformFocusMask implements FocusMask {
-  private mask: Uint8Array = new Uint8Array();
+  private mask: Uint8Array = new Uint8Array()
 
   getFocusMask(image: ImageData): Promise<Uint8Array> {
-    const { width, height } = image;
+    const { width, height } = image
     if (this.mask.byteLength !== width * height) {
-      this.mask = new Uint8Array(width * height);
-      this.mask.fill(255);
+      this.mask = new Uint8Array(width * height)
+      this.mask.fill(255)
     }
-    return Promise.resolve(this.mask);
+    return Promise.resolve(this.mask)
   }
 }
 
@@ -506,23 +547,23 @@ class UniformFocusMask implements FocusMask {
  * 画像全体を九分割して、その中央部分にフォーカスするマスク。
  */
 class CenterFocusMask implements FocusMask {
-  private mask: Uint8Array = new Uint8Array();
+  private mask: Uint8Array = new Uint8Array()
 
   getFocusMask(image: ImageData): Promise<Uint8Array> {
-    const { width, height } = image;
+    const { width, height } = image
     if (this.mask.byteLength !== width * height) {
-      this.mask = new Uint8Array(width * height);
-      this.mask.fill(0);
+      this.mask = new Uint8Array(width * height)
+      this.mask.fill(0)
 
-      const yStart = Math.floor(height / 3);
-      const yEnd = yStart * 2;
-      let xStart = yStart * width + Math.floor(width / 3);
-      let xEnd = yStart * width + Math.floor(width / 3) * 2;
+      const yStart = Math.floor(height / 3)
+      const yEnd = yStart * 2
+      let xStart = yStart * width + Math.floor(width / 3)
+      let xEnd = yStart * width + Math.floor(width / 3) * 2
       for (let y = yStart; y < yEnd; y++, xStart += width, xEnd += width) {
-        this.mask.fill(255, xStart, xEnd);
+        this.mask.fill(255, xStart, xEnd)
       }
     }
-    return Promise.resolve(this.mask);
+    return Promise.resolve(this.mask)
   }
 }
 
@@ -533,10 +574,10 @@ class CenterFocusMask implements FocusMask {
  * @mediapipe/selfie-segmentation パッケージを使用している。
  */
 class SelfieSegmentationFocusMask implements FocusMask {
-  private segmentation: SelfieSegmentation;
-  private mask: Uint8Array;
-  private canvas: OffscreenCanvas;
-  private canvasCtx: OffscreenCanvasRenderingContext2D;
+  private segmentation: SelfieSegmentation
+  private mask: Uint8Array
+  private canvas: OffscreenCanvas
+  private canvasCtx: OffscreenCanvasRenderingContext2D
 
   /**
    * {@link SelfieSegmentationFocusMask} インスタンスを生成する。
@@ -544,79 +585,82 @@ class SelfieSegmentationFocusMask implements FocusMask {
    * @param assetsPath @mediapipe/selfie-segmentation のアセットファイル（.wasm や .tflite）が配置されているパス
    */
   constructor(assetsPath: string) {
-    this.mask = new Uint8Array();
-    this.canvas = createOffscreenCanvas(0, 0) as OffscreenCanvas;
-    const canvasCtx = this.canvas.getContext("2d", {
+    this.mask = new Uint8Array()
+    this.canvas = createOffscreenCanvas(0, 0) as OffscreenCanvas
+    const canvasCtx = this.canvas.getContext('2d', {
       desynchronized: true,
       willReadFrequently: true,
-    });
+    })
     if (canvasCtx === null) {
-      throw Error("Failed to create 2D canvas context");
+      throw Error('Failed to create 2D canvas context')
     }
-    this.canvasCtx = canvasCtx;
+    this.canvasCtx = canvasCtx
 
-    const config: SelfieSegmentationConfig = {};
-    assetsPath = trimLastSlash(assetsPath);
+    const config: SelfieSegmentationConfig = {}
+    const trimmedAssetsPath = trimLastSlash(assetsPath)
     config.locateFile = (file: string) => {
-      return `${assetsPath}/${file}`;
-    };
-    this.segmentation = new SelfieSegmentation(config);
+      return `${trimmedAssetsPath}/${file}`
+    }
+    this.segmentation = new SelfieSegmentation(config)
 
-    const modelSelection = 1; // `1` means "landscape" mode.
-    this.segmentation.setOptions({ modelSelection });
+    const modelSelection = 1 // `1` means "landscape" mode.
+    this.segmentation.setOptions({ modelSelection })
     this.segmentation.onResults((results: SelfieSegmentationResults) => {
-      this.processSegmentationResults(results);
-    });
+      this.processSegmentationResults(results)
+    })
   }
 
   async getFocusMask(image: ImageData): Promise<Uint8Array> {
     // @ts-ignore TS2322: 「`image`の型が合っていない」と怒られるけれど、動作はするので一旦無視
-    await this.segmentation.send({ image });
-    return this.mask;
+    await this.segmentation.send({ image })
+    return this.mask
   }
 
   private processSegmentationResults(results: SelfieSegmentationResults): void {
-    const { width, height } = results.segmentationMask;
+    const { width, height } = results.segmentationMask
 
     if (this.canvas.width !== width || this.canvas.height !== height) {
-      this.canvas.width = width;
-      this.canvas.height = height;
-      this.mask = new Uint8Array(width * height);
+      this.canvas.width = width
+      this.canvas.height = height
+      this.mask = new Uint8Array(width * height)
     }
 
-    this.canvasCtx.drawImage(results.segmentationMask, 0, 0);
-    const image = this.canvasCtx.getImageData(0, 0, width, height);
+    this.canvasCtx.drawImage(results.segmentationMask, 0, 0)
+    const image = this.canvasCtx.getImageData(0, 0, width, height)
 
     for (let i = 0; i < image.data.byteLength; i += 4) {
-      this.mask[i / 4] = image.data[i];
+      this.mask[i / 4] = image.data[i]
     }
   }
 }
 
 function createOffscreenCanvas(width: number, height: number): OffscreenCanvas | HTMLCanvasElement {
-  if (typeof OffscreenCanvas === "undefined") {
+  if (typeof OffscreenCanvas === 'undefined') {
     // OffscreenCanvas が使えない場合には通常の canvas で代替する
-    const canvas = document.createElement("canvas");
-    canvas.width = width;
-    canvas.height = height;
-    return canvas;
-  } else {
-    return new OffscreenCanvas(width, height);
+    const canvas = document.createElement('canvas')
+    canvas.width = width
+    canvas.height = height
+    return canvas
   }
+  return new OffscreenCanvas(width, height)
 }
 
-function resizeCanvasIfNeed(width: number, height: number, canvas: OffscreenCanvas | HTMLCanvasElement) {
+function resizeCanvasIfNeed(
+  width: number,
+  height: number,
+  canvas: OffscreenCanvas | HTMLCanvasElement,
+) {
   if (canvas.width !== width || canvas.height !== height) {
-    canvas.width = width;
-    canvas.height = height;
+    canvas.width = width
+    canvas.height = height
   }
 }
 
 function trimLastSlash(s: string): string {
-  if (s.slice(-1) === "/") {
-    return s.slice(0, -1);
+  if (s.slice(-1) === '/') {
+    return s.slice(0, -1)
   }
-  return s;
+  return s
 }
 
 export {
@@ -627,4 +671,4 @@ export {
   UniformFocusMask,
   CenterFocusMask,
   SelfieSegmentationFocusMask,
-};
+}

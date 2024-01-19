@@ -11,10 +11,23 @@
 
 ## develop
 
-- [FIX] Zig の組み込みのキャスト関数xToYがyFromXにリネームされたので対応
+- [FIX] Zig の WebAssembly ビルドで addSharedLibrary から addBinary を使うよう変更になったので対応
+  - https://ziglang.org/documentation/master/#Freestanding
+  - https://github.com/ziglang/zig/pull/17815
+- [FIX] zig で std.mem.copy ではなく @memcpy を使うようにする
+  - https://github.com/ziglang/zig/pull/18143
+  - @voluntas
+- [FIX] Zig の組み込みのキャスト関数 xToY が yFromX にリネームされたので対応
   - @kounoike
 - [FIX] Zig の `@truncate` やキャスト関連に破壊的変更があったため対応
   - @kounoike
+
+## light-adjustment-gpu-2023.1.1
+
+- [FIX] ライト調整 GPU 版の semantic_guided_llie_324x240 のパラメータが間違っていたのを修正
+  - @kounoike
+- [FIX] image-to-image-video-processor だけ TypeScript 5.2.2 に固定する
+  - @voluntas
 
 ## light-adjustment-gpu-2023.1.0
 
@@ -23,12 +36,12 @@
 - [ADD] 推論ベースの Low-Light-Image-Enhancement を行う @shiguredo/light-adjustment-gpu パッケージを追加
   - 暗い画像に対してコントラストを改善したり、逆光で暗くなっている人物を明るくすることができる
   - 内部的には @shiguredo/image-to-image-video-processor を利用する
-  - https://github.com/PINTO0309/PINTO_model_zoo/tree/main/370_Semantic-Guided-Low-Light-Image-Enhancement のモデルをtfjsに変換して使用する
+  - https://github.com/PINTO0309/PINTO_model_zoo/tree/main/370_Semantic-Guided-Low-Light-Image-Enhancement のモデルを tfjs に変換して使用する
   - @kounoike
-- [ADD] 画像→画像の推論を行う際に使える @shiguredo/image-to-image-video-processor パッケージを追加する
-  - Tensorflow.jsを使い、画像→画像の何らかの推論を行う
+- [ADD] 画像 → 画像の推論を行う際に使える @shiguredo/image-to-image-video-processor パッケージを追加する
+  - Tensorflow.js を使い、画像 → 画像の何らかの推論を行う
   - 推論前後のリサイズ処理を入力解像度に合わせて自動的に行う
-  - Low Light Image Enhancementのような明るさ補正、超解像、ノイズ除去などの推論で使われることを想定している
+  - Low Light Image Enhancement のような明るさ補正、超解像、ノイズ除去などの推論で使われることを想定している
   - @kounoike
 - [CHANGE] tsconfig.json の compilerOptions の lib を es2015 から es2020 に変更する
   - @voluntas
@@ -42,7 +55,7 @@
 
 ## virtual-background-2023.2.0
 
-- [UPDATE] CPU-GPUの転送を減らして背景ぼかし処理を高速化
+- [UPDATE] CPU-GPU の転送を減らして背景ぼかし処理を高速化
   - @kounoike
 - [UPDATE] GitHub Actions に Node 20 を追加
   - @voluntas
@@ -118,30 +131,30 @@
 
 ## noise-suppression-2022.4.1
 
-- [FIX] 公開APIに含まれる型を定義しているパッケージをdependenciesに追加
+- [FIX] 公開 API に含まれる型を定義しているパッケージを dependencies に追加
   - https://github.com/shiguredo/media-processors/pull/26
   - @sile
 
 ## virtual-background-2022.4.1
 
-- [FIX] 公開APIに含まれる型を定義しているパッケージをdependenciesに追加
+- [FIX] 公開 API に含まれる型を定義しているパッケージを dependencies に追加
   - https://github.com/shiguredo/media-processors/pull/26
   - @sile
 
 ## noise-suppression-2022.4.0
 
-- [ADD] RNNoiseモデルの差し替えに対応
+- [ADD] RNNoise モデルの差し替えに対応
 
   - https://github.com/shiguredo/media-processors/pull/15
   - @sile
 
-- [ADD] 処理適用前後のメディアトラックを取得するためのAPIを追加
+- [ADD] 処理適用前後のメディアトラックを取得するための API を追加
   - https://github.com/shiguredo/media-processors/pull/25
   - @sile
 
 ## virtual-background-2022.4.0
 
-- [ADD] 処理適用前後のメディアトラックを取得するためのAPIを追加
+- [ADD] 処理適用前後のメディアトラックを取得するための API を追加
   - https://github.com/shiguredo/media-processors/pull/25
   - @sile
 
