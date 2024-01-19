@@ -14,17 +14,20 @@
 - [FIX] Zig の WebAssembly ビルドで addSharedLibrary から addBinary を使うよう変更になったので対応
   - https://ziglang.org/documentation/master/#Freestanding
   - https://github.com/ziglang/zig/pull/17815
-- [FIX] ライト調整 GPU 版の semantic_guided_llie_324x240 のパラメータが間違っていたのを修正
-  - @kounoike
 - [FIX] zig で std.mem.copy ではなく @memcpy を使うようにする
   - https://github.com/ziglang/zig/pull/18143
-  - @voluntas
-- [FIX] image-to-image-video-processor だけ TypeScript 5.2.2 に固定する
   - @voluntas
 - [FIX] Zig の組み込みのキャスト関数 xToY が yFromX にリネームされたので対応
   - @kounoike
 - [FIX] Zig の `@truncate` やキャスト関連に破壊的変更があったため対応
   - @kounoike
+
+## light-adjustment-gpu-2023.1.1
+
+- [FIX] ライト調整 GPU 版の semantic_guided_llie_324x240 のパラメータが間違っていたのを修正
+  - @kounoike
+- [FIX] image-to-image-video-processor だけ TypeScript 5.2.2 に固定する
+  - @voluntas
 
 ## light-adjustment-gpu-2023.1.0
 
