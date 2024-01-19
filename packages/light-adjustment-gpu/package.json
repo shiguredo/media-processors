@@ -1,6 +1,6 @@
 {
   "name": "@shiguredo/light-adjustment-gpu",
-  "version": "2023.1.0",
+  "version": "2023.1.1",
   "description": "Low Light Image Enhancement(GPU) Library",
   "author": "Shiguredo Inc.",
   "license": "Apache-2.0",
