@@ -74,7 +74,7 @@ class NoiseSuppressionProcessor {
       this.rnnoise = await Rnnoise.load({ assetsPath: this.assetsPath })
     }
 
-    let denoiseState: DenoiseState;
+    let denoiseState: DenoiseState
     if (options.modelPath === undefined) {
       denoiseState = this.rnnoise.createDenoiseState()
     } else {
