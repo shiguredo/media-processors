@@ -30,6 +30,6 @@
     "@rollup/plugin-replace": "5.0.5",
     "@shiguredo/video-track-processor": "workspace:*",
     "@types/offscreencanvas": "2019.7.3",
-    "stackblur-canvas": "2.6.0"
+    "stackblur-canvas": "2.7.0"
   }
 }

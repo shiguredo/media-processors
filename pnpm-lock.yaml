@@ -37,8 +37,8 @@ importers:
         specifier: 2.6.2
         version: 2.6.2
       typedoc:
-        specifier: 0.25.7
-        version: 0.25.7(typescript@5.3.3)
+        specifier: 0.25.8
+        version: 0.25.8(typescript@5.3.3)
       typescript:
         specifier: 5.3.3
         version: 5.3.3
@@ -76,8 +76,8 @@ importers:
         specifier: 2019.7.3
         version: 2019.7.3
       stackblur-canvas:
-        specifier: 2.6.0
-        version: 2.6.0
+        specifier: 2.7.0
+        version: 2.7.0
 
   packages/light-adjustment-gpu:
     devDependencies:
@@ -109,8 +109,8 @@ importers:
         specifier: 2019.7.3
         version: 2019.7.3
       stackblur-canvas:
-        specifier: 2.6.0
-        version: 2.6.0
+        specifier: 2.7.0
+        version: 2.7.0
 
 packages:
 
@@ -1513,8 +1513,8 @@ packages:
     resolution: {integrity: sha512-D9cPgkvLlV3t3IzL0D0YLvGA9Ahk4PcvVwUbN0dSGr1aP0Nrt4AEnTUbuGvquEC0mA64Gqt1fzirlRs5ibXx8g==}
     dev: true
 
-  /stackblur-canvas@2.6.0:
-    resolution: {integrity: sha512-8S1aIA+UoF6erJYnglGPug6MaHYGo1Ot7h5fuXx4fUPvcvQfcdw2o/ppCse63+eZf8PPidSu4v1JnmEVtEDnpg==}
+  /stackblur-canvas@2.7.0:
+    resolution: {integrity: sha512-yf7OENo23AGJhBriGx0QivY5JP6Y1HbrrDI6WLt6C5auYZXlQrheoY8hD4ibekFKz1HOfE48Ww8kMWMnJD/zcQ==}
     engines: {node: '>=0.1.14'}
     dev: true
 
@@ -1598,8 +1598,8 @@ packages:
     engines: {node: '>=12.20'}
     dev: true
 
-  /typedoc@0.25.7(typescript@5.3.3):
-    resolution: {integrity: sha512-m6A6JjQRg39p2ZVRIN3NKXgrN8vzlHhOS+r9ymUYtcUP/TIQPvWSq7YgE5ZjASfv5Vd5BW5xrir6Gm2XNNcOow==}
+  /typedoc@0.25.8(typescript@5.3.3):
+    resolution: {integrity: sha512-mh8oLW66nwmeB9uTa0Bdcjfis+48bAjSH3uqdzSuSawfduROQLlXw//WSNZLYDdhmMVB7YcYZicq6e8T0d271A==}
     engines: {node: '>= 16'}
     hasBin: true
     peerDependencies:
