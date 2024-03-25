@@ -29,6 +29,6 @@
     "@tensorflow/tfjs": "4.17.0",
     "@tensorflow/tfjs-backend-webgl": "4.17.0",
     "@tensorflow/tfjs-backend-webgpu": "4.17.0",
-    "typescript": "5.3.3"
+    "typescript": "5.4.3"
   }
 }
