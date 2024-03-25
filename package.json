@@ -12,7 +12,7 @@
     "@types/dom-mediacapture-transform": "0.1.9"
   },
   "devDependencies": {
-    "@biomejs/biome": "1.5.3",
+    "@biomejs/biome": "1.6.3",
     "@rollup/plugin-commonjs": "25.0.7",
     "@rollup/plugin-node-resolve": "15.2.3",
     "@rollup/plugin-typescript": "11.1.6",
@@ -20,10 +20,10 @@
     "rollup-plugin-copy": "3.5.0",
     "serve": "14.2.1",
     "tslib": "2.6.2",
-    "typedoc": "0.25.9",
-    "typescript": "5.3.3"
+    "typedoc": "0.25.12",
+    "typescript": "5.4.3"
   },
-  "packageManager": "pnpm@8.15.4",
+  "packageManager": "pnpm@8.15.5",
   "engines": {
     "node": ">=18.17"
   }
