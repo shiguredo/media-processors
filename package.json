@@ -23,8 +23,8 @@
     "typedoc": "0.25.13",
     "typescript": "5.4.5"
   },
-  "packageManager": "pnpm@8.13.1",
+  "packageManager": "pnpm@9.0.2",
   "engines": {
-    "node": ">=18.17"
+    "node": ">=18"
   }
 }

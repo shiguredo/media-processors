@@ -274,4 +274,4 @@ function resizeCanvasIfNeed(
   }
 }
 
-export { VideoTrackProcessor, ProcessImageCallback }
+export { VideoTrackProcessor, type ProcessImageCallback }
