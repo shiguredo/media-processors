@@ -13,7 +13,7 @@ importers:
         version: 0.1.9
     devDependencies:
       '@biomejs/biome':
-        specifier: ^1.7.0
+        specifier: 1.7.0
         version: 1.7.0
       '@rollup/plugin-commonjs':
         specifier: 25.0.7
@@ -37,10 +37,10 @@ importers:
         specifier: 2.6.2
         version: 2.6.2
       typedoc:
-        specifier: ^0.25.13
+        specifier: 0.25.13
         version: 0.25.13(typescript@5.4.5)
       typescript:
-        specifier: ^5.4.5
+        specifier: 5.4.5
         version: 5.4.5
 
   packages/image-to-image-video-processor:
