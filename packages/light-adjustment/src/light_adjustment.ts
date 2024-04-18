@@ -599,7 +599,7 @@ class SelfieSegmentationFocusMask implements FocusMask {
     const config: SelfieSegmentationConfig = {}
     const trimmedAssetsPath = trimLastSlash(assetsPath)
     config.locateFile = (file: string) => {
-      return `${trimLastSlash}/${file}`
+      return `${trimmedAssetsPath}/${file}`
     }
     this.segmentation = new SelfieSegmentation(config)
 
