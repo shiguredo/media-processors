@@ -55,8 +55,8 @@ importers:
         specifier: 4.18.0
         version: 4.18.0(@tensorflow/tfjs-core@4.18.0)
       '@tensorflow/tfjs-backend-webgpu':
-        specifier: 4.18.0
-        version: 4.18.0(@tensorflow/tfjs-core@4.18.0)
+        specifier: 4.19.0
+        version: 4.19.0(@tensorflow/tfjs-core@4.18.0)
       typescript:
         specifier: 5.4.5
         version: 5.4.5
@@ -323,16 +323,22 @@ packages:
     peerDependencies:
       '@tensorflow/tfjs-core': 4.18.0
 
+  '@tensorflow/tfjs-backend-cpu@4.19.0':
+    resolution: {integrity: sha512-7pT05Ea6GTXjbqRgkmayZRYvaiNl3LLk1TyfUvC8iIqMw5d7p4Wgte2pfM2gMbIZ/opOxURhFYuI0FiQvUrW6g==}
+    engines: {yarn: '>= 1.3.2'}
+    peerDependencies:
+      '@tensorflow/tfjs-core': 4.19.0
+
   '@tensorflow/tfjs-backend-webgl@4.18.0':
     resolution: {integrity: sha512-ZLQ8MnWnIttMDqHepEzPL0Y4HkTePl8+AaYm9AcNnDUK7VF2jn+BXcTHCUOGfiwKu/OMwRc6osDrjxr0cCqNrA==}
     engines: {yarn: '>= 1.3.2'}
     peerDependencies:
       '@tensorflow/tfjs-core': 4.18.0
 
-  '@tensorflow/tfjs-backend-webgpu@4.18.0':
-    resolution: {integrity: sha512-r+/TfLAd3qgReJglhhzrfxDckXChaLTwz0kWZWpijTgPrvY1Mhuta9KAwqKEVWvj4E5z51G3+V7YHHu6y7VfmA==}
+  '@tensorflow/tfjs-backend-webgpu@4.19.0':
+    resolution: {integrity: sha512-/nvbmrmDGOolsF8ediZrmvq2viG/GliAssT6NvP3V2g3MLUhPC2wyRE6QmIOGo9hqDrGJ1ZmAc37jRw24sHQwA==}
     peerDependencies:
-      '@tensorflow/tfjs-core': 4.18.0
+      '@tensorflow/tfjs-core': 4.19.0
 
   '@tensorflow/tfjs-converter@4.18.0':
     resolution: {integrity: sha512-b7utNMvmI986OPaQvDyHoiHKiIyip7ubSjG4KzTcFOWEKTsirtHxRp/6QKY/XSuH3AJK9Switu1/B5QC7xR2Zg==}
@@ -1226,6 +1232,12 @@ snapshots:
       '@types/seedrandom': 2.4.34
       seedrandom: 3.0.5
 
+  '@tensorflow/tfjs-backend-cpu@4.19.0(@tensorflow/tfjs-core@4.18.0)':
+    dependencies:
+      '@tensorflow/tfjs-core': 4.18.0
+      '@types/seedrandom': 2.4.34
+      seedrandom: 3.0.5
+
   '@tensorflow/tfjs-backend-webgl@4.18.0(@tensorflow/tfjs-core@4.18.0)':
     dependencies:
       '@tensorflow/tfjs-backend-cpu': 4.18.0(@tensorflow/tfjs-core@4.18.0)
@@ -1234,9 +1246,9 @@ snapshots:
       '@types/seedrandom': 2.4.34
       seedrandom: 3.0.5
 
-  '@tensorflow/tfjs-backend-webgpu@4.18.0(@tensorflow/tfjs-core@4.18.0)':
+  '@tensorflow/tfjs-backend-webgpu@4.19.0(@tensorflow/tfjs-core@4.18.0)':
     dependencies:
-      '@tensorflow/tfjs-backend-cpu': 4.18.0(@tensorflow/tfjs-core@4.18.0)
+      '@tensorflow/tfjs-backend-cpu': 4.19.0(@tensorflow/tfjs-core@4.18.0)
       '@tensorflow/tfjs-core': 4.18.0
 
   '@tensorflow/tfjs-converter@4.18.0(@tensorflow/tfjs-core@4.18.0)':
