@@ -1,5 +1,6 @@
 # Media Processors
 
+![Static Badge](https://img.shields.io/badge/Checked_with-Biome-60a5fa?style=flat&logo=biome)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
 仮想背景やノイズ抑制、ライト調整といったメディア処理をブラウザで簡単に行えるようにするためのライブラリです。
@@ -8,11 +9,11 @@
 
 We will not respond to PRs or issues that have not been discussed on Discord. Also, Discord is only available in Japanese.
 
-Please read https://github.com/shiguredo/oss/blob/master/README.en.md before use.
+Please read <https://github.com/shiguredo/oss/blob/master/README.en.md> before use.
 
 ## 時雨堂のオープンソースソフトウェアについて
 
-利用前に https://github.com/shiguredo/oss をお読みください。
+利用前に <https://github.com/shiguredo/oss> をお読みください。
 
 ## 方針
 
@@ -69,7 +70,7 @@ GitHub Pages にサンプルを用意しています。完全にクライアン�
 
 最新の状況などは Discord で共有しています。質問や相談も Discord でのみ受け付けています。
 
-https://discord.gg/shiguredo の `#media-processors` チャネルをご利用ください。
+<https://discord.gg/shiguredo> の `#media-processors` チャネルをご利用ください。
 
 ### バグ報告
 
