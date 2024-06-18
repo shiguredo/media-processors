@@ -46,7 +46,7 @@ pyparsing==3.1.1
 python-dateutil==2.8.2
 pytz==2023.3.post1
 PyYAML==6.0.1
-requests==2.31.0
+requests==2.32.2
 requests-oauthlib==1.3.1
 rich==13.7.0
 rsa==4.9
@@ -65,7 +65,7 @@ termcolor==2.3.0
 toolz==0.12.0
 typing-extensions==4.8.0
 tzdata==2023.3
-urllib3==1.26.18
+urllib3==1.26.19
 Werkzeug==2.3.8
 wrapt==1.16.0
 wurlitzer==3.0.3
