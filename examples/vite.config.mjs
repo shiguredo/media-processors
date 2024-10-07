@@ -60,7 +60,6 @@ export default defineConfig({
         {
           src: [
             '../packages/light-adjustment-gpu/dist/tfjs_model*',
-            '../packages/light-adjustment-gpu/model/*',
           ],
           dest: 'light-adjustment-gpu',
         },
