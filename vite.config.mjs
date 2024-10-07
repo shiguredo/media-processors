@@ -16,6 +16,14 @@ export default defineConfig({
       input: {
         index: resolve(__dirname, 'examples/index.html'),
         virtualBackground: resolve(__dirname, 'examples/virtual-background/index.html'),
+        lightAdjustment: resolve(__dirname, 'examples/light-adjustment/index.html'),
+        lightAdjustmentGpu: resolve(__dirname, 'examples/light-adjustment-gpu/index.html'),
+        noiseSuppression: resolve(__dirname, 'examples/noise-suppression/index.html'),
+        videoMultiProcessors: resolve(__dirname, 'examples/video-multi-processors/index.html'),
+        videoMultiProcessorsGpu: resolve(
+          __dirname,
+          'examples/video-multi-processors-gpu/index.html',
+        ),
       },
     },
   },
