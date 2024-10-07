@@ -1,0 +1,43 @@
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <title>Media Processors: ライト調整(GPU)サンプル</title>
+</head>
+
+<body>
+  <h1>Media Processors: ライト調整(GPU)サンプル</h1>
+
+  <h3>入力映像設定</h3>
+  解像度: <input id="videoWidth" type="number" min="1" max="2000" value="640">x
+  <input id="videoHeight" type="number" min="1" max="2000" value="360">
+  &nbsp;
+  FPS: <input id="videoFps" type="number" min="1" max="120" value="15">
+  &nbsp; <br />
+  入力カメラデバイス: <select id="videoDevice" size="1">
+    <option>未指定</option>
+  </select><br />
+  モデル:
+  <select id="model">
+    <option value="semantic_guided_llie_1284x720">Semantic-Guided-Low-Light-Image-Enhancement 1284x720</option>
+    <option selected value="semantic_guided_llie_648x360">Semantic-Guided-Low-Light-Image-Enhancement 648x360</option>
+    <option value="semantic_guided_llie_648x480">Semantic-Guided-Low-Light-Image-Enhancement 648x480</option>
+    <option value="semantic_guided_llie_324x240">Semantic-Guided-Low-Light-Image-Enhancement 324x240</option>
+  </select>
+  効果強度: <input id="strength" type="range" min="0.0" max="1.0" value="0.5" step="0.05">
+  <output id="strengthValue">0.5</output>
+  <br />
+  <input type="button" value="設定反映" onclick="start()">
+
+  <br />
+
+  <h3>左: 処理映像、右: オリジナル映像</h3>
+
+  フレーム処理時間: <span id="elapsed">0.0</span> 秒 フレームレート: <span id="fps">0.0</span>FPS<br />
+  <video id="videoProcessed" autoplay playsinline style="border: 1px solid blue;"></video>
+  <video id="videoOriginal" autoplay playsinline style="border: 1px solid red;"></video><br />
+
+  <script type="module" src="./main.mts"></script>
+</body>
+
+</html>

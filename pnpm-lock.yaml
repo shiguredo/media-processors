@@ -48,6 +48,15 @@ importers:
 
   examples:
     dependencies:
+      '@shiguredo/light-adjustment':
+        specifier: workspace:*
+        version: link:../packages/light-adjustment
+      '@shiguredo/light-adjustment-gpu':
+        specifier: workspace:*
+        version: link:../packages/light-adjustment-gpu
+      '@shiguredo/noise-suppression':
+        specifier: workspace:*
+        version: link:../packages/noise-suppression
       '@shiguredo/virtual-background':
         specifier: workspace:*
         version: link:../packages/virtual-background
