@@ -24,6 +24,9 @@
 
 ### misc
 
+- [CHANGE] examples のビルドを Vite を利用するようにする
+  - @voluntas
+
 ## light-adjustment-gpu-2023.1.1
 
 - [FIX] ライト調整 GPU 版の semantic_guided_llie_324x240 のパラメータが間違っていたのを修正

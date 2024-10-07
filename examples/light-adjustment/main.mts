@@ -52,13 +52,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (name == 'focusMask') {
       switch (document.getElementById(name).value) {
         case 'uniform':
-          options[name] = new Shiguredo.UniformFocusMask()
+          options[name] = new UniformFocusMask()
           break
         case 'center':
-          options[name] = new Shiguredo.CenterFocusMask()
+          options[name] = new CenterFocusMask()
           break
         case 'selfieSegmentation':
-          options[name] = new Shiguredo.SelfieSegmentationFocusMask('./light-adjustment/')
+          options[name] = new SelfieSegmentationFocusMask('./light-adjustment/')
           break
       }
     } else {
@@ -78,7 +78,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       const track = stream.getVideoTracks()[0]
       const options = {
-        focusMask: new Shiguredo.SelfieSegmentationFocusMask('./light-adjustment/'),
+        focusMask: new SelfieSegmentationFocusMask('./light-adjustment/'),
       }
       processor.startProcessing(track, options).then((processed_track) => {
         document.getElementById('videoProcessed').srcObject = new MediaStream([processed_track])

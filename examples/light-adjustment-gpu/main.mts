@@ -60,7 +60,7 @@ document.addEventListener('DOMContentLoaded', async () => {
       processor.stopProcessing()
     }
     console.log(document.getElementById('model').value)
-    processor = new Shiguredo.LightAdjustmentGpuProcessor(
+    processor = new LightAdjustmentGpuProcessor(
       './light-adjustment-gpu/',
       document.getElementById('model').value,
       document.getElementById('strength').value,
