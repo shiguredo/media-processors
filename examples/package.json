@@ -2,6 +2,7 @@
   "name": "media-processors-examples",
   "scripts": {
     "dev": "vite",
+    "preview": "vite preview",
     "build": "vite build",
     "lint": "biome lint .",
     "fmt": "biome format --write .",

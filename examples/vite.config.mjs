@@ -4,6 +4,24 @@ import { defineConfig } from 'vite'
 export default defineConfig({
   resolve: {
     preserveSymlinks: true,
+    alias: {
+      '@shiguredo/virtual-background': resolve(
+        __dirname,
+        '../packages/virtual-background/dist/virtual_background.mjs',
+      ),
+      '@shiguredo/noise-suppression': resolve(
+        __dirname,
+        '../packages/noise-suppression/dist/noise_suppression.mjs',
+      ),
+      '@shiguredo/light-adjustment': resolve(
+        __dirname,
+        '../packages/light-adjustment/dist/light_adjustment.mjs',
+      ),
+      '@shiguredo/light-adjustment-gpu': resolve(
+        __dirname,
+        '../packages/light-adjustment-gpu/dist/light_adjustment_gpu.mjs',
+      ),
+    },
   },
   optimizeDeps: {
     exclude: [
