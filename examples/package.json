@@ -1,0 +1,11 @@
+{
+  "name": "media-processors-examples",
+  "scripts": {
+    "lint": "biome lint .",
+    "fmt": "biome format --write .",
+    "check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@shiguredo/virtual-background": "workspace:*"
+  }
+}

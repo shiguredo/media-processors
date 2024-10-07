@@ -46,6 +46,12 @@ importers:
         specifier: 5.4.8
         version: 5.4.8(@types/node@22.3.0)
 
+  examples:
+    dependencies:
+      '@shiguredo/virtual-background':
+        specifier: workspace:*
+        version: link:../packages/virtual-background
+
   packages/image-to-image-video-processor:
     devDependencies:
       '@shiguredo/video-track-processor':
