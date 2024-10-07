@@ -9,9 +9,12 @@
     "check": "tsc --noEmit"
   },
   "dependencies": {
-    "@shiguredo/virtual-background": "workspace:*",
-    "@shiguredo/noise-suppression": "workspace:*",
     "@shiguredo/light-adjustment": "workspace:*",
-    "@shiguredo/light-adjustment-gpu": "workspace:*"
+    "@shiguredo/light-adjustment-gpu": "workspace:*",
+    "@shiguredo/noise-suppression": "workspace:*",
+    "@shiguredo/virtual-background": "workspace:*"
+  },
+  "devDependencies": {
+    "vite-plugin-static-copy": "1.0.6"
   }
 }

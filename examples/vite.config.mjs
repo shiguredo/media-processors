@@ -1,3 +1,5 @@
+import { viteStaticCopy } from 'vite-plugin-static-copy'
+
 import { resolve } from 'node:path'
 import { defineConfig } from 'vite'
 
@@ -45,4 +47,24 @@ export default defineConfig({
     },
   },
   envDir: resolve(__dirname, './'),
+  plugins: [
+    viteStaticCopy({
+      targets: [
+        {
+          src: [
+            '../packages/virtual-background/dist/*.{tflite,binarypb,wasm}',
+            '../packages/virtual-background/dist/*wasm_bin.js',
+          ],
+          dest: 'virtual-background',
+        },
+        {
+          src: [
+            '../packages/light-adjustment-gpu/dist/tfjs_model*',
+            '../packages/light-adjustment-gpu/model/*',
+          ],
+          dest: 'light-adjustment-gpu',
+        },
+      ],
+    }),
+  ],
 })

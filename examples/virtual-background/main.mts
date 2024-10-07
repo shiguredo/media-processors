@@ -6,7 +6,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     throw Error('Unsupported platform')
   }
 
-  const assetsPath = './virtual-background/'
+  const assetsPath = '.'
   const processor = new VirtualBackgroundProcessor(assetsPath)
   setInterval(() => {
     const elapsed = processor.getAverageProcessedTimeMs() / 1000
