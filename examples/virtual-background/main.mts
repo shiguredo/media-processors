@@ -94,5 +94,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     })
   }
 
+  document.getElementById('virtualBackgroundOn')?.addEventListener('click', showProcessedVideo)
+  document.getElementById('virtualBackgroundOff')?.addEventListener('click', showOriginalVideo)
+
   showOriginalVideo()
 })
