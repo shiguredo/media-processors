@@ -12,9 +12,9 @@
   <strong><span style="color:#F00">※ イヤホン推奨</span></strong><br />
   <br />
 
-  <input value="再生開始（ノイズ抑制ON）" type="button" onClick="playProcessedAudio()">
-  <input value="再生開始（ノイズ抑制OFF）" type="button" onClick="playOriginalAudio()">
-  <input value="再生停止" type="button" onClick="stopAudio()"><br />
+  <input value="再生開始（ノイズ抑制ON）" type="button" id="playProcessedAudio">
+  <input value="再生開始（ノイズ抑制OFF）" type="button" id="playOriginalAudio">
+  <input value="再生停止" type="button" id="stopAudio"><br />
 
   <h3>波形: 左=オリジナル、右=ノイズ抑制後</h3>
   <canvas id="oscilloscopeOriginal"></canvas>

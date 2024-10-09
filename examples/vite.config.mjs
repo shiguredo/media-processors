@@ -69,6 +69,10 @@ export default defineConfig({
           src: ['../packages/light-adjustment-gpu/dist/tfjs_model*'],
           dest: 'light-adjustment-gpu',
         },
+        {
+          src: ['../packages/noise-suppression/dist/*.wasm'],
+          dest: 'noise-suppression',
+        },
       ],
     }),
   ],

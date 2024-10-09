@@ -6,16 +6,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     throw Error('Unsupported platform')
   }
 
-  const assetsPath = './noise-suppression/'
+  const assetsPath = '.'
   const processor = new NoiseSuppressionProcessor(assetsPath)
 
   let audioCtx
   let analyserOriginal
-  let analyzerProcessed
+  let analyserProcessed
   let sourceOriginal
   let sourceProcessed
   function initAudioAnalysersIfNeed() {
-    if (audioCtx == undefined) {
+    if (audioCtx === undefined) {
       audioCtx = new (window.AudioContext || window.webkitAudioContext)()
 
       analyserOriginal = audioCtx.createAnalyser()
@@ -109,7 +109,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     let silence = true
     for (let i = 0; i < dataArray.length; i++) {
-      if (dataArray[i] != 128) {
+      if (dataArray[i] !== 128) {
         silence = false
         break
       }
@@ -144,6 +144,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     canvasCtx.fillStyle = 'rgb(200, 200, 200)'
     canvasCtx.fillRect(0, 0, canvas.width, canvas.height)
   }
+
+  document.getElementById('playProcessedAudio').addEventListener('click', playProcessedAudio)
+  document.getElementById('playOriginalAudio').addEventListener('click', playOriginalAudio)
+  document.getElementById('stopAudio').addEventListener('click', stopAudio)
 
   clearCanvas(document.getElementById('oscilloscopeOriginal'))
   clearCanvas(document.getElementById('oscilloscopeProcessed'))
