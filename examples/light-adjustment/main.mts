@@ -1,4 +1,4 @@
-import { LightAdjustmentProcessor } from '@shiguredo/light-adjustment'
+import { LightAdjustmentProcessor, SelfieSegmentationFocusMask } from '@shiguredo/light-adjustment'
 
 document.addEventListener('DOMContentLoaded', async () => {
   if (!LightAdjustmentProcessor.isSupported()) {
@@ -58,7 +58,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           options[name] = new CenterFocusMask()
           break
         case 'selfieSegmentation':
-          options[name] = new SelfieSegmentationFocusMask('./light-adjustment/')
+          options[name] = new SelfieSegmentationFocusMask('.')
           break
       }
     } else {
@@ -78,7 +78,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
       const track = stream.getVideoTracks()[0]
       const options = {
-        focusMask: new SelfieSegmentationFocusMask('./light-adjustment/'),
+        focusMask: new SelfieSegmentationFocusMask('.'),
       }
       processor.startProcessing(track, options).then((processed_track) => {
         document.getElementById('videoProcessed').srcObject = new MediaStream([processed_track])
