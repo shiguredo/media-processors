@@ -59,8 +59,14 @@ export default defineConfig({
         },
         {
           src: [
-            '../packages/light-adjustment-gpu/dist/tfjs_model*',
+            '../packages/light-adjustment/dist/*.{tflite,binarypb,wasm}',
+            '../packages/light-adjustment/dist/*wasm_bin.js',
+            '../packages/light-adjustment/dist/tfjs_model*',
           ],
+          dest: 'light-adjustment',
+        },
+        {
+          src: ['../packages/light-adjustment-gpu/dist/tfjs_model*'],
           dest: 'light-adjustment-gpu',
         },
       ],

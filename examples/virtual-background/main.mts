@@ -1,4 +1,5 @@
 import { VirtualBackgroundProcessor } from '@shiguredo/virtual-background'
+import img from './background.jpg'
 
 document.addEventListener('DOMContentLoaded', async () => {
   if (!VirtualBackgroundProcessor.isSupported()) {
@@ -81,7 +82,7 @@ document.addEventListener('DOMContentLoaded', async () => {
           break
         case 'image':
           backgroundImage = new Image()
-          backgroundImage.src = 'background.jpg'
+          backgroundImage.src = img
           break
         default:
           return
