@@ -1,8 +1,28 @@
 # Media Processors サンプル
 
 本リポジトリが提供するメディア処理パッケージの実際に動作するサンプルです:
-- 仮想背景: [virtual-background.html](virtual-background.html)
-- ノイズ抑制: [noise-suppression.html](noise-suppression.html)
+
+## ライブラリのビルド
+
+まずはライブラリのビルドをしておく必要があります。
+
+```bash
+pnpm build
+```
+
+## サンプルの起動
+
+```bash
+cd examples
+pnpm dev
+```
+
+## サンプルのビルド
+
+```bash
+cd examples
+pnpm build
+```
 
 ## ライセンス
 

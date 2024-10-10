@@ -1,14 +1,11 @@
 name: GitHub Pages Deploy
 
-# Controls when the workflow will run
 on:
   push:
     branches: ["develop"]
 
-  # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -22,23 +19,16 @@ jobs:
         with:
           node-version: "18"
       - uses: pnpm/action-setup@v4
-        name: Install pnpm
       - run: pnpm install
-      - run: pnpm run build
-      - name: Prepare static files
-        run: |
-          mkdir _site/
-          cp -r examples/ _site/
-          rm _site/examples/virtual-background
-          cp -r packages/virtual-background/dist/ _site/examples/virtual-background
-          rm _site/examples/light-adjustment
-          cp -r packages/light-adjustment/dist/ _site/examples/light-adjustment
-          rm _site/examples/light-adjustment-gpu
-          cp -r packages/light-adjustment-gpu/dist/ _site/examples/light-adjustment-gpu
-          rm _site/examples/noise-suppression
-          cp -r packages/noise-suppression/dist/ _site/examples/noise-suppression
+      - name: Build
+        run: pnpm build
+      - name: Build examples
+        run: pnpm build
+        working-directory: examples
       - name: Upload files
         uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./examples/dist
       - name: Slack Notification
         if: failure()
         uses: rtCamp/action-slack-notify@v2
