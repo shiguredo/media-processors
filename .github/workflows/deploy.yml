@@ -20,8 +20,10 @@ jobs:
           node-version: "18"
       - uses: pnpm/action-setup@v4
       - run: pnpm install
-      - run: pnpm build
-      - run: pnpm build
+      - name: build
+        run: pnpm build
+      - name: examples build
+        run: pnpm build
         working-directory: examples
       - name: Upload files
         uses: actions/upload-pages-artifact@v3
