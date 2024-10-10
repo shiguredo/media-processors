@@ -43,10 +43,10 @@ Please read <https://github.com/shiguredo/oss/blob/master/README.en.md> before u
 
 GitHub Pages にサンプルを用意しています。完全にクライアントでのみ動作します。
 
-- [仮想背景 / 背景ぼかし](https://shiguredo.github.io/media-processors/examples/virtual-background.html)
-- [ノイズ抑制](https://shiguredo.github.io/media-processors/examples/noise-suppression.html)
-- [ライト調整](https://shiguredo.github.io/media-processors/examples/light-adjustment)
-- [ライト調整（GPU版）](https://shiguredo.github.io/media-processors/examples/light-adjustment-gpu)
+- [仮想背景 / 背景ぼかし](https://shiguredo.github.io/media-processors/virtual-background/)
+- [ノイズ抑制](https://shiguredo.github.io/media-processors/noise-suppression/)
+- [ライト調整](https://shiguredo.github.io/media-processors/light-adjustment/)
+- [ライト調整（GPU版）](https://shiguredo.github.io/media-processors/light-adjustment-gpu/)
 
 ## 優先実装
 
