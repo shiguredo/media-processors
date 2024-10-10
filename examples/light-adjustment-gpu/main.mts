@@ -6,22 +6,24 @@ document.addEventListener('DOMContentLoaded', async () => {
     throw Error('Unsupported platform')
   }
 
-  let processor = undefined
+  let processor: LightAdjustmentGpuProcessor
   setInterval(() => {
     if (processor !== undefined) {
       const elapsed = processor.getAverageProcessedTimeMs() / 1000
-      document.getElementById('elapsed').innerText = elapsed.toFixed(4).padStart(4, '0')
+      const elapsedElement = document.getElementById('elapsed') as HTMLSpanElement
+      elapsedElement.textContent = elapsed.toFixed(4).padStart(4, '0')
       const fps = processor.getFps()
-      document.getElementById('fps').innerText = fps.toFixed(2).padStart(5, '0')
+      const fpsElement = document.getElementById('fps') as HTMLSpanElement
+      fpsElement.textContent = fps.toFixed(2).padStart(5, '0')
     }
   }, 300)
 
   function getUserMedia() {
     const constraints = {
-      width: document.getElementById('videoWidth').value,
-      height: document.getElementById('videoHeight').value,
-      frameRate: { ideal: document.getElementById('videoFps').value },
-      deviceId: document.getElementById('videoDevice').value,
+      width: (document.getElementById('videoWidth') as HTMLInputElement).value,
+      height: (document.getElementById('videoHeight') as HTMLInputElement).value,
+      frameRate: { ideal: (document.getElementById('videoFps') as HTMLInputElement).value },
+      deviceId: (document.getElementById('videoDevice') as HTMLInputElement).value,
     }
     return navigator.mediaDevices.getUserMedia({ video: constraints }).then((result) => {
       updateDeviceList()
@@ -30,53 +32,59 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   let isFirst = true
-  function updateDeviceList() {
+  async function updateDeviceList() {
     if (!isFirst) {
       return
     }
     isFirst = false
 
-    navigator.mediaDevices.enumerateDevices().then((devices) => {
-      const videoDevices = devices.filter((device) => device.kind === 'videoinput' && device.label)
-      const select = document.getElementById('videoDevice')
-      videoDevices.forEach((device) => {
-        const option = document.createElement('option')
-        option.value = device.deviceId
-        option.text = device.label
-        select.appendChild(option)
-      })
-    })
-  }
-
-  function updateStrength(event) {
-    if (processor !== undefined) {
-      processor.setStrength(event.target.value)
+    const devices = await navigator.mediaDevices.enumerateDevices()
+    const videoDevices = devices.filter((device) => device.kind === 'videoinput' && device.label)
+    const select = document.getElementById('videoDevice') as HTMLSelectElement
+    for (const device of videoDevices) {
+      const option = document.createElement('option')
+      option.value = device.deviceId
+      option.text = device.label
+      select.appendChild(option)
     }
-    document.getElementById('strengthValue').textContent = event.target.value
   }
 
-  function start() {
+  function updateStrength(event: Event) {
+    if (processor !== undefined) {
+      processor.setStrength((event.target as HTMLInputElement).value)
+    }
+    const strengthValueElement = document.getElementById('strengthValue')
+    if (strengthValueElement !== null) {
+      strengthValueElement.textContent = (event.target as HTMLInputElement).value
+    }
+  }
+
+  async function start() {
     if (processor !== undefined) {
       processor.stopProcessing()
     }
-    console.log(document.getElementById('model').value)
     processor = new LightAdjustmentGpuProcessor(
-      './light-adjustment-gpu/',
-      document.getElementById('model').value,
-      document.getElementById('strength').value,
+      '',
+      (document.getElementById('model') as HTMLInputElement).value,
+      (document.getElementById('strength') as HTMLInputElement).value,
     )
 
-    getUserMedia().then((stream) => {
-      document.getElementById('videoOriginal').srcObject = stream
+    const stream = await getUserMedia()
+    const videoOriginalElement = document.getElementById('videoOriginal') as HTMLVideoElement
+    videoOriginalElement.srcObject = stream
 
-      const track = stream.getVideoTracks()[0]
-      const options = {}
-      processor.startProcessing(track, options).then((processed_track) => {
-        document.getElementById('videoProcessed').srcObject = new MediaStream([processed_track])
-      })
-    })
+    const track = stream.getVideoTracks()[0]
+    const options = {}
+    const processedTrack = await processor.startProcessing(track, options)
+    const videoProcessedElement = document.getElementById('videoProcessed') as HTMLVideoElement
+    videoProcessedElement.srcObject = new MediaStream([processedTrack])
 
-    document.getElementById('strength').addEventListener('change', updateStrength)
+    const strengthElement = document.getElementById('strength') as HTMLInputElement
+    strengthElement.addEventListener('change', updateStrength)
   }
+
+  const startButton = document.getElementById('start') as HTMLButtonElement
+  startButton.addEventListener('click', start)
+
   start()
 })
