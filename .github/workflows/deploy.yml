@@ -20,9 +20,9 @@ jobs:
           node-version: "18"
       - uses: pnpm/action-setup@v4
       - run: pnpm install
-      - name: build
+      - name: Build
         run: pnpm build
-      - name: examples build
+      - name: Build examples
         run: pnpm build
         working-directory: examples
       - name: Upload files
