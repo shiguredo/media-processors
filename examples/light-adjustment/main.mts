@@ -86,4 +86,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     })
   }
   start()
+
+  document.getElementById('start').addEventListener('click', start)
 })
