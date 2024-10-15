@@ -22,15 +22,35 @@ pub struct PlayOptions {
 
 #[derive(Debug)]
 pub struct Player {
-    pub player_id: PlayerId,
-    pub start_time: Duration,
-    pub mp4_bytes: Rc<Vec<u8>>,
-    pub tracks: Vec<TrackPlayer>,
-    pub repeat: bool,
-    pub timestamp_offset: Duration,
+    player_id: PlayerId,
+    start_time: Duration,
+    mp4_bytes: Rc<Vec<u8>>,
+    tracks: Vec<TrackPlayer>,
+    repeat: bool,
+    timestamp_offset: Duration,
 }
 
 impl Player {
+    pub fn new(
+        player_id: PlayerId,
+        options: PlayOptions,
+        mp4_bytes: Rc<Vec<u8>>,
+        tracks: &[Track],
+    ) -> Self {
+        Self {
+            player_id,
+            start_time: WasmApi::now(),
+            mp4_bytes,
+            repeat: options.repeat,
+            timestamp_offset: Duration::ZERO,
+            tracks: tracks
+                .iter()
+                .map(|t| TrackPlayer::new(player_id, t))
+                .collect::<orfail::Result<_>>()
+                .expect("unreachable"),
+        }
+    }
+
     fn now(&self) -> Duration {
         WasmApi::now().saturating_sub(self.start_time)
     }
@@ -128,7 +148,7 @@ impl Player {
 }
 
 #[derive(Debug, Clone)]
-pub struct TrackPlayer {
+struct TrackPlayer {
     player_id: PlayerId,
     sample_table: Rc<SampleTableAccessor<StblBox>>,
     decoder: Option<DecoderId>,
@@ -137,7 +157,7 @@ pub struct TrackPlayer {
 }
 
 impl TrackPlayer {
-    pub fn new(player_id: PlayerId, track: &Track) -> orfail::Result<Self> {
+    fn new(player_id: PlayerId, track: &Track) -> orfail::Result<Self> {
         Ok(TrackPlayer {
             player_id,
             sample_table: track.sample_table.clone(),

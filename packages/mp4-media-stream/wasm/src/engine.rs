@@ -1,12 +1,11 @@
-use std::{collections::HashMap, rc::Rc, time::Duration};
+use std::{collections::HashMap, rc::Rc};
 
 use futures::{executor::LocalPool, future::RemoteHandle, task::LocalSpawnExt};
 use orfail::OrFail;
 
 use crate::{
     mp4::{Mp4, Mp4Info, Track},
-    player::{PlayOptions, Player, PlayerId, TrackPlayer},
-    wasm::WasmApi,
+    player::{PlayOptions, Player, PlayerId},
 };
 
 #[derive(Debug)]
@@ -44,19 +43,7 @@ impl Engine {
         // MP4 はロード済みであるのが前提
         assert!(!self.tracks.is_empty());
 
-        let player = Player {
-            player_id,
-            start_time: WasmApi::now(),
-            mp4_bytes: Rc::clone(&self.mp4_bytes),
-            repeat: options.repeat,
-            timestamp_offset: Duration::ZERO,
-            tracks: self
-                .tracks
-                .iter()
-                .map(|t| TrackPlayer::new(player_id, t))
-                .collect::<orfail::Result<_>>()
-                .expect("unreachable"),
-        };
+        let player = Player::new(player_id, options, self.mp4_bytes.clone(), &self.tracks);
         self.players.insert(
             player_id,
             self.executor
