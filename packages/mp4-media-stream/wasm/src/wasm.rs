@@ -11,6 +11,12 @@ use crate::{
     player::{PlayOptions, PlayerId},
 };
 
+pub type DecoderId = u32;
+
+// 複数の映像・音声トラックに対応するまでは ID はハードコーディングしてしまう
+const AUDIO_DECODER_ID: DecoderId = 0;
+const VIDEO_DECODER_ID: DecoderId = 1;
+
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct EncodedChunkMetadata {
@@ -34,25 +40,23 @@ impl WasmApi {
         rx.unwrap_or_else(|_| ()).await;
     }
 
+    // 事前に TypeScript 側で decoder configuration のチェックを行っているので、これは常に成功する
     pub fn create_video_decoder(player_id: PlayerId, config: VideoDecoderConfig) -> DecoderId {
         unsafe {
             createVideoDecoder(player_id, JsonVec::new(config));
         }
-
-        // TODO: 結果を返さなくする
-        0
+        AUDIO_DECODER_ID
     }
 
+    // 事前に TypeScript 側で decoder configuration のチェックを行っているので、これは常に成功する
     pub fn create_audio_decoder(player_id: PlayerId, config: AudioDecoderConfig) -> DecoderId {
         unsafe {
             createAudioDecoder(player_id, JsonVec::new(config));
         }
-
-        // TODO: 結果を返さなくする
-        1
+        VIDEO_DECODER_ID
     }
 
-    pub fn render(
+    pub fn decode(
         player_id: PlayerId,
         decoder: DecoderId,
         timescale: NonZeroU32,
@@ -87,12 +91,12 @@ impl WasmApi {
         unsafe { closeDecoder(player_id, decoder) }
     }
 
+    // MP4 の終端に達したことを TypeScript 側に伝える
+    // (repeat=true の場合にはこれが呼ばれることはない）
     pub fn notify_eos(player_id: PlayerId) {
-        unsafe { notifyEos(player_id) }
+        unsafe { onEos(player_id) }
     }
 }
-
-pub type DecoderId = u32;
 
 extern "C" {
     #[expect(improper_ctypes)]
@@ -120,7 +124,7 @@ extern "C" {
 
     pub fn closeDecoder(player_id: PlayerId, decoder: DecoderId);
 
-    pub fn notifyEos(player_id: PlayerId);
+    pub fn onEos(player_id: PlayerId);
 }
 
 #[no_mangle]

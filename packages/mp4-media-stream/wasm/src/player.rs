@@ -136,7 +136,7 @@ impl Player {
     fn render_sample(&self, track: &TrackPlayer) {
         let sample = track.current_sample();
         let data = &self.mp4_bytes[sample.data_offset() as usize..][..sample.data_size() as usize];
-        WasmApi::render(
+        WasmApi::decode(
             self.player_id,
             track.decoder.expect("unreachable"),
             track.timescale,

@@ -58,9 +58,9 @@ class Mp4MediaStream {
             engineRef.value.decode(playerId, decoderId, metadataWasmJson, dataOffset, dataLen)
           }
         },
-        notifyEos(playerId: number) {
+        onEos(playerId: number) {
           if (engineRef.value) {
-            engineRef.value.notifyEos(playerId)
+            engineRef.value.onEos(playerId)
           }
         },
       },
@@ -288,7 +288,7 @@ class Engine {
     }
   }
 
-  async notifyEos(playerId: number) {
+  async onEos(playerId: number) {
     this.stop(playerId)
   }
 
