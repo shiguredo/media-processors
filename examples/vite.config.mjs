@@ -24,6 +24,7 @@ export default defineConfig({
         __dirname,
         '../packages/light-adjustment-gpu/dist/light_adjustment_gpu.mjs',
       ),
+      '@shiguredo/mp4-media-stream': resolve(__dirname, '../packages/mp4-media-stream/dist/mp4_media_stream.mjs'),
     },
   },
   optimizeDeps: {
@@ -32,6 +33,7 @@ export default defineConfig({
       '@shiguredo/noise-suppression',
       '@shiguredo/light-adjustment',
       '@shiguredo/light-adjustment-gpu',
+      '@shiguredo/mp4-media-stream',
     ],
   },
   build: {
@@ -44,6 +46,7 @@ export default defineConfig({
         noiseSuppression: resolve(__dirname, 'noise-suppression/index.html'),
         videoMultiProcessors: resolve(__dirname, 'video-multi-processors/index.html'),
         videoMultiProcessorsGpu: resolve(__dirname, 'video-multi-processors-gpu/index.html'),
+        mp4MediaStream: resolve(__dirname, 'mp4-media-stream/index.html'),
       },
     },
   },
