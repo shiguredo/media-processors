@@ -71,24 +71,24 @@ pub struct Track {
 }
 
 impl Track {
-    pub fn new(trak_box: TrakBox) -> orfail::Result<Self> {
+    pub fn new(trak_box: TrakBox, mp4_size: usize) -> orfail::Result<Self> {
+        let kind = match trak_box.mdia_box.hdlr_box.handler_type {
+            HdlrBox::HANDLER_TYPE_SOUN => "audio ",
+            HdlrBox::HANDLER_TYPE_VIDE => "video ",
+            _ => "",
+        };
+
         let timescale = trak_box.mdia_box.mdhd_box.timescale;
         let sample_table =
             SampleTableAccessor::new(trak_box.mdia_box.minf_box.stbl_box).or_fail()?;
-        (sample_table.sample_count() > 0).or_fail()?;
+        (sample_table.sample_count() > 0).or_fail_with(|()| format!("Empty {kind}track"))?;
 
         match sample_table.stbl_box().stsd_box.entries.first() {
             Some(SampleEntry::Avc1(_)) => (),
             Some(SampleEntry::Opus(_)) => (),
             Some(b) => {
-                let kind = match trak_box.mdia_box.hdlr_box.handler_type {
-                    HdlrBox::HANDLER_TYPE_SOUN => "audio ",
-                    HdlrBox::HANDLER_TYPE_VIDE => "video ",
-                    _ => "",
-                };
                 return Err(Failure::new(format!(
-                    "Unsupported {}codec: {}",
-                    kind,
+                    "Unsupported {kind}codec: {}",
                     b.box_type()
                 )));
             }
@@ -97,6 +97,13 @@ impl Track {
                 unreachable!()
             }
         };
+
+        if let Some(last) = sample_table.samples().last() {
+            let expected_min_mp4_size = last.data_offset() + last.data_size() as u64;
+            (expected_min_mp4_size <= mp4_size as u64)
+                .or_fail_with(|()| format!("Last {kind}sample's data is out of range"))?;
+        }
+
         Ok(Self {
             sample_table: Rc::new(sample_table),
             timescale,
@@ -124,7 +131,7 @@ impl Mp4 {
                 video_track_count += 1;
             }
 
-            tracks.push(Track::new(trak_box).or_fail()?);
+            tracks.push(Track::new(trak_box, mp4_bytes.len()).or_fail()?);
         }
         (!tracks.is_empty()).or_fail_with(|()| "No video or audio tracks found".to_owned())?;
         (audio_track_count <= 1)

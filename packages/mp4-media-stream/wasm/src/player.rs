@@ -56,32 +56,43 @@ impl Player {
         WasmApi::now().saturating_sub(self.start_time)
     }
 
-    fn next_timestamp(&self) -> Duration {
-        // TODO: repeat を考慮する
+    // 再生時刻が一番近いサンプルのタイムスタンプを返す
+    // 全てのトラックが終端に達している場合には None が返される
+    fn next_timestamp(&self) -> Option<Duration> {
         self.tracks
             .iter()
+            .filter(|t| !t.eos())
             .map(|t| t.current_timestamp())
             .min()
+    }
+
+    // ファイル全体の尺を返す
+    fn file_duration(&self) -> Duration {
+        self.tracks
+            .iter()
+            .map(|t| t.duration())
+            .max()
             .expect("unreachable")
     }
 
     pub async fn run(mut self) {
         loop {
-            // TODO: 数フレーム分は先読みしてデコードしておく
-            while self.run_one().await {
-                // TODO: sleep until next sample timestamp
-
+            while let Some(wait) = self
+                .next_timestamp()
+                .map(|t| t.saturating_sub(self.elapsed()))
+            {
                 // 次のサンプルのタイムスタンプまで待つ
-                // TODO: 遅れている場合にはフレームスキップをするかも
-                let now = self.elapsed();
-                let wait_duration = self.next_timestamp().saturating_sub(now);
-                WasmApi::sleep(wait_duration).await;
+                WasmApi::sleep(wait).await;
+
+                self.run_one().await;
             }
+
             if !self.repeat {
                 break;
             }
 
-            self.timestamp_offset += self.next_timestamp(); // TODO: duration を足すべき？
+            // 繰り返し再生を行う場合には、開始時刻を調整する
+            self.timestamp_offset += self.file_duration();
             self.start_time = WasmApi::now();
             for track in &mut self.tracks {
                 track.current_sample_index = NonZeroU32::MIN;
@@ -91,7 +102,7 @@ impl Player {
         WasmApi::notify_eos(self.player_id);
     }
 
-    async fn run_one(&mut self) -> bool {
+    async fn run_one(&mut self) {
         let now = self.elapsed();
 
         for track in &mut self.tracks {
@@ -99,32 +110,28 @@ impl Player {
         }
 
         for track in &self.tracks {
-            if now < track.current_timestamp() {
+            if track.eos() || now < track.current_timestamp() {
                 continue;
             }
-            self.render_sample(track);
+            self.decode_sample(track);
+            break;
         }
 
         for track in &mut self.tracks {
-            if now < track.current_timestamp() {
+            if track.eos() || now < track.current_timestamp() {
                 continue;
             }
 
             track.current_sample_index = track.current_sample_index.saturating_add(1);
-            if track.current_sample_index.get() + 1 == track.sample_table.sample_count() {
-                // TODO: 尺が長い方に合わせる
-                return false;
-            }
+            return;
         }
-
-        true
     }
 
-    fn render_sample(&self, track: &TrackPlayer) {
+    fn decode_sample(&self, track: &TrackPlayer) {
         let sample = track.current_sample();
         let data = &self.mp4_bytes[sample.data_offset() as usize..][..sample.data_size() as usize];
 
-        // Rust 側で関与するのはデコードまでで、その先の処理は TypeScript 側で行われる
+        // Rust 側で関与するのはデコードのトリガーを引くところまでで、その先の処理は TypeScript 側で行われる
         WasmApi::decode(
             self.player_id,
             track.decoder.expect("unreachable"),
@@ -157,6 +164,9 @@ impl TrackPlayer {
     }
 
     async fn maybe_setup_decoder(&mut self) {
+        if self.eos() {
+            return;
+        }
         if self.decoder.is_some() && !self.is_sample_entry_changed() {
             return;
         }
@@ -207,6 +217,15 @@ impl TrackPlayer {
     fn current_timestamp(&self) -> Duration {
         let sample = self.current_sample();
         Duration::from_secs(sample.timestamp()) / self.timescale.get()
+    }
+
+    fn duration(&self) -> Duration {
+        let last = self.sample_table.samples().last().expect("unreachable");
+        Duration::from_secs(last.timestamp() + last.duration() as u64) / self.timescale.get()
+    }
+
+    fn eos(&self) -> bool {
+        self.current_sample_index.get() + 1 == self.sample_table.sample_count()
     }
 }
 
