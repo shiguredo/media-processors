@@ -170,8 +170,8 @@ class Engine {
       return
     }
     ;(this.wasm.exports.stop as CallableFunction)(this.engine, playerId)
-    this.closeDecoder(playerId, 0)
-    this.closeDecoder(playerId, 1)
+    this.closeDecoder(playerId, AUDIO_DECODER_ID)
+    this.closeDecoder(playerId, VIDEO_DECODER_ID)
     this.players.delete(playerId)
   }
 
@@ -304,6 +304,7 @@ class Engine {
     dataOffset: number,
     dataLen: number,
   ) {
+      console.log(`decode: ${playerId}, ${decoderId}`)
     const player = this.players.get(playerId)
     if (player === undefined) {
       throw 'TODO-6'
