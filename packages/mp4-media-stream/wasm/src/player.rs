@@ -73,8 +73,8 @@ impl Player {
 
                 // 次のサンプルのタイムスタンプまで待つ
                 // TODO: 遅れている場合にはフレームスキップをするかも
-                let elapsed = self.elapsed();
-                let wait_duration = self.next_timestamp().saturating_sub(elapsed);
+                let now = self.elapsed();
+                let wait_duration = self.next_timestamp().saturating_sub(now);
                 WasmApi::sleep(wait_duration).await;
             }
             if !self.repeat {
@@ -92,24 +92,10 @@ impl Player {
     }
 
     fn run_one(&mut self) -> bool {
-        // TODO: sample entry が変わったらデコーダを作り直す or configure() を呼び直す
         let now = self.elapsed();
 
         for track in &mut self.tracks {
-            if track.decoder.is_none() {
-                let decoder = match track.sample_table.stbl_box().stsd_box.entries.first() {
-                    Some(SampleEntry::Avc1(b)) => {
-                        let config = VideoDecoderConfig::from_avc1_box(b);
-                        WasmApi::create_video_decoder(self.player_id, config)
-                    }
-                    Some(SampleEntry::Opus(b)) => {
-                        let config = AudioDecoderConfig::from_opus_box(b);
-                        WasmApi::create_audio_decoder(self.player_id, config)
-                    }
-                    _ => unreachable!(),
-                };
-                track.decoder = Some(decoder);
-            };
+            track.maybe_setup_decoder();
         }
 
         for track in &self.tracks {
@@ -137,6 +123,8 @@ impl Player {
     fn render_sample(&self, track: &TrackPlayer) {
         let sample = track.current_sample();
         let data = &self.mp4_bytes[sample.data_offset() as usize..][..sample.data_size() as usize];
+
+        // Rust 側で関与するのはデコードまでで、その先の処理は TypeScript 側で行われる
         WasmApi::decode(
             self.player_id,
             track.decoder.expect("unreachable"),
@@ -166,6 +154,48 @@ impl TrackPlayer {
             timescale: track.timescale,
             current_sample_index: NonZeroU32::MIN,
         })
+    }
+
+    fn maybe_setup_decoder(&mut self) {
+        if self.decoder.is_some() && !self.is_sample_entry_changed() {
+            return;
+        }
+
+        if let Some(decoder) = self.decoder {
+            WasmApi::close_decoder(self.player_id, decoder);
+        }
+
+        let decoder = match self.current_sample().chunk().sample_entry() {
+            SampleEntry::Avc1(b) => {
+                let config = VideoDecoderConfig::from_avc1_box(b);
+                WasmApi::create_video_decoder(self.player_id, config)
+            }
+            SampleEntry::Opus(b) => {
+                let config = AudioDecoderConfig::from_opus_box(b);
+                WasmApi::create_audio_decoder(self.player_id, config)
+            }
+            _ => {
+                // MP4::load() の中で非対応コーデックのチェックは行っているので、ここに来ることはない
+                unreachable!()
+            }
+        };
+        self.decoder = Some(decoder);
+    }
+
+    fn is_sample_entry_changed(&self) -> bool {
+        // `Mp4::load()` の中で空サンプルがないことは確認済みなので、以降の処理が失敗することはない
+        let prev_sample_index = NonZeroU32::new(self.current_sample_index.get() - 1)
+            .or_else(|| self.sample_table.samples().last().map(|s| s.index()))
+            .expect("unreachable");
+        let prev_sample = self
+            .sample_table
+            .get_sample(prev_sample_index)
+            .expect("unreachable");
+        let current_sample = self
+            .sample_table
+            .get_sample(self.current_sample_index)
+            .expect("unreachable");
+        prev_sample.chunk().sample_entry() != current_sample.chunk().sample_entry()
     }
 
     fn current_sample(&self) -> SampleAccessor<StblBox> {
