@@ -304,7 +304,6 @@ class Engine {
     dataOffset: number,
     dataLen: number,
   ) {
-      console.log(`decode: ${playerId}, ${decoderId}`)
     const player = this.players.get(playerId)
     if (player === undefined) {
       throw 'TODO-6'
@@ -318,7 +317,7 @@ class Engine {
     chunkParams.data = data
     // @ts-ignore TS2488: TODO
     chunkParams.transfer = [data.buffer]
-    if (decoderId === 0) {
+    if (decoderId === VIDEO_DECODER_ID) {
       if (player.videoDecoder === undefined) {
         throw 'TODO-7'
       }
