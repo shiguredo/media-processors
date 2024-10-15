@@ -18,8 +18,8 @@ pub type DecoderId = u32;
 pub struct EncodedChunkMetadata {
     #[serde(rename = "type")]
     pub ty: &'static str, // key | delta
-    pub timestamp: u32, // millis
-    pub duration: u32,  // millis
+    pub timestamp: u64, // micros
+    pub duration: u32,  // micros
 }
 
 #[derive(Debug)]
@@ -76,8 +76,8 @@ impl WasmApi {
             },
             timestamp: (Duration::from_secs(sample.timestamp()) / timescale.get()
                 + timestamp_offset)
-                .as_millis() as u32,
-            duration: (Duration::from_secs(sample.duration() as u64) / timescale.get()).as_millis()
+                .as_micros() as u64,
+            duration: (Duration::from_secs(sample.duration() as u64) / timescale.get()).as_micros()
                 as u32,
         };
         unsafe {
