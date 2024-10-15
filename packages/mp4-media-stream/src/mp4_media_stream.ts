@@ -85,6 +85,8 @@ class Mp4MediaStream {
   play(options: Mp4MediaStreamPlayOptions = {}): MediaStream {
     return this.engine.play(options)
   }
+
+    // TODO: stop()
 }
 
 type Mp4Info = {
