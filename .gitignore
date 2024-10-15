@@ -42,3 +42,6 @@ yarn.lock
 
 # Ignore typedoc output
 apidoc/
+
+# Rust
+/target/
