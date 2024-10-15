@@ -388,29 +388,54 @@ class Player {
   }
 
   async closeAudioDecoder() {
-    if (this.audioDecoder !== undefined && this.audioDecoder.state !== 'closed') {
-      console.log('close audio decoder')
-      await this.audioDecoder.flush()
+    const decoder = this.audioDecoder
+    if (decoder === undefined) {
+      return
+    }
+    console.log('close audio decoder')
 
-      // await 前後で状態が変わっている可能性があるのでもう一度チェックする
-      if (this.audioDecoder !== undefined) {
-        this.audioDecoder.close()
-        this.audioDecoder = undefined
+    if (decoder.state !== 'closed') {
+      try {
+        await decoder.flush()
+      } catch (e) {
+        if (e instanceof DOMException && e.name === 'AbortError') {
+          // デコーダーのクローズ処理と競合した場合にはここに来る（単に無視すればいい）
+        } else {
+          throw e
+        }
       }
+    }
+
+    // await 前後で状態が変わっている可能性があるのでもう一度チェックする
+    if (decoder === this.audioDecoder && decoder.state !== 'closed') {
+      decoder.close()
+      this.audioDecoder = undefined
     }
   }
 
   async closeVideoDecoder() {
-    if (this.videoDecoder !== undefined && this.videoDecoder.state !== 'closed') {
-      console.log('close video decoder')
+    const decoder = this.videoDecoder
+    if (decoder === undefined) {
+      return
+    }
+    console.log('close video decoder')
 
-      await this.videoDecoder.flush()
-
-      // await 前後で状態が変わっている可能性があるのでもう一度チェックする
-      if (this.videoDecoder !== undefined) {
-        this.videoDecoder.close()
-        this.videoDecoder = undefined
+    if (decoder.state !== 'closed') {
+      try {
+        await decoder.flush()
+      } catch (e) {
+        if (e instanceof DOMException && e.name === 'AbortError') {
+          // デコーダーのクローズ処理と競合した場合にはここに来る（単に無視すればいい）
+        } else {
+          throw e
+        }
       }
+    }
+
+    // await 前後で状態が変わっている可能性があるのでもう一度チェックする
+    if (decoder === this.videoDecoder && decoder.state !== 'closed') {
+      decoder.close()
+      this.videoDecoder = undefined
     }
   }
 
