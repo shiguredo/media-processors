@@ -35,14 +35,14 @@ class Mp4MediaStream {
             engineRef.value.sleep(resultTx, duration)
           }
         },
-        createVideoDecoder(playerId: number, configWasmJson: number) {
+        createVideoDecoder(resultTx: number, playerId: number, configWasmJson: number) {
           if (engineRef.value) {
-            engineRef.value.createVideoDecoder(playerId, configWasmJson)
+            engineRef.value.createVideoDecoder(resultTx, playerId, configWasmJson)
           }
         },
-        createAudioDecoder(playerId: number, configWasmJson: number) {
+        createAudioDecoder(resultTx: number, playerId: number, configWasmJson: number) {
           if (engineRef.value) {
-            engineRef.value.createAudioDecoder(playerId, configWasmJson)
+            engineRef.value.createAudioDecoder(resultTx, playerId, configWasmJson)
           }
         },
         closeDecoder(playerId: number, decoderId: number) {
@@ -163,15 +163,15 @@ class Engine {
     return player.createMediaStream()
   }
 
-  stop(playerId: number) {
+  async stop(playerId: number) {
     console.log('stop player')
     const player = this.players.get(playerId)
     if (player === undefined) {
       return
     }
     ;(this.wasm.exports.stop as CallableFunction)(this.engine, playerId)
-    this.closeDecoder(playerId, AUDIO_DECODER_ID)
-    this.closeDecoder(playerId, VIDEO_DECODER_ID)
+    await player.stop()
+
     this.players.delete(playerId)
   }
 
@@ -186,16 +186,15 @@ class Engine {
     }, duration)
   }
 
-  async createVideoDecoder(playerId: number, configWasmJson: number) {
+  async createVideoDecoder(resultTx: number, playerId: number, configWasmJson: number) {
     console.log('createVideoDecoder')
     const player = this.players.get(playerId)
     if (player === undefined) {
       throw 'TODO-1'
     }
-    if (player.videoWriter !== undefined) {
-      // 一つ前のデコーダーの終了処理が進行中の場合には、それを待機する
-      await player.videoWriter.closed
-    }
+
+    // 一つ前のデコーダーの終了処理が進行中の場合に備えて、ここでも close を呼び出して終了を待機する
+    await player.closeVideoDecoder()
 
     const config = this.wasmJsonToValue(configWasmJson) as VideoDecoderConfig
     // @ts-ignore TS2488: TODO
@@ -211,7 +210,7 @@ class Engine {
         try {
           await player.videoWriter.write(frame)
         } catch (e) {
-          this.stop(playerId)
+          await this.stop(playerId)
           throw e // TODO
         }
       },
@@ -223,19 +222,23 @@ class Engine {
 
     player.videoDecoder = new VideoDecoder(init)
     player.videoDecoder.configure(config)
+    ;(this.wasm.exports.notifyDecoderId as CallableFunction)(
+      this.engine,
+      resultTx,
+      VIDEO_DECODER_ID,
+    )
     console.log('video decoder created')
   }
 
-  async createAudioDecoder(playerId: number, configWasmJson: number) {
+  async createAudioDecoder(resultTx: number, playerId: number, configWasmJson: number) {
     console.log('createAudioDecoder')
     const player = this.players.get(playerId)
     if (player === undefined) {
       throw 'TODO-3'
     }
-    if (player.audioWriter !== undefined) {
-      // 一つ前のデコーダーの終了処理が進行中の場合には、それを待機する
-      await player.audioWriter.closed
-    }
+
+    // 一つ前のデコーダーの終了処理が進行中の場合に備えて、ここでも close を呼び出して終了を待機する
+    await player.closeAudioDecoder()
 
     const config = this.wasmJsonToValue(configWasmJson) as AudioDecoderConfig
     const init = {
@@ -247,7 +250,7 @@ class Engine {
         try {
           await player.audioWriter.write(data)
         } catch (e) {
-          this.stop(playerId)
+          await this.stop(playerId)
           throw e // TODO: エラーの種類によって処理を分ける（closed なら正常系）
         }
       },
@@ -259,6 +262,11 @@ class Engine {
 
     player.audioDecoder = new AudioDecoder(init)
     player.audioDecoder.configure(config)
+    ;(this.wasm.exports.notifyDecoderId as CallableFunction)(
+      this.engine,
+      resultTx,
+      AUDIO_DECODER_ID,
+    )
     console.log('audio decoder created')
   }
 
@@ -269,32 +277,16 @@ class Engine {
       return
     }
 
-    if (
-      decoderId === VIDEO_DECODER_ID &&
-      player.videoDecoder !== undefined &&
-      player.videoWriter !== undefined &&
-      player.videoDecoder.state !== 'closed'
-    ) {
-      await player.videoDecoder.flush()
-      player.videoDecoder.close()
-      player.videoDecoder = undefined
-      player.videoWriter.close()
-      player.videoWriter = undefined
-    } else if (
-      player.audioDecoder !== undefined &&
-      player.audioWriter !== undefined &&
-      player.audioDecoder.state !== 'closed'
-    ) {
-      await player.audioDecoder.flush()
-      player.audioDecoder.close()
-      player.audioDecoder = undefined
-      player.audioWriter.close()
-      player.audioWriter = undefined
+    if (decoderId === AUDIO_DECODER_ID) {
+      await player.closeAudioDecoder()
+    } else {
+      await player.closeVideoDecoder()
     }
   }
 
+  // MP4 の終端に達した場合に呼ばれるコールバック
   async onEos(playerId: number) {
-    this.stop(playerId)
+    await this.stop(playerId)
   }
 
   decode(
@@ -368,8 +360,8 @@ class Engine {
 }
 
 class Player {
-  audio: boolean
-  video: boolean
+  private audio: boolean
+  private video: boolean
   audioDecoder?: AudioDecoder
   videoDecoder?: VideoDecoder
   audioWriter?: WritableStreamDefaultWriter
@@ -393,6 +385,47 @@ class Player {
       this.videoWriter = generator.writable.getWriter()
     }
     return new MediaStream(tracks)
+  }
+
+  async closeAudioDecoder() {
+    if (this.audioDecoder !== undefined && this.audioDecoder.state !== 'closed') {
+      console.log('close audio decoder')
+      await this.audioDecoder.flush()
+
+      // await 前後で状態が変わっている可能性があるのでもう一度チェックする
+      if (this.audioDecoder !== undefined) {
+        this.audioDecoder.close()
+        this.audioDecoder = undefined
+      }
+    }
+  }
+
+  async closeVideoDecoder() {
+    if (this.videoDecoder !== undefined && this.videoDecoder.state !== 'closed') {
+      console.log('close video decoder')
+
+      await this.videoDecoder.flush()
+
+      // await 前後で状態が変わっている可能性があるのでもう一度チェックする
+      if (this.videoDecoder !== undefined) {
+        this.videoDecoder.close()
+        this.videoDecoder = undefined
+      }
+    }
+  }
+
+  async stop() {
+    await this.closeAudioDecoder()
+    await this.closeVideoDecoder()
+
+    if (this.audioWriter !== undefined) {
+      await this.audioWriter.close()
+      this.audioWriter = undefined
+    }
+    if (this.videoWriter !== undefined) {
+      await this.videoWriter.close()
+      this.videoWriter = undefined
+    }
   }
 }
 

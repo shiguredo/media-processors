@@ -68,7 +68,7 @@ impl Player {
     pub async fn run(mut self) {
         loop {
             // TODO: 数フレーム分は先読みしてデコードしておく
-            while self.run_one() {
+            while self.run_one().await {
                 // TODO: sleep until next sample timestamp
 
                 // 次のサンプルのタイムスタンプまで待つ
@@ -91,11 +91,11 @@ impl Player {
         WasmApi::notify_eos(self.player_id);
     }
 
-    fn run_one(&mut self) -> bool {
+    async fn run_one(&mut self) -> bool {
         let now = self.elapsed();
 
         for track in &mut self.tracks {
-            track.maybe_setup_decoder();
+            track.maybe_setup_decoder().await;
         }
 
         for track in &self.tracks {
@@ -156,7 +156,7 @@ impl TrackPlayer {
         })
     }
 
-    fn maybe_setup_decoder(&mut self) {
+    async fn maybe_setup_decoder(&mut self) {
         if self.decoder.is_some() && !self.is_sample_entry_changed() {
             return;
         }
@@ -168,11 +168,11 @@ impl TrackPlayer {
         let decoder = match self.current_sample().chunk().sample_entry() {
             SampleEntry::Avc1(b) => {
                 let config = VideoDecoderConfig::from_avc1_box(b);
-                WasmApi::create_video_decoder(self.player_id, config)
+                WasmApi::create_video_decoder(self.player_id, config).await
             }
             SampleEntry::Opus(b) => {
                 let config = AudioDecoderConfig::from_opus_box(b);
-                WasmApi::create_audio_decoder(self.player_id, config)
+                WasmApi::create_audio_decoder(self.player_id, config).await
             }
             _ => {
                 // MP4::load() の中で非対応コーデックのチェックは行っているので、ここに来ることはない

@@ -13,10 +13,6 @@ use crate::{
 
 pub type DecoderId = u32;
 
-// 複数の映像・音声トラックに対応するまでは ID はハードコーディングしてしまう
-const AUDIO_DECODER_ID: DecoderId = 0;
-const VIDEO_DECODER_ID: DecoderId = 1;
-
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct EncodedChunkMetadata {
@@ -41,19 +37,27 @@ impl WasmApi {
     }
 
     // 事前に TypeScript 側で decoder configuration のチェックを行っているので、これは常に成功する
-    pub fn create_audio_decoder(player_id: PlayerId, config: AudioDecoderConfig) -> DecoderId {
+    pub async fn create_audio_decoder(
+        player_id: PlayerId,
+        config: AudioDecoderConfig,
+    ) -> DecoderId {
+        let (tx, rx) = oneshot::channel::<DecoderId>();
         unsafe {
-            createAudioDecoder(player_id, JsonVec::new(config));
+            createAudioDecoder(Box::into_raw(Box::new(tx)), player_id, JsonVec::new(config));
         }
-        AUDIO_DECODER_ID
+        rx.unwrap_or_else(|_| unreachable!()).await
     }
 
     // 事前に TypeScript 側で decoder configuration のチェックを行っているので、これは常に成功する
-    pub fn create_video_decoder(player_id: PlayerId, config: VideoDecoderConfig) -> DecoderId {
+    pub async fn create_video_decoder(
+        player_id: PlayerId,
+        config: VideoDecoderConfig,
+    ) -> DecoderId {
+        let (tx, rx) = oneshot::channel::<DecoderId>();
         unsafe {
-            createVideoDecoder(player_id, JsonVec::new(config));
+            createVideoDecoder(Box::into_raw(Box::new(tx)), player_id, JsonVec::new(config));
         }
-        VIDEO_DECODER_ID
+        rx.unwrap_or_else(|_| unreachable!()).await
     }
 
     pub fn decode(
@@ -117,10 +121,18 @@ extern "C" {
     );
 
     #[expect(improper_ctypes)]
-    pub fn createVideoDecoder(player_id: PlayerId, config: JsonVec<VideoDecoderConfig>);
+    pub fn createVideoDecoder(
+        result_tx: *mut oneshot::Sender<DecoderId>,
+        player_id: PlayerId,
+        config: JsonVec<VideoDecoderConfig>,
+    );
 
     #[expect(improper_ctypes)]
-    pub fn createAudioDecoder(player_id: PlayerId, config: JsonVec<AudioDecoderConfig>);
+    pub fn createAudioDecoder(
+        result_tx: *mut oneshot::Sender<DecoderId>,
+        player_id: PlayerId,
+        config: JsonVec<AudioDecoderConfig>,
+    );
 
     pub fn closeDecoder(player_id: PlayerId, decoder: DecoderId);
 
@@ -131,6 +143,20 @@ extern "C" {
 #[expect(clippy::not_unsafe_ptr_arg_deref)]
 pub fn awake(engine: *mut Engine, result_tx: *mut oneshot::Sender<()>) {
     let is_ok = unsafe { Box::from_raw(result_tx) }.send(()).is_ok();
+    if !is_ok {
+        return;
+    }
+    unsafe { &mut *engine }.poll();
+}
+
+#[no_mangle]
+#[expect(non_snake_case, clippy::not_unsafe_ptr_arg_deref)]
+pub fn notifyDecoderId(
+    engine: *mut Engine,
+    result_tx: *mut oneshot::Sender<DecoderId>,
+    decoder_id: DecoderId,
+) {
+    let is_ok = unsafe { Box::from_raw(result_tx) }.send(decoder_id).is_ok();
     if !is_ok {
         return;
     }
