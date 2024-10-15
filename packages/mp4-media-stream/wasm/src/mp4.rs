@@ -80,7 +80,18 @@ impl Track {
         match sample_table.stbl_box().stsd_box.entries.first() {
             Some(SampleEntry::Avc1(_)) => (),
             Some(SampleEntry::Opus(_)) => (),
-            Some(b) => return Err(Failure::new(format!("Unsupported codec: {}", b.box_type()))),
+            Some(b) => {
+                let kind = match trak_box.mdia_box.hdlr_box.handler_type {
+                    HdlrBox::HANDLER_TYPE_SOUN => "audio ",
+                    HdlrBox::HANDLER_TYPE_VIDE => "video ",
+                    _ => "",
+                };
+                return Err(Failure::new(format!(
+                    "Unsupported {}codec: {}",
+                    kind,
+                    b.box_type()
+                )));
+            }
             None => {
                 // MP4 デコード時にチェック済みなので、ここには来ない
                 unreachable!()

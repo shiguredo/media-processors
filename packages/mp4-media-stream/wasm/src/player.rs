@@ -45,13 +45,14 @@ impl Player {
             timestamp_offset: Duration::ZERO,
             tracks: tracks
                 .iter()
-                .map(|t| TrackPlayer::new(player_id, t))
+                .map(|track| TrackPlayer::new(player_id, track))
                 .collect::<orfail::Result<_>>()
                 .expect("unreachable"),
         }
     }
 
-    fn now(&self) -> Duration {
+    // 再生開始からの経過時間を返す
+    fn elapsed(&self) -> Duration {
         WasmApi::now().saturating_sub(self.start_time)
     }
 
@@ -59,7 +60,7 @@ impl Player {
         // TODO: repeat を考慮する
         self.tracks
             .iter()
-            .map(|t| t.current_position())
+            .map(|t| t.current_timestamp())
             .min()
             .expect("unreachable")
     }
@@ -72,8 +73,8 @@ impl Player {
 
                 // 次のサンプルのタイムスタンプまで待つ
                 // TODO: 遅れている場合にはフレームスキップをするかも
-                let now = self.now();
-                let wait_duration = self.next_timestamp().saturating_sub(now);
+                let elapsed = self.elapsed();
+                let wait_duration = self.next_timestamp().saturating_sub(elapsed);
                 WasmApi::sleep(wait_duration).await;
             }
             if !self.repeat {
@@ -92,7 +93,7 @@ impl Player {
 
     fn run_one(&mut self) -> bool {
         // TODO: sample entry が変わったらデコーダを作り直す or configure() を呼び直す
-        let now = self.now();
+        let now = self.elapsed();
 
         for track in &mut self.tracks {
             if track.decoder.is_none() {
@@ -112,14 +113,14 @@ impl Player {
         }
 
         for track in &self.tracks {
-            if now < track.current_position() {
+            if now < track.current_timestamp() {
                 continue;
             }
             self.render_sample(track);
         }
 
         for track in &mut self.tracks {
-            if now < track.current_position() {
+            if now < track.current_timestamp() {
                 continue;
             }
 
@@ -173,7 +174,7 @@ impl TrackPlayer {
             .expect("unreachable")
     }
 
-    fn current_position(&self) -> Duration {
+    fn current_timestamp(&self) -> Duration {
         let sample = self.current_sample();
         Duration::from_secs(sample.timestamp()) / self.timescale.get()
     }
