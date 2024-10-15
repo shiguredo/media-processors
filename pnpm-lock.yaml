@@ -54,6 +54,9 @@ importers:
       '@shiguredo/light-adjustment-gpu':
         specifier: workspace:*
         version: link:../packages/light-adjustment-gpu
+      '@shiguredo/mp4-media-stream':
+        specifier: workspace:*
+        version: link:../packages/mp4-media-stream
       '@shiguredo/noise-suppression':
         specifier: workspace:*
         version: link:../packages/noise-suppression
@@ -106,6 +109,8 @@ importers:
       '@shiguredo/image-to-image-video-processor':
         specifier: workspace:*
         version: link:../image-to-image-video-processor
+
+  packages/mp4-media-stream: {}
 
   packages/noise-suppression:
     devDependencies:
