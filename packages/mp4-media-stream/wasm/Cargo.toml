@@ -1,0 +1,17 @@
+[package]
+name = "mp4_media_stream"
+edition = "2021"
+publish = false
+
+# media-processors の内部でのみ使われる crate なのでバージョンは固定
+version = "0.0.0"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+futures = "0.3.31"
+orfail = { version = "1.1.0", features = ["serde"] }
+serde = { version = "1.0.210", features = ["derive"] }
+serde_json = "1.0.128"
+shiguredo_mp4 = "2024.3.0"
