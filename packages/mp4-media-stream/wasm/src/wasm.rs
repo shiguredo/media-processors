@@ -41,17 +41,17 @@ impl WasmApi {
     }
 
     // 事前に TypeScript 側で decoder configuration のチェックを行っているので、これは常に成功する
-    pub fn create_video_decoder(player_id: PlayerId, config: VideoDecoderConfig) -> DecoderId {
+    pub fn create_audio_decoder(player_id: PlayerId, config: AudioDecoderConfig) -> DecoderId {
         unsafe {
-            createVideoDecoder(player_id, JsonVec::new(config));
+            createAudioDecoder(player_id, JsonVec::new(config));
         }
         AUDIO_DECODER_ID
     }
 
     // 事前に TypeScript 側で decoder configuration のチェックを行っているので、これは常に成功する
-    pub fn create_audio_decoder(player_id: PlayerId, config: AudioDecoderConfig) -> DecoderId {
+    pub fn create_video_decoder(player_id: PlayerId, config: VideoDecoderConfig) -> DecoderId {
         unsafe {
-            createAudioDecoder(player_id, JsonVec::new(config));
+            createVideoDecoder(player_id, JsonVec::new(config));
         }
         VIDEO_DECODER_ID
     }

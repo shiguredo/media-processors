@@ -4,6 +4,9 @@ interface Mp4MediaStreamPlayOptions {
   repeat?: boolean
 }
 
+const AUDIO_DECODER_ID: number = 0
+const VIDEO_DECODER_ID: number = 1
+
 class Mp4MediaStream {
   private engine: Engine
 
@@ -183,14 +186,15 @@ class Engine {
     }, duration)
   }
 
-  createVideoDecoder(playerId: number, configWasmJson: number) {
+  async createVideoDecoder(playerId: number, configWasmJson: number) {
     console.log('createVideoDecoder')
     const player = this.players.get(playerId)
     if (player === undefined) {
       throw 'TODO-1'
     }
-    if (player.videoDecoder !== undefined) {
-      throw 'TODO-2'
+    if (player.videoWriter !== undefined) {
+      // 一つ前のデコーダーの終了処理が進行中の場合には、それを待機する
+      await player.videoWriter.closed
     }
 
     const config = this.wasmJsonToValue(configWasmJson) as VideoDecoderConfig
@@ -222,14 +226,15 @@ class Engine {
     console.log('video decoder created')
   }
 
-  createAudioDecoder(playerId: number, configWasmJson: number) {
+  async createAudioDecoder(playerId: number, configWasmJson: number) {
     console.log('createAudioDecoder')
     const player = this.players.get(playerId)
     if (player === undefined) {
       throw 'TODO-3'
     }
-    if (player.audioDecoder !== undefined) {
-      throw 'TODO-4'
+    if (player.audioWriter !== undefined) {
+      // 一つ前のデコーダーの終了処理が進行中の場合には、それを待機する
+      await player.audioWriter.closed
     }
 
     const config = this.wasmJsonToValue(configWasmJson) as AudioDecoderConfig
@@ -265,7 +270,7 @@ class Engine {
     }
 
     if (
-      decoderId === 0 &&
+      decoderId === VIDEO_DECODER_ID &&
       player.videoDecoder !== undefined &&
       player.videoWriter !== undefined &&
       player.videoDecoder.state !== 'closed'
