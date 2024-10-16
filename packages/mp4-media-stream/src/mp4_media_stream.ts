@@ -125,24 +125,20 @@ class Engine {
     )
 
     // MP4 内に含まれる映像・音声を WebCodecs のデコーダー扱えるかどうかをチェックする
-    const info = this.wasmResultToValue(resultWasmJson) as {
-      audioConfigs: [AudioDecoderConfig]
-      videoConfigs: [VideoDecoderConfig]
-    }
+    const info = this.wasmResultToValue(resultWasmJson) as Mp4Info
     for (const config of info.audioConfigs) {
       if (!(await AudioDecoder.isConfigSupported(config)).supported) {
-        // TODO: ちゃんとする
-        throw 'unsupported audio codec'
+        throw new Error(`Unsupported audio decoder configuration: ${JSON.stringify(config)}`)
       }
     }
     for (const config of info.videoConfigs) {
       if (config.description !== undefined) {
-        // @ts-ignore TS2488: TODO
-        config.description = new Uint8Array(config.description)
+        // JSON.parse() の結果では config.description の型は number[] となって期待とは異なるので
+        // ここで適切な型に変換している
+        config.description = new Uint8Array(config.description as object as number[])
       }
       if (!(await VideoDecoder.isConfigSupported(config)).supported) {
-        // TODO: ちゃんとする
-        throw 'unsupported audio codec'
+        throw new Error(`Unsupported video decoder configuration: ${JSON.stringify(config)}`)
       }
       this.info = info
     }
@@ -152,7 +148,8 @@ class Engine {
 
   play(options: PlayOptions = {}): MediaStream {
     if (this.info === undefined) {
-      throw 'bug'
+      // ここには来ないはず
+      throw new Error('bug')
     }
 
     const playerId = this.nextPlayerId
@@ -200,7 +197,9 @@ class Engine {
   async createVideoDecoder(resultTx: number, playerId: number, configWasmJson: number) {
     const player = this.players.get(playerId)
     if (player === undefined) {
-      throw 'TODO-1'
+      // stop() と競合したらここに来る可能性がある
+      // すでに停止済みであり、新規でデコーダーを作成する必要はないので、ここで return する
+      return
     }
 
     // 一つ前のデコーダーの終了処理が進行中の場合に備えて、ここでも close を呼び出して終了を待機する
@@ -242,7 +241,9 @@ class Engine {
   async createAudioDecoder(resultTx: number, playerId: number, configWasmJson: number) {
     const player = this.players.get(playerId)
     if (player === undefined) {
-      throw 'TODO-3'
+      // stop() と競合したらここに来る可能性がある
+      // すでに停止済みであり、新規でデコーダーを作成する必要はないので、ここで return する
+      return
     }
 
     // 一つ前のデコーダーの終了処理が進行中の場合に備えて、ここでも close を呼び出して終了を待機する
