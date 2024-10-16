@@ -1,0 +1,21 @@
+{
+  "name": "media-processors-examples",
+  "scripts": {
+    "dev": "vite",
+    "preview": "vite preview",
+    "build": "vite build",
+    "lint": "biome lint .",
+    "fmt": "biome format --write .",
+    "check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@shiguredo/light-adjustment": "workspace:*",
+    "@shiguredo/light-adjustment-gpu": "workspace:*",
+    "@shiguredo/noise-suppression": "workspace:*",
+    "@shiguredo/virtual-background": "workspace:*",
+    "@shiguredo/mp4-media-stream": "workspace:*"
+  },
+  "devDependencies": {
+    "vite-plugin-static-copy": "1.0.6"
+  }
+}

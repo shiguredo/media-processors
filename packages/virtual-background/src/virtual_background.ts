@@ -1,7 +1,7 @@
 import {
-  Results as SelfieSegmentationResults,
   SelfieSegmentation,
-  SelfieSegmentationConfig,
+  type SelfieSegmentationConfig,
+  type Results as SelfieSegmentationResults,
 } from '@mediapipe/selfie_segmentation'
 import { VideoTrackProcessor } from '@shiguredo/video-track-processor'
 import * as StackBlur from 'stackblur-canvas'
@@ -391,10 +391,10 @@ function browser(): string {
 }
 
 export {
-  VirtualBackgroundProcessorOptions,
+  type VirtualBackgroundProcessorOptions,
   VirtualBackgroundProcessor,
-  ImageRegion,
-  ImageSize,
+  type ImageRegion,
+  type ImageSize,
   cropBackgroundImageCenter,
   fillBackgroundImage,
 }

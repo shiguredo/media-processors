@@ -1,6 +1,6 @@
 import {
+  type ImageToImageModelOptions,
   ImageToImageVideoProcessor,
-  ImageToImageModelOptions,
 } from '@shiguredo/image-to-image-video-processor'
 
 /**

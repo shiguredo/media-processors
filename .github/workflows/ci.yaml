@@ -14,18 +14,18 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        node: ["18", "20"]
+        node: ["18", "20", "22"]
     steps:
       - uses: actions/checkout@v4
       - uses: goto-bus-stop/setup-zig@v2
+        with:
+          version: 0.12.0
       - run: zig version
+      - run: rustup update stable && rustup target add wasm32-unknown-unknown
       - uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node }}
-      - uses: pnpm/action-setup@v2
-        name: Install pnpm
-        with:
-          version: 8
+      - uses: pnpm/action-setup@v4
       - run: pnpm --version
       - run: pnpm install
       - run: pnpm run build

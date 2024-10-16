@@ -1,7 +1,7 @@
 import {
-  Results as SelfieSegmentationResults,
   SelfieSegmentation,
-  SelfieSegmentationConfig,
+  type SelfieSegmentationConfig,
+  type Results as SelfieSegmentationResults,
 } from '@mediapipe/selfie_segmentation'
 import { VideoTrackProcessor } from '@shiguredo/video-track-processor'
 
@@ -666,8 +666,8 @@ function trimLastSlash(s: string): string {
 export {
   LightAdjustmentProcessor,
   LightAdjustmentProcessorStats,
-  LightAdjustmentProcessorOptions,
-  FocusMask,
+  type LightAdjustmentProcessorOptions,
+  type FocusMask,
   UniformFocusMask,
   CenterFocusMask,
   SelfieSegmentationFocusMask,

@@ -1,4 +1,4 @@
-import { DenoiseState, Rnnoise } from '@shiguredo/rnnoise-wasm'
+import { type DenoiseState, Rnnoise } from '@shiguredo/rnnoise-wasm'
 
 /**
  * {@link NoiseSuppressionProcessor.startProcessing} メソッドに指定可能なオプション
@@ -74,7 +74,7 @@ class NoiseSuppressionProcessor {
       this.rnnoise = await Rnnoise.load({ assetsPath: this.assetsPath })
     }
 
-    let denoiseState: DenoiseState;
+    let denoiseState: DenoiseState
     if (options.modelPath === undefined) {
       denoiseState = this.rnnoise.createDenoiseState()
     } else {
@@ -291,4 +291,4 @@ function trimLastSlash(s: string): string {
   return s
 }
 
-export { NoiseSuppressionProcessor, NoiseSuppressionProcessorOptions }
+export { NoiseSuppressionProcessor, type NoiseSuppressionProcessorOptions }

@@ -48,8 +48,8 @@ JavaScript/TypeScriptでノイズ抑制機能を実現するためのライブ�
 </script>
 ```
 
-実際の動作は[デモページ](https://shiguredo.github.io/media-processors/examples/noise-suppression.html)（
-[ソースコード](https://github.com/shiguredo/media-processors/blob/develop/examples/noise-suppression.html)）で確認できます。
+実際の動作は[デモページ](https://shiguredo.github.io/media-processors/noise-suppression/)（
+[ソースコード](https://github.com/shiguredo/media-processors/blob/develop/examples/noise-suppression/main.mts)）で確認できます。
 
 ### JavaScript/TypeScript から利用する場合
 

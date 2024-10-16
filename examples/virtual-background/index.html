@@ -1,0 +1,37 @@
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <title>Media Processors: 仮想背景サンプル</title>
+</head>
+
+<body>
+  <h1>Media Processors: 仮想背景サンプル</h1>
+
+  <h3>入力設定</h3>
+  解像度: <input id="videoWidth" type="text" value="640">x<input id="videoHeight" type="text" value="360"><br />
+  FPS: <input id="videoFps" type="text" value="15"><br />
+  入力カメラデバイス: <select id="videoDevice" size="1">
+    <option>未指定</option>
+  </select>
+
+  <h3>仮想背景設定</h3>
+  <select id="virtualBackgroundType" size="3">
+    <option value="blur-5" selected>ぼかし（弱）</option>
+    <option value="blur-15">ぼかし（強）</option>
+    <option value="image">画像</option>
+  </select>
+  <br /><br />
+
+  <input type="button" value="仮想背景ON" id="virtualBackgroundOn">
+  <input type="button" value="仮想背景OFF" id="virtualBackgroundOff">
+  <br />
+  フレーム処理時間: <span id="elapsed">0.0</span> 秒 フレームレート: <span id="fps">0.0</span>FPS<br />
+  <br />
+
+  <video id="video" autoplay playsinline></video>
+
+  <script type="module" src="main.mts"></script>
+</body>
+
+</html>

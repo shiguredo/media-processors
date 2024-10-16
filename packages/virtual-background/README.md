@@ -57,8 +57,8 @@ JavaScript/TypeScriptで仮想背景機能を実現するためのライブラ�
 </script>
 ```
 
-実際の動作は[デモページ](https://shiguredo.github.io/media-processors/examples/virtual-background.html)（
-[ソースコード](https://github.com/shiguredo/media-processors/blob/develop/examples/virtual-background.html)）で確認できます。
+実際の動作は[デモページ](https://shiguredo.github.io/media-processors/virtual-background/)（
+[ソースコード](https://github.com/shiguredo/media-processors/blob/develop/examples/virtual-background/main.mts)）で確認できます。
 
 
 ### JavaScript/TypeScript から利用する場合

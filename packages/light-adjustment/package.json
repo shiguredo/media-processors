@@ -1,6 +1,6 @@
 {
   "name": "@shiguredo/light-adjustment",
-  "version": "2023.2.0",
+  "version": "2024.1.0",
   "description": "Light Adjustment Library",
   "author": "Shiguredo Inc.",
   "license": "Apache-2.0",
@@ -27,9 +27,9 @@
   ],
   "devDependencies": {
     "@mediapipe/selfie_segmentation": "0.1.1675465747",
-    "@rollup/plugin-replace": "5.0.5",
+    "@rollup/plugin-replace": "5.0.7",
     "@shiguredo/video-track-processor": "workspace:*",
     "@types/offscreencanvas": "2019.7.3",
-    "stackblur-canvas": "2.6.0"
+    "stackblur-canvas": "2.7.0"
   }
 }

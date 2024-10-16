@@ -1,44 +1,35 @@
 name: GitHub Pages Deploy
 
-# Controls when the workflow will run
 on:
   push:
     branches: ["develop"]
 
-  # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
 
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: goto-bus-stop/setup-zig@v2
+        with:
+          version: 0.12.0
       - run: zig version
+      - run: rustup update stable && rustup target add wasm32-unknown-unknown
       - uses: actions/setup-node@v4
         with:
           node-version: "18"
-      - uses: pnpm/action-setup@v2
-        name: Install pnpm
-        with:
-          version: 8
+      - uses: pnpm/action-setup@v4
       - run: pnpm install
-      - run: pnpm run build
-      - name: Prepare static files
-        run: |
-          mkdir _site/
-          cp -r examples/ _site/
-          rm _site/examples/virtual-background
-          cp -r packages/virtual-background/dist/ _site/examples/virtual-background
-          rm _site/examples/light-adjustment
-          cp -r packages/light-adjustment/dist/ _site/examples/light-adjustment
-          rm _site/examples/light-adjustment-gpu
-          cp -r packages/light-adjustment-gpu/dist/ _site/examples/light-adjustment-gpu
-          rm _site/examples/noise-suppression
-          cp -r packages/noise-suppression/dist/ _site/examples/noise-suppression
+      - name: Build
+        run: pnpm build
+      - name: Build examples
+        run: pnpm build
+        working-directory: examples
       - name: Upload files
-        uses: actions/upload-pages-artifact@v2
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./examples/dist
       - name: Slack Notification
         if: failure()
         uses: rtCamp/action-slack-notify@v2
@@ -60,4 +51,4 @@ jobs:
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v3
+        uses: actions/deploy-pages@v4
