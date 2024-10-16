@@ -31,6 +31,7 @@ Please read <https://github.com/shiguredo/oss/blob/master/README.en.md> before u
 - [ノイズ抑制](https://github.com/shiguredo/media-processors/tree/develop/packages/noise-suppression)
 - [ライト調整](https://github.com/shiguredo/media-processors/tree/develop/packages/light-adjustment)
 - [ライト調整（GPU版）](https://github.com/shiguredo/media-processors/tree/develop/packages/light-adjustment-gpu)
+- [MP4 メディアストリーム](https://github.com/shiguredo/media-processors/tree/develop/packages/mp4-media-stream)
 
 ## npm
 
@@ -47,6 +48,7 @@ GitHub Pages にサンプルを用意しています。完全にクライアン�
 - [ノイズ抑制](https://shiguredo.github.io/media-processors/noise-suppression/)
 - [ライト調整](https://shiguredo.github.io/media-processors/light-adjustment/)
 - [ライト調整（GPU版）](https://shiguredo.github.io/media-processors/light-adjustment-gpu/)
+- [MP4 メディアストリーム](https://shiguredo.github.io/media-processors/mp4-media-stream/)
 
 ## 優先実装
 

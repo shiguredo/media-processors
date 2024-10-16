@@ -21,7 +21,7 @@ const video = document.getElementById('video')
 video.srcObject = stream
 ```
 
-実際の動作は[デモページ](https://shiguredo.github.io/media-processors/examples/mp4-media-stream/)（
+実際の動作は[デモページ](https://shiguredo.github.io/media-processors/mp4-media-stream/)（
 [ソースコード](https://github.com/shiguredo/media-processors/blob/develop/examples/mp4-media-stream/main.mts)）で確認できます。
 
 ## サポートブラウザ

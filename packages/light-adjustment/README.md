@@ -55,7 +55,7 @@ processor.startProcessing(track, options).then((processed_track) => {
 });
 ```
 
-実際の動作は[デモページ](https://shiguredo.github.io/media-processors/examples/light-adjustment/)（
+実際の動作は[デモページ](https://shiguredo.github.io/media-processors/light-adjustment/)（
 [ソースコード](https://github.com/shiguredo/media-processors/blob/develop/examples/light-adjustment/main.mts)）で確認できます。
 
 
