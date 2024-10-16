@@ -1,6 +1,6 @@
 const WASM_BASE64 = '__WASM__'
 
-interface Mp4MediaStreamPlayOptions {
+interface PlayOptions {
   repeat?: boolean
 }
 
@@ -86,7 +86,7 @@ class Mp4MediaStream {
     return stream
   }
 
-  play(options: Mp4MediaStreamPlayOptions = {}): MediaStream {
+  play(options: PlayOptions = {}): MediaStream {
     return this.engine.play(options)
   }
 
@@ -150,7 +150,7 @@ class Engine {
     return { audio: info.audioConfigs.length > 0, video: info.videoConfigs.length > 0 }
   }
 
-  play(options: Mp4MediaStreamPlayOptions = {}): MediaStream {
+  play(options: PlayOptions = {}): MediaStream {
     if (this.info === undefined) {
       throw 'bug'
     }
@@ -458,4 +458,4 @@ class Player {
   }
 }
 
-export { Mp4MediaStream, type Mp4MediaStreamPlayOptions }
+export { Mp4MediaStream, type PlayOptions }
