@@ -8,13 +8,31 @@ document.addEventListener('DOMContentLoaded', async () => {
     throw Error('Unsupported platform')
   }
 
-  async function play() {
-    let mp4File = getInputFile()
+  async function load() {
+    const input = document.getElementById('input')
+    const files = input.files
+    if (files === null || files.length === 0) {
+      return
+    }
+    const file = files[0]
 
     if (mp4MediaStream !== undefined) {
-      mp4MediaStream.stop()
+      await mp4MediaStream.stop()
     }
-    mp4MediaStream = await Mp4MediaStream.load(mp4File)
+
+    try {
+      mp4MediaStream = await Mp4MediaStream.load(file)
+    } catch (e) {
+      alert(e.message)
+      throw e
+    }
+  }
+
+  function play() {
+    if (mp4MediaStream === undefined) {
+      alert('MP4 ファイルが未選択です')
+      return
+    }
 
     const options = {
       repeat: document.getElementById('repeat').checked,
@@ -23,17 +41,17 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     let output = document.getElementById('output')
     output.srcObject = stream
-    // TODO: stream.getTracks()[0].stop()
   }
 
-  function getInputFile() {
-    const input = document.getElementById('input')
-    const files = input.files
-    if (files === null || files.length === 0) {
+  async function stop() {
+    if (mp4MediaStream === undefined) {
       return
     }
-    return files[0]
+
+    await mp4MediaStream.stop()
   }
 
-  document.getElementById('input').addEventListener('change', play)
+  document.getElementById('input').addEventListener('change', load)
+  document.getElementById('play').addEventListener('click', play)
+  document.getElementById('stop').addEventListener('click', stop)
 })

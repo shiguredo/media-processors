@@ -7,10 +7,15 @@
     <h1>Media Processors: MP4 メディアストリームサンプル</h1>
 
     <h3>入力 MP4 ファイル</h3>
-    <input id="input" type="file" accept="video/mp4" onclick="event.target.value = ''" />
+    ファイル選択後に「再生開始」ボタンを押してください。
+    <br /><br />
+    <input id="input" type="file" accept="video/mp4" />
+    <br /><br />
+    <input id="play" type="button" value="再生開始" />
+    <input id="stop" type="button" value="再生停止" />
 
     <br /><br />
-    <input id="repeat" type="checkbox"> 繰り返し再生
+    <input id="repeat" type="checkbox"> リピート再生を有効にする
     <br />
 
     <h3>出力映像</h3>
