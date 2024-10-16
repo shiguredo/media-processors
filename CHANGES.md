@@ -11,6 +11,10 @@
 
 ## develop
 
+## mp4-media-stream-2024.1.0
+
+**初リリース**
+
 ## light-adjustment-2024.1.0
 
 - [FIX] Zig の WebAssembly ビルドで addSharedLibrary から addBinary を使うよう変更になったので対応
