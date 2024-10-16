@@ -39,7 +39,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
     const stream = mp4MediaStream.play(options)
 
-    let output = document.getElementById('output')
+    const output = document.getElementById('output')
     output.srcObject = stream
   }
 
