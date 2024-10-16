@@ -309,6 +309,7 @@ class Engine {
   async closeDecoder(playerId: number, decoderId: number) {
     const player = this.players.get(playerId)
     if (player === undefined) {
+      // すでに停止済みなので、何もする必要はない
       return
     }
 
@@ -333,26 +334,27 @@ class Engine {
   ) {
     const player = this.players.get(playerId)
     if (player === undefined) {
-      throw 'TODO-6'
+      // stop() 呼び出しと競合した場合にここに来る可能性がある
+      // すでに停止済みなので、これ以上デコードを行う必要はない
+      return
     }
 
     const chunkParams = this.wasmJsonToValue(metadataWasmJson) as
       | EncodedAudioChunkInit
       | EncodedVideoChunkInit
-    const data = new Uint8Array(this.memory.buffer, dataOffset, dataLen).slice()
+    chunkParams.data = new Uint8Array(this.memory.buffer, dataOffset, dataLen)
 
-    chunkParams.data = data
-    // @ts-ignore TS2488: TODO
-    chunkParams.transfer = [data.buffer]
     if (decoderId === VIDEO_DECODER_ID) {
       if (player.videoDecoder === undefined) {
-        throw 'TODO-7'
+        // ここには来ないはず
+        throw new Error('bug')
       }
       const chunk = new EncodedVideoChunk(chunkParams)
       player.videoDecoder.decode(chunk)
     } else {
       if (player.audioDecoder === undefined) {
-        throw 'TODO-8'
+        // ここには来ないはず
+        throw new Error('bug')
       }
       const chunk = new EncodedAudioChunk(chunkParams)
       player.audioDecoder.decode(chunk)
@@ -372,10 +374,9 @@ class Engine {
   }
 
   private wasmResultToValue(wasmResult: number): object {
-    const result = this.wasmJsonToValue(wasmResult) as { Ok?: object; Err?: object }
+    const result = this.wasmJsonToValue(wasmResult) as { Ok?: object; Err?: { message: string } }
     if (result.Err !== undefined) {
-      // TODO: error handling
-      throw JSON.stringify(result.Err)
+        throw new Error(result.Err.message)
     }
     return result.Ok as object
   }
