@@ -143,9 +143,6 @@ class Engine {
       this.info = info
     }
 
-    // TODO: remove
-    console.log(JSON.stringify(info))
-
     return { audio: info.audioConfigs.length > 0, video: info.videoConfigs.length > 0 }
   }
 
@@ -164,13 +161,11 @@ class Engine {
       playerId,
       this.valueToWasmJson(options),
     )
-    console.log('player created')
 
     return player.createMediaStream()
   }
 
   async stop(playerId: number) {
-    console.log('stop player')
     const player = this.players.get(playerId)
     if (player === undefined) {
       return
@@ -193,7 +188,6 @@ class Engine {
   }
 
   async createVideoDecoder(resultTx: number, playerId: number, configWasmJson: number) {
-    console.log('createVideoDecoder')
     const player = this.players.get(playerId)
     if (player === undefined) {
       throw 'TODO-1'
@@ -233,11 +227,9 @@ class Engine {
       resultTx,
       VIDEO_DECODER_ID,
     )
-    console.log('video decoder created')
   }
 
   async createAudioDecoder(resultTx: number, playerId: number, configWasmJson: number) {
-    console.log('createAudioDecoder')
     const player = this.players.get(playerId)
     if (player === undefined) {
       throw 'TODO-3'
@@ -273,11 +265,9 @@ class Engine {
       resultTx,
       AUDIO_DECODER_ID,
     )
-    console.log('audio decoder created')
   }
 
   async closeDecoder(playerId: number, decoderId: number) {
-    console.log('close decoder')
     const player = this.players.get(playerId)
     if (player === undefined) {
       return
@@ -398,7 +388,6 @@ class Player {
     if (decoder === undefined) {
       return
     }
-    console.log('close audio decoder')
 
     if (decoder.state !== 'closed') {
       try {
@@ -424,7 +413,6 @@ class Player {
     if (decoder === undefined) {
       return
     }
-    console.log('close video decoder')
 
     if (decoder.state !== 'closed') {
       try {
