@@ -1,12 +1,23 @@
 const WASM_BASE64 = '__WASM__'
 
+/**
+ * {@link Mp4MediaStream.play} に指定可能なオプション
+ */
 interface PlayOptions {
+  /**
+   * true が指定されると、MP4 ファイルの終端に達した場合に、先頭に戻って再生が繰り返されます
+   *
+   * デフォルト値は false
+   */
   repeat?: boolean
 }
 
 const AUDIO_DECODER_ID: number = 0
 const VIDEO_DECODER_ID: number = 1
 
+/**
+ * MP4 を入力にとって、それを再生する MediaStream を生成するクラス
+ */
 class Mp4MediaStream {
   private wasm: WebAssembly.Instance
   private memory: WebAssembly.Memory
@@ -21,6 +32,16 @@ class Mp4MediaStream {
     this.engine = (this.wasm.exports.newEngine as CallableFunction)()
   }
 
+  /**
+   * 実行環境が必要な機能をサポートしているかどうかを判定します
+   *
+   * 以下のクラスが利用可能である必要があります:
+   * - MediaStreamTrackGenerator
+   * - AudioDecoder
+   * - VideoDecoder
+   *
+   * @returns サポートされているかどうか
+   */
   static isSupported(): boolean {
     return !(
       typeof MediaStreamTrackGenerator === 'undefined' ||
@@ -29,6 +50,16 @@ class Mp4MediaStream {
     )
   }
 
+  /**
+   * 指定された MP4 をロードします
+   *
+   * @param mp4 対象の MP4 データ
+   *
+   * @returns ロード結果の Mp4MediaStream インスタンス
+   *
+   * @throws
+   * 指定された MP4 が不正であったり、非対応コーデックを含んでいる場合には例外が送出されます
+   */
   static async load(mp4: Blob): Promise<Mp4MediaStream> {
     // インポート関数の中で this を参照したいけど、この時点ではまだ作成されていないので
     // 間接的に参照するようにする
@@ -95,6 +126,21 @@ class Mp4MediaStream {
     return stream
   }
 
+  /**
+   * ロード済み MP4 の再生するための MediaStream インスタンスを生成します
+   *
+   * @param options 再生オプション
+   *
+   * @returns MP4 再生用の MediaStream インスタンス
+   *
+   * 複数回呼び出された場合には、それぞれが別々の MediaStream インスタンスを返します
+   *
+   * [注意]
+   * 返り値の MediaStream は RTCPeerConnection に渡して WebRTC のソースとすることも可能です。
+   * ただし、その場合には「同時に VideoElement.srcObject に指定する」などのように別に経路でも参照される
+   * ようにしないと、WebRTC の受信側で映像のフレームレートが極端に下がったり、止まったりする現象が確認されています。
+   * なお、VideoElement はミュートかつ hidden visibility でも問題ありません。
+   */
   play(options: PlayOptions = {}): MediaStream {
     if (this.info === undefined) {
       // ここには来ないはず
@@ -116,7 +162,10 @@ class Mp4MediaStream {
   }
 
   /**
-   * 再生中の全てのメディアストリームを停止する
+   * 再生中の全ての MediaStream を停止します
+   *
+   * 個別の MediaStream を停止したい場合には、単にそのインスタンスを破棄するか、
+   * MedisStreamTrack.stop() を呼び出してください
    */
   async stop() {
     for (const playerId of this.players.keys()) {
