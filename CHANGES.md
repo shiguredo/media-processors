@@ -11,9 +11,12 @@
 
 ## develop
 
+## light-adjustment-2024.1.0
+
 - [FIX] Zig の WebAssembly ビルドで addSharedLibrary から addBinary を使うよう変更になったので対応
   - <https://ziglang.org/documentation/master/#Freestanding>
   - <https://github.com/ziglang/zig/pull/17815>
+  - @voluntas
 - [FIX] zig で std.mem.copy ではなく @memcpy を使うようにする
   - <https://github.com/ziglang/zig/pull/18143>
   - @voluntas
@@ -21,9 +24,6 @@
   - @kounoike
 - [FIX] Zig の `@truncate` やキャスト関連に破壊的変更があったため対応
   - @kounoike
-
-### misc
-
 - [CHANGE] examples のビルドを Vite を利用するようにする
   - @voluntas
 
