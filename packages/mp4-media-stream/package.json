@@ -1,7 +1,7 @@
 {
   "name": "@shiguredo/mp4-media-stream",
   "version": "2024.1.0",
-  "description": "Generate MediaStream from MP4 file",
+  "description": "Library to generate MediaStream from MP4 file",
   "author": "Shiguredo Inc.",
   "license": "Apache-2.0",
   "main": "dist/mp4_media_stream.js",
