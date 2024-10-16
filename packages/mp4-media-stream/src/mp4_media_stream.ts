@@ -90,7 +90,12 @@ class Mp4MediaStream {
     return this.engine.play(options)
   }
 
-  // TODO: stop()
+  /**
+   * 再生中の全てのメディアストリームを停止する
+   */
+  async stop() {
+    await this.engine.stopAll()
+  }
 }
 
 type Mp4Info = {
@@ -174,6 +179,12 @@ class Engine {
     await player.stop()
 
     this.players.delete(playerId)
+  }
+
+  async stopAll() {
+    for (const playerId of this.players.keys()) {
+      await this.stop(playerId)
+    }
   }
 
   consoleLog(messageWasmJson: number) {
