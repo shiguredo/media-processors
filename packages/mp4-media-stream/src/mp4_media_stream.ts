@@ -184,7 +184,7 @@ class Mp4MediaStream {
     this.players.delete(playerId)
   }
 
-  async loadMp4(mp4Bytes: Uint8Array): Promise<{ audio: boolean; video: boolean }> {
+  private async loadMp4(mp4Bytes: Uint8Array): Promise<{ audio: boolean; video: boolean }> {
     const mp4WasmBytes = this.toWasmBytes(mp4Bytes)
     const resultWasmJson = (this.wasm.exports.loadMp4 as CallableFunction)(
       this.engine,
