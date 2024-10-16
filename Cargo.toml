@@ -1,0 +1,3 @@
+[workspace]
+members = ["packages/mp4-media-stream/wasm/"]
+resolver = "2"

@@ -1,0 +1,30 @@
+{
+  "name": "@shiguredo/mp4-media-stream",
+  "version": "2024.1.0",
+  "description": "Library to generate MediaStream from MP4 file",
+  "author": "Shiguredo Inc.",
+  "license": "Apache-2.0",
+  "main": "dist/mp4_media_stream.js",
+  "module": "dist/mp4_media_stream.mjs",
+  "types": "dist/mp4_media_stream.d.ts",
+  "scripts": {
+    "build": "cargo build --release --target wasm32-unknown-unknown -p mp4_media_stream && rollup -c ./rollup.config.mjs --bundleConfigAsCjs && tsc --emitDeclarationOnly",
+    "lint": "biome lint ./src",
+    "fmt": "biome format --write src",
+    "doc": "typedoc"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/shiguredo/media-processors.git"
+  },
+  "keywords": [
+    "mp4"
+  ],
+  "bugs": {
+    "url": "https://discord.gg/shiguredo"
+  },
+  "homepage": "https://github.com/shiguredo/media-processors#readme",
+  "files": [
+    "dist"
+  ]
+}

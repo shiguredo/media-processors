@@ -1,0 +1,26 @@
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Media Processors: MP4 メディアストリームサンプル</title>
+  </head>
+  <body>
+    <h1>Media Processors: MP4 メディアストリームサンプル</h1>
+
+    <h3>入力 MP4 ファイル</h3>
+    ファイル選択後に「再生開始」ボタンを押してください。
+    <br /><br />
+    <input id="input" type="file" accept="video/mp4" />
+    <br /><br />
+    <input id="play" type="button" value="再生開始" />
+    <input id="stop" type="button" value="再生停止" />
+
+    <br /><br />
+    <input id="repeat" type="checkbox"> リピート再生を有効にする
+    <br />
+
+    <h3>出力映像</h3>
+    <video id="output" autoplay playsinline></video>
+
+    <script type="module" src="./main.mts"></script>
+  </body>
+</html>
