@@ -132,11 +132,10 @@ class Engine {
       }
     }
     for (const config of info.videoConfigs) {
-      if (config.description !== undefined) {
-        // JSON.parse() の結果では config.description の型は number[] となって期待とは異なるので
-        // ここで適切な型に変換している
-        config.description = new Uint8Array(config.description as object as number[])
-      }
+      // JSON.parse() の結果では config.description の型は number[] となって期待とは異なるので
+      // ここで適切な型に変換している
+      config.description = new Uint8Array(config.description as object as number[])
+
       if (!(await VideoDecoder.isConfigSupported(config)).supported) {
         throw new Error(`Unsupported video decoder configuration: ${JSON.stringify(config)}`)
       }
@@ -206,25 +205,40 @@ class Engine {
     await player.closeVideoDecoder()
 
     const config = this.wasmJsonToValue(configWasmJson) as VideoDecoderConfig
-    // @ts-ignore TS2488: TODO
-    config.description = new Uint8Array(config.description)
+
+    // JSON.parse() の結果では config.description の型は number[] となって期待とは異なるので
+    // ここで適切な型に変換している
+    config.description = new Uint8Array(config.description as object as number[])
 
     const init = {
       output: async (frame: VideoFrame) => {
         if (player.videoWriter === undefined) {
-          throw 'bug'
+          // writer の出力先がすでに閉じられている場合などにここに来る可能性がある
+          return
         }
 
-        // TODO: error handling (stop engine)
         try {
           await player.videoWriter.write(frame)
-        } catch (e) {
+        } catch (error) {
+          // 書き込みエラーが発生した場合には再生を停止する
+
+          if (error instanceof DOMException && error.name === 'InvalidStateError') {
+            // 出力先の MediaStreamTrack が停止済み、などの理由で write() が失敗した場合にここに来る。
+            // このケースは普通に発生し得るので正常系の一部。
+            // writer はすでに閉じているので、重複 close() による警告ログ出力を避けるために undefined に設定する。
+            player.videoWriter = undefined
+            await this.stop(playerId)
+            return
+          }
+
+          // 想定外のエラーの場合は再送する
           await this.stop(playerId)
-          throw e // TODO
+          throw error
         }
       },
-      error: (error: DOMException) => {
-        // TODO: ちゃんとしたエラーハンドリング
+      error: async (error: DOMException) => {
+        // デコードエラーが発生した場合には再生を停止する
+        await this.stop(playerId)
         throw error
       },
     }
@@ -253,18 +267,32 @@ class Engine {
     const init = {
       output: async (data: AudioData) => {
         if (player.audioWriter === undefined) {
-          throw 'bug'
+          // writer の出力先がすでに閉じられている場合などにここに来る可能性がある
+          return
         }
 
         try {
           await player.audioWriter.write(data)
         } catch (e) {
+          // 書き込みエラーが発生した場合には再生を停止する
+
+          if (e instanceof DOMException && e.name === 'InvalidStateError') {
+            // 出力先の MediaStreamTrack が停止済み、などの理由で write() が失敗した場合にここに来る。
+            // このケースは普通に発生し得るので正常系の一部。
+            // writer はすでに閉じているので、重複 close() による警告ログ出力を避けるために undefined に設定する。
+            player.audioWriter = undefined
+            await this.stop(playerId)
+            return
+          }
+
+          // 想定外のエラーの場合は再送する
           await this.stop(playerId)
-          throw e // TODO: エラーの種類によって処理を分ける（closed なら正常系）
+          throw e
         }
       },
-      error: (error: DOMException) => {
-        // TODO: ちゃんとしたエラーハンドリング
+      error: async (error: DOMException) => {
+        // デコードエラーが発生した場合には再生を停止する
+        await this.stop(playerId)
         throw error
       },
     }
@@ -449,11 +477,23 @@ class Player {
     await this.closeVideoDecoder()
 
     if (this.audioWriter !== undefined) {
-      await this.audioWriter.close()
+      try {
+        await this.audioWriter.close()
+      } catch (e) {
+        // writer がエラー状態になっている場合などには close() に失敗する模様
+        // 特に対処法も実害もなさそうなので、ログだけ出して無視しておく
+        console.log(`[WARNING] ${e}`)
+      }
       this.audioWriter = undefined
     }
     if (this.videoWriter !== undefined) {
-      await this.videoWriter.close()
+      try {
+        await this.videoWriter.close()
+      } catch (e) {
+        // writer がエラー状態になっている場合などには close() に失敗する模様
+        // 特に対処法も実害もなさそうなので、ログだけ出して無視しておく
+        console.log(`[WARNING] ${e}`)
+      }
       this.videoWriter = undefined
     }
   }
