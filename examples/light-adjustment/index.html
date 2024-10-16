@@ -20,28 +20,23 @@
   <input type="button" value="設定反映" id="start">
 
   <h3>ライト調整設定</h3>
-  AGCWD Alpha: <input id="alpha" type="range" min="0" max="2" value="0.5" step="0.1" oninput="updateOption('alpha')">
+  AGCWD Alpha: <input id="alpha" type="range" min="0" max="2" value="0.5" step="0.1">
   <span id="alpha-value">0.5</span><br />
-  AdjustmentLevel: <input id="adjustmentLevel" type="range" min="0" max="100" value="50" step="5"
-    oninput="updateOption('adjustmentLevel')">
+  AdjustmentLevel: <input id="adjustmentLevel" type="range" min="0" max="100" value="50" step="5">
   <span id="adjustmentLevel-value">50</span><br />
-  SharpnessLevel: <input id="sharpnessLevel" type="range" min="0" max="100" value="20" step="5"
-    oninput="updateOption('sharpnessLevel')">
+  SharpnessLevel: <input id="sharpnessLevel" type="range" min="0" max="100" value="20" step="5">
   <span id="sharpnessLevel-value">20</span><br />
-  MinIntensity: <input id="minIntensity" type="range" min="0" max="255" value="0" step="1"
-    oninput="updateOption('minIntensity')">
+  MinIntensity: <input id="minIntensity" type="range" min="0" max="255" value="0" step="1">
   <span id="minIntensity-value">0</span><br />
-  MaxIntensity: <input id="maxIntensity" type="range" min="0" max="255" value="255" step="1"
-    oninput="updateOption('maxIntensity')">
+  MaxIntensity: <input id="maxIntensity" type="range" min="0" max="255" value="255" step="1">
   <span id="maxIntensity-value">255</span><br />
-  FocusMask: <select id="focusMask" size="1" oninput="updateOption('focusMask')">
+  FocusMask: <select id="focusMask" size="1">
     <option value="uniform">Uniform</option>
     <option value="center">Center</option>
     <option value="selfieSegmentation" selected>SelfieSegmentation</option>
   </select>
   <!-- 開発者用の隠しパラメータ
-    EntropyThreshold: <input id="entropyThreshold" type="range" min="0" max="0.2" value="0.05" step="0.01"
-                             oninput="updateOption('entropyThreshold')">
+    EntropyThreshold: <input id="entropyThreshold" type="range" min="0" max="0.2" value="0.05" step="0.01">
                       <span id="entropyThreshold-value">0.5</span><br />
     -->
   <br />

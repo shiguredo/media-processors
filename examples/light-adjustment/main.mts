@@ -88,4 +88,18 @@ document.addEventListener('DOMContentLoaded', async () => {
   start()
 
   document.getElementById('start').addEventListener('click', start)
+  document.getElementById('alpha').addEventListener('input', () => updateOption('alpha'))
+  document
+    .getElementById('adjustmentLevel')
+    .addEventListener('input', () => updateOption('adjustmentLevel'))
+  document
+    .getElementById('sharpnessLevel')
+    .addEventListener('input', () => updateOption('sharpnessLevel'))
+  document
+    .getElementById('minIntensity')
+    .addEventListener('input', () => updateOption('minIntensity'))
+  document
+    .getElementById('maxIntensity')
+    .addEventListener('input', () => updateOption('maxIntensity'))
+  document.getElementById('focusMask').addEventListener('input', () => updateOption('focusMask'))
 })
