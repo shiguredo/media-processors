@@ -15,7 +15,11 @@ class Mp4MediaStream {
   }
 
   static isSupported(): boolean {
-    return !(typeof MediaStreamTrackGenerator === 'undefined')
+    return !(
+      typeof MediaStreamTrackGenerator === 'undefined' ||
+      typeof AudioDecoder === 'undefined' ||
+      typeof VideoDecoder === 'undefined'
+    )
   }
 
   static async loadMp4(mp4: Blob): Promise<Mp4MediaStream> {
@@ -86,7 +90,7 @@ class Mp4MediaStream {
     return this.engine.play(options)
   }
 
-    // TODO: stop()
+  // TODO: stop()
 }
 
 type Mp4Info = {
