@@ -42,8 +42,8 @@
 </script>
 ```
 
-実際の動作は[デモページ](https://shiguredo.github.io/media-processors/examples/light-adjustment-gpu.html)（
-[ソースコード](https://github.com/shiguredo/media-processors/blob/develop/examples/light-adjustment-gpu.html)）で確認できます。
+実際の動作は[デモページ](https://shiguredo.github.io/media-processors/examples/light-adjustment-gpu/)（
+[ソースコード](https://github.com/shiguredo/media-processors/blob/develop/examples/light-adjustment-gpu/main.mts)）で確認できます。
 
 
 ### JavaScript/TypeScript から利用する場合
