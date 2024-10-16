@@ -178,12 +178,6 @@ pub fn newEngine() -> *mut Engine {
 
 #[no_mangle]
 #[expect(non_snake_case, clippy::not_unsafe_ptr_arg_deref)]
-pub fn freeEngine(engine: *mut Engine) {
-    let _ = unsafe { Box::from_raw(engine) };
-}
-
-#[no_mangle]
-#[expect(non_snake_case, clippy::not_unsafe_ptr_arg_deref)]
 pub fn loadMp4(engine: *mut Engine, mp4_bytes: *mut Vec<u8>) -> JsonVec<orfail::Result<Mp4Info>> {
     let engine = unsafe { &mut *engine };
     let result = engine

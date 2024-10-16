@@ -8,10 +8,17 @@ const AUDIO_DECODER_ID: number = 0
 const VIDEO_DECODER_ID: number = 1
 
 class Mp4MediaStream {
-  private engine: Engine
+  private wasm: WebAssembly.Instance
+  private memory: WebAssembly.Memory
+  private engine: number
+  private info?: Mp4Info
+  private players: Map<number, Player> = new Map()
+  private nextPlayerId = 0
 
-  constructor(wasm: WebAssembly.Instance) {
-    this.engine = new Engine(wasm, wasm.exports.memory as WebAssembly.Memory)
+  private constructor(wasm: WebAssembly.Instance) {
+    this.wasm = wasm
+    this.memory = wasm.exports.memory as WebAssembly.Memory
+    this.engine = (this.wasm.exports.newEngine as CallableFunction)()
   }
 
   static isSupported(): boolean {
@@ -23,35 +30,37 @@ class Mp4MediaStream {
   }
 
   static async load(mp4: Blob): Promise<Mp4MediaStream> {
-    const engineRef: { value?: Engine } = { value: undefined }
+    // インポート関数の中で this を参照したいけど、この時点ではまだ作成されていないので
+    // 間接的に参照するようにする
+    const ref: { stream?: Mp4MediaStream } = { stream: undefined }
     const importObject = {
       env: {
         now() {
           return performance.now()
         },
         consoleLog(messageWasmJson: number) {
-          if (engineRef.value) {
-            engineRef.value.consoleLog(messageWasmJson)
+          if (ref.stream) {
+            ref.stream.consoleLog(messageWasmJson)
           }
         },
         sleep(resultTx: number, duration: number) {
-          if (engineRef.value) {
-            engineRef.value.sleep(resultTx, duration)
+          if (ref.stream) {
+            ref.stream.sleep(resultTx, duration)
           }
         },
         createVideoDecoder(resultTx: number, playerId: number, configWasmJson: number) {
-          if (engineRef.value) {
-            engineRef.value.createVideoDecoder(resultTx, playerId, configWasmJson)
+          if (ref.stream) {
+            ref.stream.createVideoDecoder(resultTx, playerId, configWasmJson)
           }
         },
         createAudioDecoder(resultTx: number, playerId: number, configWasmJson: number) {
-          if (engineRef.value) {
-            engineRef.value.createAudioDecoder(resultTx, playerId, configWasmJson)
+          if (ref.stream) {
+            ref.stream.createAudioDecoder(resultTx, playerId, configWasmJson)
           }
         },
         closeDecoder(playerId: number, decoderId: number) {
-          if (engineRef.value) {
-            engineRef.value.closeDecoder(playerId, decoderId)
+          if (ref.stream) {
+            ref.stream.closeDecoder(playerId, decoderId)
           }
         },
         decode(
@@ -61,13 +70,13 @@ class Mp4MediaStream {
           dataOffset: number,
           dataLen: number,
         ) {
-          if (engineRef.value) {
-            engineRef.value.decode(playerId, decoderId, metadataWasmJson, dataOffset, dataLen)
+          if (ref.stream) {
+            ref.stream.decode(playerId, decoderId, metadataWasmJson, dataOffset, dataLen)
           }
         },
         onEos(playerId: number) {
-          if (engineRef.value) {
-            engineRef.value.onEos(playerId)
+          if (ref.stream) {
+            ref.stream.onEos(playerId)
           }
         },
       },
@@ -78,43 +87,52 @@ class Mp4MediaStream {
     )
 
     const stream = new Mp4MediaStream(wasmResults.instance)
-    engineRef.value = stream.engine
+    ref.stream = stream
 
     const mp4Bytes = new Uint8Array(await mp4.arrayBuffer())
-    await stream.engine.loadMp4(mp4Bytes)
+    await stream.loadMp4(mp4Bytes)
 
     return stream
   }
 
   play(options: PlayOptions = {}): MediaStream {
-    return this.engine.play(options)
+    if (this.info === undefined) {
+      // ここには来ないはず
+      throw new Error('bug')
+    }
+
+    const playerId = this.nextPlayerId
+    this.nextPlayerId += 1
+
+    const player = new Player(this.info.audioConfigs.length > 0, this.info.videoConfigs.length > 0)
+    this.players.set(playerId, player)
+    ;(this.wasm.exports.play as CallableFunction)(
+      this.engine,
+      playerId,
+      this.valueToWasmJson(options),
+    )
+
+    return player.createMediaStream()
   }
 
   /**
    * 再生中の全てのメディアストリームを停止する
    */
   async stop() {
-    await this.engine.stopAll()
+    for (const playerId of this.players.keys()) {
+      await this.stopPlayer(playerId)
+    }
   }
-}
 
-type Mp4Info = {
-  audioConfigs: [AudioDecoderConfig]
-  videoConfigs: [VideoDecoderConfig]
-}
+  private async stopPlayer(playerId: number) {
+    const player = this.players.get(playerId)
+    if (player === undefined) {
+      return
+    }
+    ;(this.wasm.exports.stop as CallableFunction)(this.engine, playerId)
+    await player.stop()
 
-class Engine {
-  private wasm: WebAssembly.Instance
-  private memory: WebAssembly.Memory
-  private engine: number
-  private info?: Mp4Info
-  private players: Map<number, Player> = new Map()
-  private nextPlayerId = 0
-
-  constructor(wasm: WebAssembly.Instance, memory: WebAssembly.Memory) {
-    this.wasm = wasm
-    this.memory = memory
-    this.engine = (this.wasm.exports.newEngine as CallableFunction)()
+    this.players.delete(playerId)
   }
 
   async loadMp4(mp4Bytes: Uint8Array): Promise<{ audio: boolean; video: boolean }> {
@@ -145,55 +163,18 @@ class Engine {
     return { audio: info.audioConfigs.length > 0, video: info.videoConfigs.length > 0 }
   }
 
-  play(options: PlayOptions = {}): MediaStream {
-    if (this.info === undefined) {
-      // ここには来ないはず
-      throw new Error('bug')
-    }
-
-    const playerId = this.nextPlayerId
-    this.nextPlayerId += 1
-
-    const player = new Player(this.info.audioConfigs.length > 0, this.info.videoConfigs.length > 0)
-    this.players.set(playerId, player)
-    ;(this.wasm.exports.play as CallableFunction)(
-      this.engine,
-      playerId,
-      this.valueToWasmJson(options),
-    )
-
-    return player.createMediaStream()
-  }
-
-  async stop(playerId: number) {
-    const player = this.players.get(playerId)
-    if (player === undefined) {
-      return
-    }
-    ;(this.wasm.exports.stop as CallableFunction)(this.engine, playerId)
-    await player.stop()
-
-    this.players.delete(playerId)
-  }
-
-  async stopAll() {
-    for (const playerId of this.players.keys()) {
-      await this.stop(playerId)
-    }
-  }
-
-  consoleLog(messageWasmJson: number) {
+  private consoleLog(messageWasmJson: number) {
     const message = this.wasmJsonToValue(messageWasmJson)
     console.log(message)
   }
 
-  async sleep(resultTx: number, duration: number) {
+  private async sleep(resultTx: number, duration: number) {
     setTimeout(() => {
       ;(this.wasm.exports.awake as CallableFunction)(this.engine, resultTx)
     }, duration)
   }
 
-  async createVideoDecoder(resultTx: number, playerId: number, configWasmJson: number) {
+  private async createVideoDecoder(resultTx: number, playerId: number, configWasmJson: number) {
     const player = this.players.get(playerId)
     if (player === undefined) {
       // stop() と競合したらここに来る可能性がある
@@ -227,18 +208,18 @@ class Engine {
             // このケースは普通に発生し得るので正常系の一部。
             // writer はすでに閉じているので、重複 close() による警告ログ出力を避けるために undefined に設定する。
             player.videoWriter = undefined
-            await this.stop(playerId)
+            await this.stopPlayer(playerId)
             return
           }
 
           // 想定外のエラーの場合は再送する
-          await this.stop(playerId)
+          await this.stopPlayer(playerId)
           throw error
         }
       },
       error: async (error: DOMException) => {
         // デコードエラーが発生した場合には再生を停止する
-        await this.stop(playerId)
+        await this.stopPlayer(playerId)
         throw error
       },
     }
@@ -252,7 +233,7 @@ class Engine {
     )
   }
 
-  async createAudioDecoder(resultTx: number, playerId: number, configWasmJson: number) {
+  private async createAudioDecoder(resultTx: number, playerId: number, configWasmJson: number) {
     const player = this.players.get(playerId)
     if (player === undefined) {
       // stop() と競合したらここに来る可能性がある
@@ -281,18 +262,18 @@ class Engine {
             // このケースは普通に発生し得るので正常系の一部。
             // writer はすでに閉じているので、重複 close() による警告ログ出力を避けるために undefined に設定する。
             player.audioWriter = undefined
-            await this.stop(playerId)
+            await this.stopPlayer(playerId)
             return
           }
 
           // 想定外のエラーの場合は再送する
-          await this.stop(playerId)
+          await this.stopPlayer(playerId)
           throw e
         }
       },
       error: async (error: DOMException) => {
         // デコードエラーが発生した場合には再生を停止する
-        await this.stop(playerId)
+        await this.stopPlayer(playerId)
         throw error
       },
     }
@@ -306,7 +287,7 @@ class Engine {
     )
   }
 
-  async closeDecoder(playerId: number, decoderId: number) {
+  private async closeDecoder(playerId: number, decoderId: number) {
     const player = this.players.get(playerId)
     if (player === undefined) {
       // すでに停止済みなので、何もする必要はない
@@ -321,11 +302,11 @@ class Engine {
   }
 
   // MP4 の終端に達した場合に呼ばれるコールバック
-  async onEos(playerId: number) {
-    await this.stop(playerId)
+  private async onEos(playerId: number) {
+    await this.stopPlayer(playerId)
   }
 
-  decode(
+  private decode(
     playerId: number,
     decoderId: number,
     metadataWasmJson: number,
@@ -376,7 +357,7 @@ class Engine {
   private wasmResultToValue(wasmResult: number): object {
     const result = this.wasmJsonToValue(wasmResult) as { Ok?: object; Err?: { message: string } }
     if (result.Err !== undefined) {
-        throw new Error(result.Err.message)
+      throw new Error(result.Err.message)
     }
     return result.Ok as object
   }
@@ -393,6 +374,11 @@ class Engine {
     new Uint8Array(this.memory.buffer, wasmBytesOffset, bytes.length).set(bytes)
     return wasmBytes
   }
+}
+
+type Mp4Info = {
+  audioConfigs: [AudioDecoderConfig]
+  videoConfigs: [VideoDecoderConfig]
 }
 
 class Player {
