@@ -22,7 +22,7 @@ class Mp4MediaStream {
     )
   }
 
-  static async loadMp4(mp4: Blob): Promise<Mp4MediaStream> {
+  static async load(mp4: Blob): Promise<Mp4MediaStream> {
     const engineRef: { value?: Engine } = { value: undefined }
     const importObject = {
       env: {
@@ -117,7 +117,6 @@ class Engine {
     this.engine = (this.wasm.exports.newEngine as CallableFunction)()
   }
 
-  // TODO: load() でいいかも
   async loadMp4(mp4Bytes: Uint8Array): Promise<{ audio: boolean; video: boolean }> {
     const mp4WasmBytes = this.toWasmBytes(mp4Bytes)
     const resultWasmJson = (this.wasm.exports.loadMp4 as CallableFunction)(

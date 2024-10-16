@@ -14,7 +14,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (mp4MediaStream !== undefined) {
       mp4MediaStream.stop()
     }
-    mp4MediaStream = await Mp4MediaStream.loadMp4(mp4File)
+    mp4MediaStream = await Mp4MediaStream.load(mp4File)
 
     const options = {
       repeat: document.getElementById('repeat').checked,
