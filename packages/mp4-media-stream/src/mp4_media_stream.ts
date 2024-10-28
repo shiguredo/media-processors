@@ -206,8 +206,8 @@ class Mp4MediaStream {
       if (!(await VideoDecoder.isConfigSupported(config)).supported) {
         throw new Error(`Unsupported video decoder configuration: ${JSON.stringify(config)}`)
       }
-      this.info = info
     }
+    this.info = info
 
     return { audio: info.audioConfigs.length > 0, video: info.videoConfigs.length > 0 }
   }

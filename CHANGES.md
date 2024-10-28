@@ -11,6 +11,11 @@
 
 ## develop
 
+## mp4-media-stream-2024.1.1
+
+- [FIX] 音声のみの MP4 をロードした後に `Mp4MediaStream.play()` を呼び出すとエラーになる問題を修正する
+  - @sile
+
 ## mp4-media-stream-2024.1.0
 
 **初リリース**
