@@ -9,7 +9,7 @@
     "start": "serve -S -l 8080 ."
   },
   "dependencies": {
-    "@types/dom-mediacapture-transform": "0.1.9"
+    "@types/dom-mediacapture-transform": "0.1.10"
   },
   "devDependencies": {
     "@biomejs/biome": "1.9.4",
