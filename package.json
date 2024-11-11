@@ -12,7 +12,7 @@
     "@types/dom-mediacapture-transform": "0.1.9"
   },
   "devDependencies": {
-    "@biomejs/biome": "1.8.3",
+    "@biomejs/biome": "1.9.4",
     "@rollup/plugin-commonjs": "26.0.1",
     "@rollup/plugin-node-resolve": "15.2.3",
     "@rollup/plugin-typescript": "11.1.6",
@@ -22,7 +22,7 @@
     "tslib": "2.6.3",
     "typedoc": "0.26.5",
     "typescript": "5.5.4",
-    "vite": "5.4.8"
+    "vite": "5.4.10"
   },
   "packageManager": "pnpm@9.12.0",
   "engines": {
