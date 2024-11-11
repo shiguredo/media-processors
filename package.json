@@ -18,9 +18,9 @@
     "@rollup/plugin-typescript": "12.1.1",
     "rollup": "4.25.0",
     "rollup-plugin-copy": "3.5.0",
-    "serve": "14.2.3",
-    "tslib": "2.6.3",
-    "typedoc": "0.26.5",
+    "serve": "14.2.4",
+    "tslib": "2.8.1",
+    "typedoc": "0.26.11",
     "typescript": "5.5.4",
     "vite": "5.4.10"
   },
