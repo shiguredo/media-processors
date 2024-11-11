@@ -11,11 +11,11 @@
   "dependencies": {
     "@shiguredo/light-adjustment": "workspace:*",
     "@shiguredo/light-adjustment-gpu": "workspace:*",
-    "@shiguredo/mp4-media-stream": "workspace:*",
     "@shiguredo/noise-suppression": "workspace:*",
-    "@shiguredo/virtual-background": "workspace:*"
+    "@shiguredo/virtual-background": "workspace:*",
+    "@shiguredo/mp4-media-stream": "workspace:*"
   },
   "devDependencies": {
-    "vite-plugin-static-copy": "2.1.0"
+    "vite-plugin-static-copy": "1.0.6"
   }
 }
