@@ -65,8 +65,8 @@ importers:
         version: link:../packages/virtual-background
     devDependencies:
       vite-plugin-static-copy:
-        specifier: 1.0.6
-        version: 1.0.6(vite@5.4.10(@types/node@22.3.0))
+        specifier: 2.1.0
+        version: 2.1.0(vite@5.4.10(@types/node@22.3.0))
 
   packages/image-to-image-video-processor:
     devDependencies:
@@ -1376,8 +1376,8 @@ packages:
   vfile@6.0.3:
     resolution: {integrity: sha512-KzIbH/9tXat2u30jf+smMwFCsno4wHVdNmzFyL+T/L3UGqqk6JKfVqOFOZEpZSHADH1k40ab6NUIXZq422ov3Q==}
 
-  vite-plugin-static-copy@1.0.6:
-    resolution: {integrity: sha512-3uSvsMwDVFZRitqoWHj0t4137Kz7UynnJeq1EZlRW7e25h2068fyIZX4ORCCOAkfp1FklGxJNVJBkBOD+PZIew==}
+  vite-plugin-static-copy@2.1.0:
+    resolution: {integrity: sha512-n8lEOIVM00Y/zronm0RG8RdPyFd0SAAFR0sii3NWmgG3PSCyYMsvUNRQTlb3onp1XeMrKIDwCrPGxthKvqX9OQ==}
     engines: {node: ^18.0.0 || >=20.0.0}
     peerDependencies:
       vite: ^5.0.0
@@ -2628,7 +2628,7 @@ snapshots:
       '@types/unist': 3.0.3
       vfile-message: 4.0.2
 
-  vite-plugin-static-copy@1.0.6(vite@5.4.10(@types/node@22.3.0)):
+  vite-plugin-static-copy@2.1.0(vite@5.4.10(@types/node@22.3.0)):
     dependencies:
       chokidar: 3.6.0
       fast-glob: 3.3.2
