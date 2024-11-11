@@ -23,7 +23,7 @@ importers:
         version: 15.3.0(rollup@4.25.0)
       '@rollup/plugin-typescript':
         specifier: 12.1.1
-        version: 12.1.1(rollup@4.25.0)(tslib@2.8.1)(typescript@5.5.4)
+        version: 12.1.1(rollup@4.25.0)(tslib@2.8.1)(typescript@5.6.3)
       rollup:
         specifier: 4.25.0
         version: 4.25.0
@@ -38,10 +38,10 @@ importers:
         version: 2.8.1
       typedoc:
         specifier: 0.26.11
-        version: 0.26.11(typescript@5.5.4)
+        version: 0.26.11(typescript@5.6.3)
       typescript:
-        specifier: 5.5.4
-        version: 5.5.4
+        specifier: 5.6.3
+        version: 5.6.3
       vite:
         specifier: 5.4.10
         version: 5.4.10(@types/node@22.3.0)
@@ -1326,8 +1326,8 @@ packages:
     peerDependencies:
       typescript: 4.6.x || 4.7.x || 4.8.x || 4.9.x || 5.0.x || 5.1.x || 5.2.x || 5.3.x || 5.4.x || 5.5.x || 5.6.x
 
-  typescript@5.5.4:
-    resolution: {integrity: sha512-Mtq29sKDAEYP7aljRgtPOpTvOfbwRWlS6dPRzwjdE+C0R4brX/GUyhHSecbHMFLNBLcJIPt9nl9yG5TZ1weH+Q==}
+  typescript@5.6.3:
+    resolution: {integrity: sha512-hjcS1mhfuyi4WW8IWtjP7brDrG2cuDZukyrYrSauoXGNgx0S7zceP07adYkJycEr56BOUTNPzbInooiN3fn1qw==}
     engines: {node: '>=14.17'}
     hasBin: true
 
@@ -1610,11 +1610,11 @@ snapshots:
     optionalDependencies:
       rollup: 4.25.0
 
-  '@rollup/plugin-typescript@12.1.1(rollup@4.25.0)(tslib@2.8.1)(typescript@5.5.4)':
+  '@rollup/plugin-typescript@12.1.1(rollup@4.25.0)(tslib@2.8.1)(typescript@5.6.3)':
     dependencies:
       '@rollup/pluginutils': 5.1.0(rollup@4.25.0)
       resolve: 1.22.8
-      typescript: 5.5.4
+      typescript: 5.6.3
     optionalDependencies:
       rollup: 4.25.0
       tslib: 2.8.1
@@ -2565,16 +2565,16 @@ snapshots:
 
   type-fest@2.19.0: {}
 
-  typedoc@0.26.11(typescript@5.5.4):
+  typedoc@0.26.11(typescript@5.6.3):
     dependencies:
       lunr: 2.3.9
       markdown-it: 14.1.0
       minimatch: 9.0.5
       shiki: 1.22.2
-      typescript: 5.5.4
+      typescript: 5.6.3
       yaml: 2.6.0
 
-  typescript@5.5.4: {}
+  typescript@5.6.3: {}
 
   uc.micro@2.1.0: {}
 
