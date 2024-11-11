@@ -82,9 +82,6 @@ importers:
       '@tensorflow/tfjs-backend-webgpu':
         specifier: 4.20.0
         version: 4.20.0(@tensorflow/tfjs-core@4.20.0)
-      typescript:
-        specifier: 5.5.4
-        version: 5.5.4
 
   packages/light-adjustment:
     devDependencies:
