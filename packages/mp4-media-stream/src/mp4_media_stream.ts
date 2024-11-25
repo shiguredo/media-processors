@@ -242,26 +242,17 @@ class Mp4MediaStream {
 
     const init = {
       output: async (frame: VideoFrame) => {
-        if (player.videoWriter === undefined) {
-          // writer の出力先がすでに閉じられている場合などにここに来る可能性がある
+        if (player.canvas == undefined || player.canvasCtx === undefined) {
           return
         }
 
         try {
-          await player.videoWriter.write(frame)
+          player.canvas.width = frame.displayWidth
+          player.canvas.height = frame.displayHeight
+          player.canvasCtx.drawImage(frame, 0, 0)
+          frame.close()
         } catch (error) {
           // 書き込みエラーが発生した場合には再生を停止する
-
-          if (error instanceof DOMException && error.name === 'InvalidStateError') {
-            // 出力先の MediaStreamTrack が停止済み、などの理由で write() が失敗した場合にここに来る。
-            // このケースは普通に発生し得るので正常系の一部。
-            // writer はすでに閉じているので、重複 close() による警告ログ出力を避けるために undefined に設定する。
-            player.videoWriter = undefined
-            await this.stopPlayer(playerId)
-            return
-          }
-
-          // 想定外のエラーの場合は再送する
           await this.stopPlayer(playerId)
           throw error
         }
@@ -296,6 +287,7 @@ class Mp4MediaStream {
     const config = this.wasmJsonToValue(configWasmJson) as AudioDecoderConfig
     const init = {
       output: async (data: AudioData) => {
+        console.log(`audio: ${data.timestamp}, ${data.duration}`)
         if (player.audioWriter === undefined) {
           // writer の出力先がすでに閉じられている場合などにここに来る可能性がある
           return
@@ -436,7 +428,8 @@ class Player {
   audioDecoder?: AudioDecoder
   videoDecoder?: VideoDecoder
   audioWriter?: WritableStreamDefaultWriter
-  videoWriter?: WritableStreamDefaultWriter
+  canvas?: HTMLCanvasElement
+  canvasCtx?: CanvasRenderingContext2D
 
   constructor(audio: boolean, video: boolean) {
     this.audio = audio
@@ -451,9 +444,13 @@ class Player {
       this.audioWriter = generator.writable.getWriter()
     }
     if (this.video) {
-      const generator = new MediaStreamTrackGenerator({ kind: 'video' })
-      tracks.push(generator)
-      this.videoWriter = generator.writable.getWriter()
+      this.canvas = document.createElement('canvas')
+      const canvasCtx = this.canvas.getContext('2d')
+      if (canvasCtx === null) {
+        throw Error('Failed to create 2D canvas context')
+      }
+      this.canvasCtx = canvasCtx
+      tracks.push(this.canvas.captureStream().getVideoTracks()[0])
     }
     return new MediaStream(tracks)
   }
@@ -522,15 +519,9 @@ class Player {
       }
       this.audioWriter = undefined
     }
-    if (this.videoWriter !== undefined) {
-      try {
-        await this.videoWriter.close()
-      } catch (e) {
-        // writer がエラー状態になっている場合などには close() に失敗する模様
-        // 特に対処法も実害もなさそうなので、ログだけ出して無視しておく
-        console.log(`[WARNING] ${e}`)
-      }
-      this.videoWriter = undefined
+    if (this.canvas !== undefined) {
+      this.canvas = undefined
+      this.canvasCtx = undefined
     }
   }
 }
