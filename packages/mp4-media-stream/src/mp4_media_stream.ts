@@ -242,7 +242,7 @@ class Mp4MediaStream {
 
     const init = {
       output: async (frame: VideoFrame) => {
-        if (player.canvas == undefined || player.canvasCtx === undefined) {
+        if (player.canvas === undefined || player.canvasCtx === undefined) {
           return
         }
 
