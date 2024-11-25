@@ -19,6 +19,8 @@ interface PlayOptions {
 const AUDIO_DECODER_ID: number = 0
 const VIDEO_DECODER_ID: number = 1
 
+const OPUS_SAMPLE_RATE: number = 48000
+
 /**
  * MP4 を入力にとって、それを再生する MediaStream を生成するクラス
  */
@@ -145,7 +147,7 @@ class Mp4MediaStream {
    * ようにしないと、WebRTC の受信側で映像のフレームレートが極端に下がったり、止まったりする現象が確認されています。
    * なお、VideoElement はミュートかつ hidden visibility でも問題ありません。
    */
-  play(options: PlayOptions = {}): MediaStream {
+  play(options: PlayOptions = {}): Promise<MediaStream> {
     if (this.info === undefined) {
       // ここには来ないはず
       throw new Error('bug')
@@ -433,28 +435,24 @@ class Player {
   audioWriter?: WritableStreamDefaultWriter
   canvas?: HTMLCanvasElement
   canvasCtx?: CanvasRenderingContext2D
+  audioContext?: AudioContext
+  audioInputNode?: AudioWorkletNode
 
   constructor(audio: boolean, video: boolean) {
     this.audio = audio
     this.video = video
   }
 
-  createMediaStream(): MediaStream {
+  async createMediaStream(): Promise<MediaStream> {
     const tracks = []
     if (this.audio) {
       const blob = new Blob([AUDIO_WORKLET_PROCESSOR_CODE], { type: 'application/javascript' })
-      const audioContext = new AudioContext({ sampleRate: 48000 }) // TODO: 入力ファイルから取得する
-      audioContext.audioWorklet
-        .addModule(URL.createObjectURL(blob))
-        .then(() => {
-          console.log('create audio node')
-          const audioInputNode = new AudioWorkletNode(audioContext, AUDIO_WORKLET_PROCESSOR_NAME)
-          audioInputNode.connect(audioContext.destination)
-          // audioInputNode.port.postMessage(data, [data.buffer]);
-        })
-        .catch((error) => {
-          throw error
-        })
+      this.audioContext = new AudioContext({ sampleRate: OPUS_SAMPLE_RATE })
+      await this.audioContext.audioWorklet.addModule(URL.createObjectURL(blob))
+      console.log('create audio node')
+      const audioInputNode = new AudioWorkletNode(this.audioContext, AUDIO_WORKLET_PROCESSOR_NAME)
+      audioInputNode.connect(this.audioContext.destination)
+      // audioInputNode.port.postMessage(data, [data.buffer]);
 
       const generator = new MediaStreamTrackGenerator({ kind: 'audio' })
       tracks.push(generator)
