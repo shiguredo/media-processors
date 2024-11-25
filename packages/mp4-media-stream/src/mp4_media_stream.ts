@@ -19,8 +19,6 @@ interface PlayOptions {
 const AUDIO_DECODER_ID: number = 0
 const VIDEO_DECODER_ID: number = 1
 
-const OPUS_SAMPLE_RATE: number = 48000
-
 /**
  * MP4 を入力にとって、それを再生する MediaStream を生成するクラス
  */
@@ -152,7 +150,7 @@ class Mp4MediaStream {
     const playerId = this.nextPlayerId
     this.nextPlayerId += 1
 
-    const player = new Player(this.info.audioConfigs.length > 0, this.info.videoConfigs.length > 0)
+    const player = new Player(this.info.audioConfigs, this.info.videoConfigs.length > 0)
     this.players.set(playerId, player)
     ;(this.wasm.exports.play as CallableFunction)(
       this.engine,
@@ -298,13 +296,11 @@ class Mp4MediaStream {
 
         try {
           // TODO: add timestamp handling (in processor)
-          console.log(data.numberOfChannels)
-          const channels = data.numberOfChannels
           const samples = new Float32Array(data.numberOfFrames * data.numberOfChannels)
           data.copyTo(samples, { planeIndex: 0 })
 
           const timestamp = data.timestamp
-          player.audioInputNode.port.postMessage({ timestamp, channels, samples }, [samples.buffer])
+          player.audioInputNode.port.postMessage({ timestamp, samples }, [samples.buffer])
         } catch (e) {
           // 書き込みエラーが発生した場合には再生を停止する
           await this.stopPlayer(playerId)
@@ -318,7 +314,6 @@ class Mp4MediaStream {
       },
     }
 
-    player.numberOfChannels = config.numberOfChannels
     player.audioDecoder = new AudioDecoder(init)
     player.audioDecoder.configure(config)
     ;(this.wasm.exports.notifyDecoderId as CallableFunction)(
@@ -425,28 +420,34 @@ type Mp4Info = {
 class Player {
   private audio: boolean
   private video: boolean
+  private numberOfChannels = 1
+  private sampleRate = 48000
   audioDecoder?: AudioDecoder
   videoDecoder?: VideoDecoder
   canvas?: HTMLCanvasElement
   canvasCtx?: CanvasRenderingContext2D
   audioContext?: AudioContext
   audioInputNode?: AudioWorkletNode
-  numberOfChannels = 1
 
-  constructor(audio: boolean, video: boolean) {
-    this.audio = audio
+  constructor(audioConfigs: AudioDecoderConfig[], video: boolean) {
+    this.audio = audioConfigs.length > 0
     this.video = video
+
+    if (audioConfigs.length > 0) {
+      this.numberOfChannels = audioConfigs[0].numberOfChannels
+      this.sampleRate = audioConfigs[0].sampleRate
+    }
   }
 
   async createMediaStream(): Promise<MediaStream> {
     const tracks = []
     if (this.audio) {
       const blob = new Blob([AUDIO_WORKLET_PROCESSOR_CODE], { type: 'application/javascript' })
-      this.audioContext = new AudioContext({ sampleRate: OPUS_SAMPLE_RATE })
+      this.audioContext = new AudioContext({ sampleRate: this.sampleRate })
       await this.audioContext.audioWorklet.addModule(URL.createObjectURL(blob))
 
       const workletOptions = {
-        numberOfOutputs: this.numberOfChannels,
+        outputChannelCount: [this.numberOfChannels],
       }
       this.audioInputNode = new AudioWorkletNode(
         this.audioContext,
