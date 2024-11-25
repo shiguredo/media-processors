@@ -293,38 +293,22 @@ class Mp4MediaStream {
     const config = this.wasmJsonToValue(configWasmJson) as AudioDecoderConfig
     const init = {
       output: async (data: AudioData) => {
-        if (player.audioWriter === undefined) {
-          // writer の出力先がすでに閉じられている場合などにここに来る可能性がある
-          return
-        }
         if (player.audioContext === undefined || player.audioInputNode === undefined) {
           return
         }
-          // TODO
-          // if (data.format !== 'f32-planar') {
-          // }
-          // console.log(data.numberOfChannels);
+        // TODO: error
+        // if (data.format !== 'f32-planar') {
+        // }
         try {
           // TODO: support stereo
           // TODO: add timestamp
-          const buffer = new Float32Array(data.allocationSize({ planeIndex: 0 })/ 4)
+          const buffer = new Float32Array(data.allocationSize({ planeIndex: 0 }) / 4)
           data.copyTo(buffer, { planeIndex: 0 })
           player.audioInputNode.port.postMessage(buffer, [buffer.buffer])
 
           // await player.audioWriter.write(data)
         } catch (e) {
           // 書き込みエラーが発生した場合には再生を停止する
-
-          if (e instanceof DOMException && e.name === 'InvalidStateError') {
-            // 出力先の MediaStreamTrack が停止済み、などの理由で write() が失敗した場合にここに来る。
-            // このケースは普通に発生し得るので正常系の一部。
-            // writer はすでに閉じているので、重複 close() による警告ログ出力を避けるために undefined に設定する。
-            player.audioWriter = undefined
-            await this.stopPlayer(playerId)
-            return
-          }
-
-          // 想定外のエラーの場合は再送する
           await this.stopPlayer(playerId)
           throw e
         }
@@ -444,7 +428,6 @@ class Player {
   private video: boolean
   audioDecoder?: AudioDecoder
   videoDecoder?: VideoDecoder
-  audioWriter?: WritableStreamDefaultWriter
   canvas?: HTMLCanvasElement
   canvasCtx?: CanvasRenderingContext2D
   audioContext?: AudioContext
@@ -464,10 +447,7 @@ class Player {
       this.audioInputNode = new AudioWorkletNode(this.audioContext, AUDIO_WORKLET_PROCESSOR_NAME)
       const destination = this.audioContext.createMediaStreamDestination()
       this.audioInputNode.connect(destination)
-
-      const generator = new MediaStreamTrackGenerator({ kind: 'audio' })
       tracks.push(destination.stream.getAudioTracks()[0])
-      this.audioWriter = generator.writable.getWriter()
     }
     if (this.video) {
       this.canvas = document.createElement('canvas')
@@ -535,15 +515,7 @@ class Player {
     await this.closeAudioDecoder()
     await this.closeVideoDecoder()
 
-    if (this.audioWriter !== undefined) {
-      try {
-        await this.audioWriter.close()
-      } catch (e) {
-        // writer がエラー状態になっている場合などには close() に失敗する模様
-        // 特に対処法も実害もなさそうなので、ログだけ出して無視しておく
-        console.log(`[WARNING] ${e}`)
-      }
-      this.audioWriter = undefined
+    if (this.audioContext !== undefined) {
       this.audioContext = undefined
       this.audioInputNode = undefined
     }
