@@ -50,7 +50,6 @@ class Mp4MediaStream {
    */
   static isSupported(): boolean {
     return !(
-      typeof MediaStreamTrackGenerator === 'undefined' ||
       typeof AudioDecoder === 'undefined' ||
       typeof VideoDecoder === 'undefined'
     )
