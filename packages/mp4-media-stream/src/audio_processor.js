@@ -4,7 +4,6 @@ class Mp4MediaStreamAudioWorkletProcessor extends AudioWorkletProcessor {
     this.inputBuffer = []
     this.offset = 0
     this.port.onmessage = (e) => {
-      // TODO: timestamp and buffering handling
       this.inputBuffer.push(e.data)
     }
   }
@@ -15,6 +14,14 @@ class Mp4MediaStreamAudioWorkletProcessor extends AudioWorkletProcessor {
         const outputChannel = outputs[0][channelIdx]
         const audioData = this.inputBuffer[0]
         if (audioData === undefined) {
+          // ここに来るのは、入力音声データにギャップがあるか、
+          // デコード処理が詰まっていてデータの到着が遅れているケースが考えられる。
+          // 後者の場合には、ここでゼロで埋めた分だけ後で破棄しないと、
+          // 映像とのリップシンクがズレていってしまう。
+          //
+          // this.inputBuffer の中にはタイムスタンプの情報も含まれているので、
+          // それを見て、より正確なゼロ埋めやサンプル破棄を行うことは可能なので、
+          // 実際にこういったケースが問題になることがあれば対応を検討すること。
           outputChannel[sampleIdx] = 0
         } else {
           outputChannel[sampleIdx] = audioData.samples[this.offset]
