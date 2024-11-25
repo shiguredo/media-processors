@@ -4,6 +4,7 @@ class Mp4MediaStreamAudioWorkletProcessor extends AudioWorkletProcessor {
     this.inputBuffer = []
     this.offset = 0
     this.port.onmessage = (e) => {
+      // TODO: timestamp handling
       this.inputBuffer.push(e.data)
     }
   }

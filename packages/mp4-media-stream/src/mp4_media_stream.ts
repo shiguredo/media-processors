@@ -297,9 +297,21 @@ class Mp4MediaStream {
           // writer の出力先がすでに閉じられている場合などにここに来る可能性がある
           return
         }
-
+        if (player.audioContext === undefined || player.audioInputNode === undefined) {
+          return
+        }
+          // TODO
+          // if (data.format !== 'f32-planar') {
+          // }
+          // console.log(data.numberOfChannels);
         try {
-          await player.audioWriter.write(data)
+          // TODO: support stereo
+          // TODO: add timestamp
+          const buffer = new Float32Array(data.allocationSize({ planeIndex: 0 })/ 4)
+          data.copyTo(buffer, { planeIndex: 0 })
+          player.audioInputNode.port.postMessage(buffer, [buffer.buffer])
+
+          // await player.audioWriter.write(data)
         } catch (e) {
           // 書き込みエラーが発生した場合には再生を停止する
 
@@ -449,11 +461,9 @@ class Player {
       const blob = new Blob([AUDIO_WORKLET_PROCESSOR_CODE], { type: 'application/javascript' })
       this.audioContext = new AudioContext({ sampleRate: OPUS_SAMPLE_RATE })
       await this.audioContext.audioWorklet.addModule(URL.createObjectURL(blob))
-      const audioInputNode = new AudioWorkletNode(this.audioContext, AUDIO_WORKLET_PROCESSOR_NAME)
-      // audioInputNode.port.postMessage(data, [data.buffer]);
-
+      this.audioInputNode = new AudioWorkletNode(this.audioContext, AUDIO_WORKLET_PROCESSOR_NAME)
       const destination = this.audioContext.createMediaStreamDestination()
-      audioInputNode.connect(destination)
+      this.audioInputNode.connect(destination)
 
       const generator = new MediaStreamTrackGenerator({ kind: 'audio' })
       tracks.push(destination.stream.getAudioTracks()[0])
@@ -534,6 +544,8 @@ class Player {
         console.log(`[WARNING] ${e}`)
       }
       this.audioWriter = undefined
+      this.audioContext = undefined
+      this.audioInputNode = undefined
     }
     if (this.canvas !== undefined) {
       this.canvas = undefined
