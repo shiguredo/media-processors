@@ -526,6 +526,7 @@ class Player {
     await this.closeVideoDecoder()
 
     if (this.audioContext !== undefined) {
+      await this.audioContext.close()
       this.audioContext = undefined
       this.audioInputNode = undefined
     }
