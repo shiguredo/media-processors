@@ -1,5 +1,8 @@
 const WASM_BASE64 = '__WASM__'
 
+const AUDIO_WORKLET_PROCESSOR_CODE = `__AUDIO_PROCESSOR__`
+const AUDIO_WORKLET_PROCESSOR_NAME = 'mp4-media-stream-audio-worklet-processor'
+
 /**
  * {@link Mp4MediaStream.play} に指定可能なオプション
  */
@@ -287,7 +290,6 @@ class Mp4MediaStream {
     const config = this.wasmJsonToValue(configWasmJson) as AudioDecoderConfig
     const init = {
       output: async (data: AudioData) => {
-        console.log(`audio: ${data.timestamp}, ${data.duration}`)
         if (player.audioWriter === undefined) {
           // writer の出力先がすでに閉じられている場合などにここに来る可能性がある
           return
@@ -439,6 +441,20 @@ class Player {
   createMediaStream(): MediaStream {
     const tracks = []
     if (this.audio) {
+      const blob = new Blob([AUDIO_WORKLET_PROCESSOR_CODE], { type: 'application/javascript' })
+      const audioContext = new AudioContext({ sampleRate: 48000 }) // TODO: 入力ファイルから取得する
+      audioContext.audioWorklet
+        .addModule(URL.createObjectURL(blob))
+        .then(() => {
+          console.log('create audio node')
+          const audioInputNode = new AudioWorkletNode(audioContext, AUDIO_WORKLET_PROCESSOR_NAME)
+          audioInputNode.connect(audioContext.destination)
+          // audioInputNode.port.postMessage(data, [data.buffer]);
+        })
+        .catch((error) => {
+          throw error
+        })
+
       const generator = new MediaStreamTrackGenerator({ kind: 'audio' })
       tracks.push(generator)
       this.audioWriter = generator.writable.getWriter()
