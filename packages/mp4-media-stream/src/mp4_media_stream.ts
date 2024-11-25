@@ -40,7 +40,6 @@ class Mp4MediaStream {
    * 実行環境が必要な機能をサポートしているかどうかを判定します
    *
    * 以下のクラスが利用可能である必要があります:
-   * - MediaStreamTrackGenerator
    * - AudioDecoder
    * - VideoDecoder
    *
@@ -287,7 +286,7 @@ class Mp4MediaStream {
     const config = this.wasmJsonToValue(configWasmJson) as AudioDecoderConfig
     const init = {
       output: async (data: AudioData) => {
-        if (player.audioContext === undefined || player.audioInputNode === undefined) {
+        if (player.audioInputNode === undefined) {
           return
         }
 
@@ -449,14 +448,9 @@ class Player {
       this.audioContext = new AudioContext({ sampleRate: this.sampleRate })
       await this.audioContext.audioWorklet.addModule(URL.createObjectURL(blob))
 
-      const workletOptions = {
+      this.audioInputNode = new AudioWorkletNode(this.audioContext, AUDIO_WORKLET_PROCESSOR_NAME, {
         outputChannelCount: [this.numberOfChannels],
-      }
-      this.audioInputNode = new AudioWorkletNode(
-        this.audioContext,
-        AUDIO_WORKLET_PROCESSOR_NAME,
-        workletOptions,
-      )
+      })
 
       const destination = this.audioContext.createMediaStreamDestination()
       this.audioInputNode.connect(destination)
