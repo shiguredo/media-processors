@@ -1,5 +1,6 @@
 const WASM_BASE64 = '__WASM__'
 
+// biome-ignore lint/style/noUnusedTemplateLiteral: audio_processor.js 内で文字列を使えるように `...` で囲む
 const AUDIO_WORKLET_PROCESSOR_CODE = `__AUDIO_PROCESSOR__`
 const AUDIO_WORKLET_PROCESSOR_NAME = 'mp4-media-stream-audio-worklet-processor'
 

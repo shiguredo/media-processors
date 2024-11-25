@@ -17,7 +17,7 @@ class Mp4MediaStreamAudioWorkletProcessor extends AudioWorkletProcessor {
       } else {
         outputChannel[i] = audioData[this.offset]
         this.offset++
-        if (this.offset == audioData.length) {
+        if (this.offset === audioData.length) {
           this.inputBuffer.shift()
           this.offset = 0
         }
