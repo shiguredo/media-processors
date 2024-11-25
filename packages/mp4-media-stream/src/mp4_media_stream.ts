@@ -449,13 +449,14 @@ class Player {
       const blob = new Blob([AUDIO_WORKLET_PROCESSOR_CODE], { type: 'application/javascript' })
       this.audioContext = new AudioContext({ sampleRate: OPUS_SAMPLE_RATE })
       await this.audioContext.audioWorklet.addModule(URL.createObjectURL(blob))
-      console.log('create audio node')
       const audioInputNode = new AudioWorkletNode(this.audioContext, AUDIO_WORKLET_PROCESSOR_NAME)
-      audioInputNode.connect(this.audioContext.destination)
       // audioInputNode.port.postMessage(data, [data.buffer]);
 
+      const destination = this.audioContext.createMediaStreamDestination()
+      audioInputNode.connect(destination)
+
       const generator = new MediaStreamTrackGenerator({ kind: 'audio' })
-      tracks.push(generator)
+      tracks.push(destination.stream.getAudioTracks()[0])
       this.audioWriter = generator.writable.getWriter()
     }
     if (this.video) {
