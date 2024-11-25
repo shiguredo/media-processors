@@ -1,3 +1,4 @@
+// WebCodecs の音声デコーダーが生成した AudioData の中身を MediaTrack に伝えるためのプロセッサー
 class Mp4MediaStreamAudioWorkletProcessor extends AudioWorkletProcessor {
   constructor() {
     super()
