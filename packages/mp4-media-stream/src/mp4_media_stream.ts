@@ -49,10 +49,7 @@ class Mp4MediaStream {
    * @returns サポートされているかどうか
    */
   static isSupported(): boolean {
-    return !(
-      typeof AudioDecoder === 'undefined' ||
-      typeof VideoDecoder === 'undefined'
-    )
+    return !(typeof AudioDecoder === 'undefined' || typeof VideoDecoder === 'undefined')
   }
 
   /**
@@ -295,17 +292,30 @@ class Mp4MediaStream {
         if (player.audioContext === undefined || player.audioInputNode === undefined) {
           return
         }
-        // TODO: error
-        // if (data.format !== 'f32-planar') {
-        // }
+        if (data.format !== 'f32-planar') {
+          // https://www.w3.org/TR/webcodecs/#audio-buffer-arrangement を見ると、
+          // "The Web Audio API currently uses f32-planar exclusively"と書いてあるので、
+          // いったんは"f32-planar"のみに対応（必要に応じて実装を追加していく）。
+          //
+          // MEMO: `AutoData.copyTo`で`format`が指定できるので、もしかしたら
+          //       そのオプションで"f32-planar"を指定しておけば、後続の処理は共通化できるかもしれない。
+          throw Error(`Unsupported audio data format ${data.format}."`)
+        }
+
         try {
           // TODO: support stereo
-          // TODO: add timestamp
-          const buffer = new Float32Array(data.allocationSize({ planeIndex: 0 }) / 4)
-          data.copyTo(buffer, { planeIndex: 0 })
-          player.audioInputNode.port.postMessage(buffer, [buffer.buffer])
+          // TODO: add timestamp handling (in processor)
+          const channels = []
+          const transfers = []
+          for (let i = 0; i < data.numberOfChannels; i++) {
+            const channelData = new Float32Array(data.numberOfFrames)
+            data.copyTo(channelData, { planeIndex: 0 })
+            channels.push(channelData)
+            transfers.push(channelData.buffer)
+          }
 
-          // await player.audioWriter.write(data)
+          const timestamp = data.timestamp
+          player.audioInputNode.port.postMessage({ timestamp, channels }, transfers)
         } catch (e) {
           // 書き込みエラーが発生した場合には再生を停止する
           await this.stopPlayer(playerId)
@@ -319,6 +329,7 @@ class Mp4MediaStream {
       },
     }
 
+    player.numberOfChannels = config.numberOfChannels
     player.audioDecoder = new AudioDecoder(init)
     player.audioDecoder.configure(config)
     ;(this.wasm.exports.notifyDecoderId as CallableFunction)(
@@ -431,6 +442,7 @@ class Player {
   canvasCtx?: CanvasRenderingContext2D
   audioContext?: AudioContext
   audioInputNode?: AudioWorkletNode
+  numberOfChannels = 1
 
   constructor(audio: boolean, video: boolean) {
     this.audio = audio
@@ -443,7 +455,16 @@ class Player {
       const blob = new Blob([AUDIO_WORKLET_PROCESSOR_CODE], { type: 'application/javascript' })
       this.audioContext = new AudioContext({ sampleRate: OPUS_SAMPLE_RATE })
       await this.audioContext.audioWorklet.addModule(URL.createObjectURL(blob))
-      this.audioInputNode = new AudioWorkletNode(this.audioContext, AUDIO_WORKLET_PROCESSOR_NAME)
+
+      const workletOptions = {
+        numberOfOutputs: this.numberOfChannels,
+      }
+      this.audioInputNode = new AudioWorkletNode(
+        this.audioContext,
+        AUDIO_WORKLET_PROCESSOR_NAME,
+        workletOptions,
+      )
+
       const destination = this.audioContext.createMediaStreamDestination()
       this.audioInputNode.connect(destination)
       tracks.push(destination.stream.getAudioTracks()[0])
