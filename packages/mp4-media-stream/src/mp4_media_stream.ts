@@ -1,6 +1,6 @@
 const WASM_BASE64 = '__WASM__'
 
-// biome-ignore lint/style/noUnusedTemplateLiteral: audio_processor.js 内で文字列を使えるように `...` で囲む
+// biome-ignore lint/style/noUnusedTemplateLiteral: audio_processor.js 内で文字列を扱いたいので `` で囲んでいる
 const AUDIO_WORKLET_PROCESSOR_CODE = `__AUDIO_PROCESSOR__`
 const AUDIO_WORKLET_PROCESSOR_NAME = 'mp4-media-stream-audio-worklet-processor'
 
@@ -47,7 +47,7 @@ class Mp4MediaStream {
    * @returns サポートされているかどうか
    */
   static isSupported(): boolean {
-    return !(typeof AudioDecoder === 'undefined' || typeof VideoDecoder === 'undefined')
+    return typeof AudioDecoder !== 'undefined' && typeof VideoDecoder !== 'undefined'
   }
 
   /**
@@ -150,7 +150,7 @@ class Mp4MediaStream {
     const playerId = this.nextPlayerId
     this.nextPlayerId += 1
 
-    const player = new Player(this.info.audioConfigs, this.info.videoConfigs.length > 0)
+    const player = new Player(this.info.audioConfigs, this.info.videoConfigs)
     this.players.set(playerId, player)
     ;(this.wasm.exports.play as CallableFunction)(
       this.engine,
@@ -252,7 +252,7 @@ class Mp4MediaStream {
           player.canvasCtx.drawImage(frame, 0, 0)
           frame.close()
         } catch (error) {
-          // 書き込みエラーが発生した場合には再生を停止する
+          // エラーが発生した場合には再生を停止する
           await this.stopPlayer(playerId)
           throw error
         }
@@ -290,19 +290,21 @@ class Mp4MediaStream {
         if (player.audioContext === undefined || player.audioInputNode === undefined) {
           return
         }
-        if (data.format !== 'f32') {
-          throw Error(`Unsupported audio data format: ${data.format}"`)
-        }
 
         try {
-          // TODO: add timestamp handling (in processor)
+          if (data.format !== 'f32') {
+            // フォーマットは f32 だけが来る想定。
+            // もし他のフォーマットが来ることがあれば、その都度対応すること。
+            throw Error(`Unsupported audio data format: ${data.format}"`)
+          }
+
           const samples = new Float32Array(data.numberOfFrames * data.numberOfChannels)
           data.copyTo(samples, { planeIndex: 0 })
 
           const timestamp = data.timestamp
           player.audioInputNode.port.postMessage({ timestamp, samples }, [samples.buffer])
         } catch (e) {
-          // 書き込みエラーが発生した場合には再生を停止する
+          // エラーが発生した場合には再生を停止する
           await this.stopPlayer(playerId)
           throw e
         }
@@ -429,11 +431,12 @@ class Player {
   audioContext?: AudioContext
   audioInputNode?: AudioWorkletNode
 
-  constructor(audioConfigs: AudioDecoderConfig[], video: boolean) {
+  constructor(audioConfigs: AudioDecoderConfig[], videoConfigs: VideoDecoderConfig[]) {
     this.audio = audioConfigs.length > 0
-    this.video = video
+    this.video = videoConfigs.length > 0
 
     if (audioConfigs.length > 0) {
+      // [NOTE] 今は複数音声入力トラックには未対応なので、最初の一つに決め打ちでいい
       this.numberOfChannels = audioConfigs[0].numberOfChannels
       this.sampleRate = audioConfigs[0].sampleRate
     }
