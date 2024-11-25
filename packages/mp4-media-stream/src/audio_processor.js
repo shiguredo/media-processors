@@ -4,24 +4,32 @@ class Mp4MediaStreamAudioWorkletProcessor extends AudioWorkletProcessor {
     this.inputBuffer = []
     this.offset = 0
     this.port.onmessage = (e) => {
-      // TODO: timestamp handling
+      // TODO: timestamp and buffering handling
       this.inputBuffer.push(e.data)
     }
   }
 
   process(inputs, outputs, parameters) {
     const outputChannel = outputs[0][0]
-    for (let i = 0; i < outputChannel.length; i++) {
-      const audioData = this.inputBuffer[0]
-      if (audioData === undefined) {
-        outputChannel[i] = 0
-      } else {
-        outputChannel[i] = audioData[this.offset]
-        this.offset++
-        if (this.offset === audioData.length) {
-          this.inputBuffer.shift()
-          this.offset = 0
+    for (let sampleIdx = 0; sampleIdx < outputs[0][0].length; sampleIdx++) {
+      for (let channelIdx = 0; channelIdx < outputs[0].length; channelIdx++) {
+        const outputChannel = outputs[0][channelIdx]
+        const audioData = this.inputBuffer[0]
+        if (audioData === undefined) {
+          outputChannel[sampleIdx] = 0
+        } else {
+          outputChannel[sampleIdx] = audioData.samples[this.offset]
+          this.offset++
         }
+      }
+
+      if (this.inputBuffer[0] === undefined) {
+        continue
+      }
+
+      if (this.offset === this.inputBuffer[0].samples.length) {
+        this.inputBuffer.shift()
+        this.offset = 0
       }
     }
     return true

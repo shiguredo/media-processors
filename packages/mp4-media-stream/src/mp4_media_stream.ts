@@ -292,30 +292,19 @@ class Mp4MediaStream {
         if (player.audioContext === undefined || player.audioInputNode === undefined) {
           return
         }
-        if (data.format !== 'f32-planar') {
-          // https://www.w3.org/TR/webcodecs/#audio-buffer-arrangement を見ると、
-          // "The Web Audio API currently uses f32-planar exclusively"と書いてあるので、
-          // いったんは"f32-planar"のみに対応（必要に応じて実装を追加していく）。
-          //
-          // MEMO: `AutoData.copyTo`で`format`が指定できるので、もしかしたら
-          //       そのオプションで"f32-planar"を指定しておけば、後続の処理は共通化できるかもしれない。
-          throw Error(`Unsupported audio data format ${data.format}."`)
+        if (data.format !== 'f32') {
+          throw Error(`Unsupported audio data format: ${data.format}"`)
         }
 
         try {
-          // TODO: support stereo
           // TODO: add timestamp handling (in processor)
-          const channels = []
-          const transfers = []
-          for (let i = 0; i < data.numberOfChannels; i++) {
-            const channelData = new Float32Array(data.numberOfFrames)
-            data.copyTo(channelData, { planeIndex: 0 })
-            channels.push(channelData)
-            transfers.push(channelData.buffer)
-          }
+          console.log(data.numberOfChannels)
+          const channels = data.numberOfChannels
+          const samples = new Float32Array(data.numberOfFrames * data.numberOfChannels)
+          data.copyTo(samples, { planeIndex: 0 })
 
           const timestamp = data.timestamp
-          player.audioInputNode.port.postMessage({ timestamp, channels }, transfers)
+          player.audioInputNode.port.postMessage({ timestamp, channels, samples }, [samples.buffer])
         } catch (e) {
           // 書き込みエラーが発生した場合には再生を停止する
           await this.stopPlayer(playerId)
