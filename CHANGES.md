@@ -11,6 +11,8 @@
 
 ## develop
 
+## mp4-media-stream-2024.2.0
+
 - [CHANGE] `Mp4MediaStream.play()` を非同期にする
   - @sile
 - [FIX] `Mp4MediaStream` が生成した `MediaStream` を WebRTC の入力とすると受信側で映像と音声のタイムスタンプが大幅にズレることがある問題を修正する
