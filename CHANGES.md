@@ -11,6 +11,16 @@
 
 ## develop
 
+- [CHANGE] `Mp4MediaStream.play()` を非同期にする
+  - @sile
+- [FIX] `Mp4MediaStream` が生成した `MediaStream` を WebRTC の入力とすると受信側で映像と音声のタイムスタンプが大幅にズレることがある問題を修正する
+  - 以前は `MediaStreamTrackGenerator` を使って、映像および音声の出力先の `MediaTrack` を生成していた
+    - ただし `MediaStreamTrackGenerator` に映像フレーム・音声データを書き込む際に指定するタイムスタンプを 0 始まりにすると、WebRTC を通した場合に映像と音声でのタイムスタンプが大幅（e.g., 数時間以上）にズレる問題が確認された
+    - 実際に `MediaStreamTrackProcessor` が生成したタイムスタンプを確認したところ、0 始まりではなかったが、このタイムスタンプの基準値を外部から取得する簡単な方法はなさそうだった
+      - 一度 `getUserMedia()` を呼び出してその結果を `MediaStreamTrackProcessor` に渡すことで取得できないことはないが現実的ではない
+  - そのため、`MediaStreamTrackGenerator` は使うのは止めて、映像では `HTMLCanvasElement` を、音声では `AudioContext` を使って `MediaTrack` を生成するように変更した
+  - @sile
+
 ## mp4-media-stream-2024.1.2
 
 - [FIX] 音声のみの MP4 をロードした後に `Mp4MediaStream.play()` を呼び出すとエラーになる問題を修正する

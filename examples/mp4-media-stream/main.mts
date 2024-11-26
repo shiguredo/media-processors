@@ -28,7 +28,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
   }
 
-  function play() {
+  async function play() {
     if (mp4MediaStream === undefined) {
       alert('MP4 ファイルが未選択です')
       return
@@ -37,7 +37,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     const options = {
       repeat: document.getElementById('repeat').checked,
     }
-    const stream = mp4MediaStream.play(options)
+    const stream = await mp4MediaStream.play(options)
 
     const output = document.getElementById('output')
     output.srcObject = stream

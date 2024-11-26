@@ -22,6 +22,10 @@ export default [
         __WASM__: () => fs.readFileSync("../../target/wasm32-unknown-unknown/release/mp4_media_stream.wasm", "base64"),
         preventAssignment: true
       }),
+      replace({
+        __AUDIO_PROCESSOR__: () => fs.readFileSync("src/audio_processor.js"),
+        preventAssignment: true
+      }),
       typescript({module: "esnext"}),
       commonjs(),
       resolve()
@@ -40,6 +44,10 @@ export default [
     plugins: [
       replace({
         __WASM__: () => fs.readFileSync("../../target/wasm32-unknown-unknown/release/mp4_media_stream.wasm", "base64"),
+        preventAssignment: true
+      }),
+      replace({
+        __AUDIO_PROCESSOR__: () => fs.readFileSync("src/audio_processor.js"),
         preventAssignment: true
       }),
       typescript({module: "esnext"}),
