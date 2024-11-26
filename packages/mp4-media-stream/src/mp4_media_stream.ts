@@ -299,6 +299,7 @@ class Mp4MediaStream {
 
           const samples = new Float32Array(data.numberOfFrames * data.numberOfChannels)
           data.copyTo(samples, { planeIndex: 0 })
+          data.close()
 
           const timestamp = data.timestamp
           player.audioInputNode.port.postMessage({ timestamp, samples }, [samples.buffer])
