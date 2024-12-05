@@ -11,6 +11,8 @@
 
 ## develop
 
+### misc
+
 ## mp4-media-stream-2024.2.0
 
 - [CHANGE] `Mp4MediaStream.play()` を非同期にする
