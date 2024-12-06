@@ -249,19 +249,22 @@ class Mp4MediaStream {
 
     const init = {
       output: async (frame: VideoFrame) => {
-        if (player.canvas === undefined || player.canvasCtx === undefined) {
-          return
-        }
-
         try {
-          player.canvas.width = frame.displayWidth
-          player.canvas.height = frame.displayHeight
-          player.canvasCtx.drawImage(frame, 0, 0)
+          if (player.canvas === undefined || player.canvasCtx === undefined) {
+            return
+          }
+
+          try {
+            player.canvas.width = frame.displayWidth
+            player.canvas.height = frame.displayHeight
+            player.canvasCtx.drawImage(frame, 0, 0)
+          } catch (error) {
+            // エラーが発生した場合には再生を停止する
+            await this.stopPlayer(playerId)
+            throw error
+          }
+        } finally {
           frame.close()
-        } catch (error) {
-          // エラーが発生した場合には再生を停止する
-          await this.stopPlayer(playerId)
-          throw error
         }
       },
       error: async (error: DOMException) => {
@@ -294,21 +297,24 @@ class Mp4MediaStream {
     const config = this.wasmJsonToValue(configWasmJson) as AudioDecoderConfig
     const init = {
       output: async (data: AudioData) => {
-        if (player.audioInputNode === undefined) {
-          return
-        }
-
         try {
-          const samples = new Float32Array(data.numberOfFrames * data.numberOfChannels)
-          data.copyTo(samples, { planeIndex: 0, format: 'f32' })
-          data.close()
+          if (player.audioInputNode === undefined) {
+            return
+          }
 
-          const timestamp = data.timestamp
-          player.audioInputNode.port.postMessage({ timestamp, samples }, [samples.buffer])
-        } catch (e) {
-          // エラーが発生した場合には再生を停止する
-          await this.stopPlayer(playerId)
-          throw e
+          try {
+            const samples = new Float32Array(data.numberOfFrames * data.numberOfChannels)
+            data.copyTo(samples, { planeIndex: 0, format: 'f32' })
+
+            const timestamp = data.timestamp
+            player.audioInputNode.port.postMessage({ timestamp, samples }, [samples.buffer])
+          } catch (e) {
+            // エラーが発生した場合には再生を停止する
+            await this.stopPlayer(playerId)
+            throw e
+          }
+        } finally {
+          data.close()
         }
       },
       error: async (error: DOMException) => {
