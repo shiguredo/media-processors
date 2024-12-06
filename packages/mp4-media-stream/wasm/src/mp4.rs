@@ -41,7 +41,7 @@ impl VideoDecoderConfig {
 
     pub fn from_vp08_box(b: &Vp08Box) -> Self {
         Self {
-            codec: "vp08".to_owned(),
+            codec: "vp8".to_owned(),
             description: Vec::new(),
             coded_width: b.visual.width,
             coded_height: b.visual.height,
