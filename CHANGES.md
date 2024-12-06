@@ -11,6 +11,9 @@
 
 ## develop
 
+- [ADD] `Mp4MediaStream` の対応コーデックに AAC を追加する
+  - @sile
+
 ### misc
 
 ## mp4-media-stream-2024.2.0

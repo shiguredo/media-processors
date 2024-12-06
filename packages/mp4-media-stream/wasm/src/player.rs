@@ -184,6 +184,10 @@ impl TrackPlayer {
                 let config = AudioDecoderConfig::from_opus_box(b);
                 WasmApi::create_audio_decoder(self.player_id, config).await
             }
+            SampleEntry::Mp4a(b) => {
+                let config = AudioDecoderConfig::from_mp4a_box(b);
+                WasmApi::create_audio_decoder(self.player_id, config).await
+            }
             _ => {
                 // MP4::load() の中で非対応コーデックのチェックは行っているので、ここに来ることはない
                 unreachable!()
