@@ -6,7 +6,7 @@ use shiguredo_mp4::{
     aux::SampleTableAccessor,
     boxes::{
         Avc1Box, FtypBox, HdlrBox, IgnoredBox, MoovBox, Mp4aBox, OpusBox, SampleEntry, StblBox,
-        TrakBox, Vp08Box,
+        TrakBox, Vp08Box, Vp09Box,
     },
     BaseBox, Decode, Either, Encode,
 };
@@ -42,6 +42,20 @@ impl VideoDecoderConfig {
     pub fn from_vp08_box(b: &Vp08Box) -> Self {
         Self {
             codec: "vp8".to_owned(),
+            description: Vec::new(),
+            coded_width: b.visual.width,
+            coded_height: b.visual.height,
+        }
+    }
+
+    pub fn from_vp09_box(b: &Vp09Box) -> Self {
+        Self {
+            codec: format!(
+                "vp09.{:02}.{:02}.{:02}",
+                b.vpcc_box.profile,
+                b.vpcc_box.level,
+                b.vpcc_box.bit_depth.get()
+            ),
             description: Vec::new(),
             coded_width: b.visual.width,
             coded_height: b.visual.height,
@@ -121,6 +135,7 @@ impl Track {
         match sample_table.stbl_box().stsd_box.entries.first() {
             Some(SampleEntry::Avc1(_)) => (),
             Some(SampleEntry::Vp08(_)) => (),
+            Some(SampleEntry::Vp09(_)) => (),
             Some(SampleEntry::Opus(_)) => (),
             Some(SampleEntry::Mp4a(_)) => (),
             Some(b) => {
@@ -213,6 +228,9 @@ impl Mp4 {
                     }
                     SampleEntry::Vp08(b) => {
                         video_configs.push(VideoDecoderConfig::from_vp08_box(b));
+                    }
+                    SampleEntry::Vp09(b) => {
+                        video_configs.push(VideoDecoderConfig::from_vp09_box(b));
                     }
                     SampleEntry::Opus(b) => {
                         audio_configs.push(AudioDecoderConfig::from_opus_box(b));

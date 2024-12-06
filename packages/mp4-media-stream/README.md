@@ -33,6 +33,7 @@ video.srcObject = stream
 - 映像:
   - H.264
   - VP8
+  - VP9
 - 音声:
   - AAC
   - Opus

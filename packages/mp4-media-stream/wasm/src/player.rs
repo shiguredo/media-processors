@@ -184,6 +184,10 @@ impl TrackPlayer {
                 let config = VideoDecoderConfig::from_vp08_box(b);
                 WasmApi::create_video_decoder(self.player_id, config).await
             }
+            SampleEntry::Vp09(b) => {
+                let config = VideoDecoderConfig::from_vp09_box(b);
+                WasmApi::create_video_decoder(self.player_id, config).await
+            }
             SampleEntry::Opus(b) => {
                 let config = AudioDecoderConfig::from_opus_box(b);
                 WasmApi::create_audio_decoder(self.player_id, config).await
