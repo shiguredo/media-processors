@@ -5,8 +5,8 @@ use serde::Serialize;
 use shiguredo_mp4::{
     aux::SampleTableAccessor,
     boxes::{
-        Av01Box, Avc1Box, FtypBox, HdlrBox, IgnoredBox, MoovBox, Mp4aBox, OpusBox, SampleEntry,
-        StblBox, TrakBox, Vp08Box, Vp09Box,
+        Av01Box, Avc1Box, FtypBox, HdlrBox, Hev1Box, IgnoredBox, MoovBox, Mp4aBox, OpusBox,
+        SampleEntry, StblBox, TrakBox, Vp08Box, Vp09Box,
     },
     BaseBox, Decode, Either, Encode,
 };
@@ -32,6 +32,55 @@ impl VideoDecoderConfig {
                 b.avcc_box.avc_profile_indication,
                 b.avcc_box.profile_compatibility,
                 b.avcc_box.avc_level_indication
+            ),
+            description,
+            coded_width: b.visual.width,
+            coded_height: b.visual.height,
+        }
+    }
+
+    pub fn from_hev1_box(b: &Hev1Box) -> Self {
+        let mut description = Vec::new();
+        b.hvcc_box.encode(&mut description).expect("unreachable");
+        description.drain(..8); // ボックスヘッダ部分を取り除く
+
+        let mut constraints = b
+            .hvcc_box
+            .general_constraint_indicator_flags
+            .get()
+            .to_be_bytes()
+            .to_vec();
+        while constraints.len() > 1 && constraints.last() == Some(&0) {
+            constraints.pop();
+        }
+
+        Self {
+            // ISO / IEC 14496-15 E.3
+            codec: format!(
+                "hev1.{}.{:X}.{}.{}",
+                match b.hvcc_box.general_profile_space.get() {
+                    1 => format!("A{}", b.hvcc_box.general_profile_idc.get()),
+                    2 => format!("B{}", b.hvcc_box.general_profile_idc.get()),
+                    3 => format!("C{}", b.hvcc_box.general_profile_idc.get()),
+                    v => format!("{v}"),
+                },
+                b.hvcc_box
+                    .general_profile_compatibility_flags
+                    .reverse_bits(),
+                format!(
+                    "{}{}",
+                    if b.hvcc_box.general_tier_flag.get() == 0 {
+                        'L'
+                    } else {
+                        'H'
+                    },
+                    b.hvcc_box.general_level_idc
+                ),
+                constraints
+                    .into_iter()
+                    .map(|b| format!("{:02X}", b))
+                    .collect::<Vec<_>>()
+                    .join(".")
             ),
             description,
             coded_width: b.visual.width,
@@ -163,6 +212,7 @@ impl Track {
 
         match sample_table.stbl_box().stsd_box.entries.first() {
             Some(SampleEntry::Avc1(_)) => (),
+            Some(SampleEntry::Hev1(_)) => (),
             Some(SampleEntry::Vp08(_)) => (),
             Some(SampleEntry::Vp09(_)) => (),
             Some(SampleEntry::Av01(_)) => (),
@@ -255,6 +305,9 @@ impl Mp4 {
                 match chunk.sample_entry() {
                     SampleEntry::Avc1(b) => {
                         video_configs.push(VideoDecoderConfig::from_avc1_box(b));
+                    }
+                    SampleEntry::Hev1(b) => {
+                        video_configs.push(VideoDecoderConfig::from_hev1_box(b));
                     }
                     SampleEntry::Vp08(b) => {
                         video_configs.push(VideoDecoderConfig::from_vp08_box(b));

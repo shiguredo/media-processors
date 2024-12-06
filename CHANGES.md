@@ -11,6 +11,8 @@
 
 ## develop
 
+- [ADD] `Mp4MediaStream` の対応コーデックに H.265 を追加する
+  - @sile
 - [ADD] `Mp4MediaStream` の対応コーデックに AV1 を追加する
   - @sile
 - [ADD] `Mp4MediaStream` の対応コーデックに VP9 を追加する
