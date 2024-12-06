@@ -63,8 +63,17 @@ impl AudioDecoderConfig {
             b.esds_box.es.dec_config_descr.object_type_indication
         );
         if b.esds_box.es.dec_config_descr.object_type_indication == 0x40 {
-            // TODO: profile を見る
-            codec.push_str(".2");
+            if let Some(b) = b
+                .esds_box
+                .es
+                .dec_config_descr
+                .dec_specific_info
+                .payload
+                .get(0)
+            {
+                let audio_object_type = b >> 3;
+                codec.push_str(&format!(".{audio_object_type}"));
+            }
         };
         Self {
             codec,
