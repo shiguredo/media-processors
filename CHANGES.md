@@ -11,6 +11,8 @@
 
 ## develop
 
+- [ADD] `Mp4MediaStream` の対応コーデックに VP8 を追加する
+  - @sile
 - [ADD] `Mp4MediaStream` の対応コーデックに AAC を追加する
   - @sile
 

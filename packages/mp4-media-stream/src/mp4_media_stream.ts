@@ -201,6 +201,10 @@ class Mp4MediaStream {
       // JSON.parse() の結果では config.description の型は number[] となって期待とは異なるので
       // ここで適切な型に変換している
       config.description = new Uint8Array(config.description as object as number[])
+      if (config.description.byteLength === 0) {
+        // コーデックによっては description が存在しないので空なら削除する
+        config.description = undefined
+      }
 
       if (!(await VideoDecoder.isConfigSupported(config)).supported) {
         throw new Error(`Unsupported video decoder configuration: ${JSON.stringify(config)}`)
@@ -238,22 +242,29 @@ class Mp4MediaStream {
     // JSON.parse() の結果では config.description の型は number[] となって期待とは異なるので
     // ここで適切な型に変換している
     config.description = new Uint8Array(config.description as object as number[])
+    if (config.description.byteLength === 0) {
+      // コーデックによっては description が存在しないので空なら削除する
+      config.description = undefined
+    }
 
     const init = {
       output: async (frame: VideoFrame) => {
-        if (player.canvas === undefined || player.canvasCtx === undefined) {
-          return
-        }
-
         try {
-          player.canvas.width = frame.displayWidth
-          player.canvas.height = frame.displayHeight
-          player.canvasCtx.drawImage(frame, 0, 0)
+          if (player.canvas === undefined || player.canvasCtx === undefined) {
+            return
+          }
+
+          try {
+            player.canvas.width = frame.displayWidth
+            player.canvas.height = frame.displayHeight
+            player.canvasCtx.drawImage(frame, 0, 0)
+          } catch (error) {
+            // エラーが発生した場合には再生を停止する
+            await this.stopPlayer(playerId)
+            throw error
+          }
+        } finally {
           frame.close()
-        } catch (error) {
-          // エラーが発生した場合には再生を停止する
-          await this.stopPlayer(playerId)
-          throw error
         }
       },
       error: async (error: DOMException) => {
@@ -286,21 +297,24 @@ class Mp4MediaStream {
     const config = this.wasmJsonToValue(configWasmJson) as AudioDecoderConfig
     const init = {
       output: async (data: AudioData) => {
-        if (player.audioInputNode === undefined) {
-          return
-        }
-
         try {
-          const samples = new Float32Array(data.numberOfFrames * data.numberOfChannels)
-          data.copyTo(samples, { planeIndex: 0, format: 'f32' })
-          data.close()
+          if (player.audioInputNode === undefined) {
+            return
+          }
 
-          const timestamp = data.timestamp
-          player.audioInputNode.port.postMessage({ timestamp, samples }, [samples.buffer])
-        } catch (e) {
-          // エラーが発生した場合には再生を停止する
-          await this.stopPlayer(playerId)
-          throw e
+          try {
+            const samples = new Float32Array(data.numberOfFrames * data.numberOfChannels)
+            data.copyTo(samples, { planeIndex: 0, format: 'f32' })
+
+            const timestamp = data.timestamp
+            player.audioInputNode.port.postMessage({ timestamp, samples }, [samples.buffer])
+          } catch (e) {
+            // エラーが発生した場合には再生を停止する
+            await this.stopPlayer(playerId)
+            throw e
+          }
+        } finally {
+          data.close()
         }
       },
       error: async (error: DOMException) => {
