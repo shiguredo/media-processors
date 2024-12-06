@@ -5,8 +5,8 @@ use serde::Serialize;
 use shiguredo_mp4::{
     aux::SampleTableAccessor,
     boxes::{
-        Av01Box, Avc1Box, FtypBox, HdlrBox, IgnoredBox, MoovBox, Mp4aBox, OpusBox, SampleEntry,
-        StblBox, TrakBox, Vp08Box, Vp09Box,
+        Av01Box, Avc1Box, FtypBox, HdlrBox, Hev1Box, IgnoredBox, MoovBox, Mp4aBox, OpusBox,
+        SampleEntry, StblBox, TrakBox, Vp08Box, Vp09Box,
     },
     BaseBox, Decode, Either, Encode,
 };
@@ -32,6 +32,23 @@ impl VideoDecoderConfig {
                 b.avcc_box.avc_profile_indication,
                 b.avcc_box.profile_compatibility,
                 b.avcc_box.avc_level_indication
+            ),
+            description,
+            coded_width: b.visual.width,
+            coded_height: b.visual.height,
+        }
+    }
+
+    pub fn from_hev1_box(b: &Hev1Box) -> Self {
+        let mut description = Vec::new();
+        b.hvcc_box.encode(&mut description).expect("unreachable");
+        description.drain(..8); // ボックスヘッダ部分を取り除く
+
+        Self {
+            codec: format!(
+                "hev1.1.6.L90.B0" // b.c_profile_indication,
+                                  // b.avcc_box.profile_compatibility,
+                                  // b.avcc_box.avc_level_indication
             ),
             description,
             coded_width: b.visual.width,
@@ -163,6 +180,7 @@ impl Track {
 
         match sample_table.stbl_box().stsd_box.entries.first() {
             Some(SampleEntry::Avc1(_)) => (),
+            Some(SampleEntry::Hev1(_)) => (),
             Some(SampleEntry::Vp08(_)) => (),
             Some(SampleEntry::Vp09(_)) => (),
             Some(SampleEntry::Av01(_)) => (),
@@ -255,6 +273,9 @@ impl Mp4 {
                 match chunk.sample_entry() {
                     SampleEntry::Avc1(b) => {
                         video_configs.push(VideoDecoderConfig::from_avc1_box(b));
+                    }
+                    SampleEntry::Hev1(b) => {
+                        video_configs.push(VideoDecoderConfig::from_hev1_box(b));
                     }
                     SampleEntry::Vp08(b) => {
                         video_configs.push(VideoDecoderConfig::from_vp08_box(b));
