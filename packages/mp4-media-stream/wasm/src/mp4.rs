@@ -5,8 +5,8 @@ use serde::Serialize;
 use shiguredo_mp4::{
     aux::SampleTableAccessor,
     boxes::{
-        Avc1Box, FtypBox, HdlrBox, IgnoredBox, MoovBox, Mp4aBox, OpusBox, SampleEntry, StblBox,
-        TrakBox, Vp08Box, Vp09Box,
+        Av01Box, Avc1Box, FtypBox, HdlrBox, IgnoredBox, MoovBox, Mp4aBox, OpusBox, SampleEntry,
+        StblBox, TrakBox, Vp08Box, Vp09Box,
     },
     BaseBox, Decode, Either, Encode,
 };
@@ -55,6 +55,35 @@ impl VideoDecoderConfig {
                 b.vpcc_box.profile,
                 b.vpcc_box.level,
                 b.vpcc_box.bit_depth.get()
+            ),
+            description: Vec::new(),
+            coded_width: b.visual.width,
+            coded_height: b.visual.height,
+        }
+    }
+
+    pub fn from_av01_box(b: &Av01Box) -> Self {
+        Self {
+            // https://aomediacodec.github.io/av1-isobmff/#codecsparam
+            codec: format!(
+                "av01.{}.{:02}{}.{:02}",
+                b.av1c_box.seq_profile.get(),
+                b.av1c_box.seq_level_idx_0.get(),
+                if b.av1c_box.seq_tier_0.get() == 0 {
+                    'M'
+                } else {
+                    'H'
+                },
+                match (
+                    b.av1c_box.seq_profile.get(),
+                    b.av1c_box.high_bitdepth.get(),
+                    b.av1c_box.twelve_bit.get()
+                ) {
+                    (2, 1, 1) => 12,
+                    (2, 1, 0) => 10,
+                    (_, 1, _) => 10,
+                    (_, _, _) => 8,
+                }
             ),
             description: Vec::new(),
             coded_width: b.visual.width,
@@ -136,6 +165,7 @@ impl Track {
             Some(SampleEntry::Avc1(_)) => (),
             Some(SampleEntry::Vp08(_)) => (),
             Some(SampleEntry::Vp09(_)) => (),
+            Some(SampleEntry::Av01(_)) => (),
             Some(SampleEntry::Opus(_)) => (),
             Some(SampleEntry::Mp4a(_)) => (),
             Some(b) => {
@@ -231,6 +261,9 @@ impl Mp4 {
                     }
                     SampleEntry::Vp09(b) => {
                         video_configs.push(VideoDecoderConfig::from_vp09_box(b));
+                    }
+                    SampleEntry::Av01(b) => {
+                        video_configs.push(VideoDecoderConfig::from_av01_box(b));
                     }
                     SampleEntry::Opus(b) => {
                         audio_configs.push(AudioDecoderConfig::from_opus_box(b));
