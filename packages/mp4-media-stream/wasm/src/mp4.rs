@@ -58,8 +58,16 @@ impl AudioDecoderConfig {
     }
 
     pub fn from_mp4a_box(b: &Mp4aBox) -> Self {
+        let mut codec = format!(
+            "mp4a.{:02X}",
+            b.esds_box.es.dec_config_descr.object_type_indication
+        );
+        if b.esds_box.es.dec_config_descr.object_type_indication == 0x40 {
+            // TODO: profile を見る
+            codec.push_str(".2");
+        };
         Self {
-            codec: "mp4a.40.2".to_owned(),
+            codec,
             sample_rate: b.audio.samplerate.integer,
             number_of_channels: b.audio.channelcount as u8,
         }
