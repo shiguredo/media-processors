@@ -5,7 +5,8 @@ use serde::Serialize;
 use shiguredo_mp4::{
     aux::SampleTableAccessor,
     boxes::{
-        Avc1Box, FtypBox, HdlrBox, IgnoredBox, MoovBox, OpusBox, SampleEntry, StblBox, TrakBox,
+        Avc1Box, FtypBox, HdlrBox, IgnoredBox, MoovBox, Mp4aBox, OpusBox, SampleEntry, StblBox,
+        TrakBox,
     },
     BaseBox, Decode, Either, Encode,
 };
@@ -55,6 +56,14 @@ impl AudioDecoderConfig {
             number_of_channels: b.audio.channelcount as u8,
         }
     }
+
+    pub fn from_mp4a_box(b: &Mp4aBox) -> Self {
+        Self {
+            codec: "mp4a.40.2".to_owned(),
+            sample_rate: b.audio.samplerate.integer,
+            number_of_channels: b.audio.channelcount as u8,
+        }
+    }
 }
 
 #[derive(Debug, Serialize)]
@@ -86,6 +95,7 @@ impl Track {
         match sample_table.stbl_box().stsd_box.entries.first() {
             Some(SampleEntry::Avc1(_)) => (),
             Some(SampleEntry::Opus(_)) => (),
+            Some(SampleEntry::Mp4a(_)) => (),
             Some(b) => {
                 return Err(Failure::new(format!(
                     "Unsupported {kind}codec: {}",
@@ -176,6 +186,9 @@ impl Mp4 {
                     }
                     SampleEntry::Opus(b) => {
                         audio_configs.push(AudioDecoderConfig::from_opus_box(b));
+                    }
+                    SampleEntry::Mp4a(b) => {
+                        audio_configs.push(AudioDecoderConfig::from_mp4a_box(b));
                     }
                     _ => {
                         // `Track` 作成時にチェックしているのでここには来ない
