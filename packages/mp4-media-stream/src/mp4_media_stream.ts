@@ -201,9 +201,9 @@ class Mp4MediaStream {
       // JSON.parse() の結果では config.description の型は number[] となって期待とは異なるので
       // ここで適切な型に変換している
       config.description = new Uint8Array(config.description as object as number[])
-      if (config.description.byteLength == 0) {
+      if (config.description.byteLength === 0) {
         // コーデックによっては description が存在しないので空なら削除する
-        delete config.description
+        config.description = undefined
       }
 
       if (!(await VideoDecoder.isConfigSupported(config)).supported) {
@@ -242,9 +242,9 @@ class Mp4MediaStream {
     // JSON.parse() の結果では config.description の型は number[] となって期待とは異なるので
     // ここで適切な型に変換している
     config.description = new Uint8Array(config.description as object as number[])
-    if (config.description.byteLength == 0) {
+    if (config.description.byteLength === 0) {
       // コーデックによっては description が存在しないので空なら削除する
-      delete config.description
+      config.description = undefined
     }
 
     const init = {
