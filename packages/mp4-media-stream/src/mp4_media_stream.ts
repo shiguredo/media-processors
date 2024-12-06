@@ -291,14 +291,8 @@ class Mp4MediaStream {
         }
 
         try {
-          if (data.format !== 'f32') {
-            // フォーマットは f32 だけが来る想定。
-            // もし他のフォーマットが来ることがあれば、その都度対応すること。
-            throw Error(`Unsupported audio data format: ${data.format}"`)
-          }
-
           const samples = new Float32Array(data.numberOfFrames * data.numberOfChannels)
-          data.copyTo(samples, { planeIndex: 0 })
+          data.copyTo(samples, { planeIndex: 0, format: 'f32' })
           data.close()
 
           const timestamp = data.timestamp
