@@ -6,7 +6,7 @@ use shiguredo_mp4::{
     aux::SampleTableAccessor,
     boxes::{
         Avc1Box, FtypBox, HdlrBox, IgnoredBox, MoovBox, Mp4aBox, OpusBox, SampleEntry, StblBox,
-        TrakBox,
+        TrakBox, Vp08Box,
     },
     BaseBox, Decode, Either, Encode,
 };
@@ -34,6 +34,15 @@ impl VideoDecoderConfig {
                 b.avcc_box.avc_level_indication
             ),
             description,
+            coded_width: b.visual.width,
+            coded_height: b.visual.height,
+        }
+    }
+
+    pub fn from_vp08_box(b: &Vp08Box) -> Self {
+        Self {
+            codec: "vp08".to_owned(),
+            description: Vec::new(),
             coded_width: b.visual.width,
             coded_height: b.visual.height,
         }
@@ -111,6 +120,7 @@ impl Track {
 
         match sample_table.stbl_box().stsd_box.entries.first() {
             Some(SampleEntry::Avc1(_)) => (),
+            Some(SampleEntry::Vp08(_)) => (),
             Some(SampleEntry::Opus(_)) => (),
             Some(SampleEntry::Mp4a(_)) => (),
             Some(b) => {
@@ -200,6 +210,9 @@ impl Mp4 {
                 match chunk.sample_entry() {
                     SampleEntry::Avc1(b) => {
                         video_configs.push(VideoDecoderConfig::from_avc1_box(b));
+                    }
+                    SampleEntry::Vp08(b) => {
+                        video_configs.push(VideoDecoderConfig::from_vp08_box(b));
                     }
                     SampleEntry::Opus(b) => {
                         audio_configs.push(AudioDecoderConfig::from_opus_box(b));
