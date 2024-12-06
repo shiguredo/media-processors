@@ -1,6 +1,6 @@
 {
   "name": "@shiguredo/mp4-media-stream",
-  "version": "2024.2.0",
+  "version": "2024.3.0",
   "description": "Library to generate MediaStream from MP4 file",
   "author": "Shiguredo Inc.",
   "license": "Apache-2.0",
