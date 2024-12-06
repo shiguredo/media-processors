@@ -44,11 +44,43 @@ impl VideoDecoderConfig {
         b.hvcc_box.encode(&mut description).expect("unreachable");
         description.drain(..8); // ボックスヘッダ部分を取り除く
 
+        let mut constraints = b
+            .hvcc_box
+            .general_constraint_indicator_flags
+            .get()
+            .to_be_bytes()
+            .to_vec();
+        while constraints.len() > 1 && constraints.last() == Some(&0) {
+            constraints.pop();
+        }
+
         Self {
+            // ISO / IEC 14496-15 E.3
             codec: format!(
-                "hev1.1.6.L90.B0" // b.c_profile_indication,
-                                  // b.avcc_box.profile_compatibility,
-                                  // b.avcc_box.avc_level_indication
+                "hev1.{}.{:X}.{}.{}",
+                match b.hvcc_box.general_profile_space.get() {
+                    1 => format!("A{}", b.hvcc_box.general_profile_idc.get()),
+                    2 => format!("B{}", b.hvcc_box.general_profile_idc.get()),
+                    3 => format!("C{}", b.hvcc_box.general_profile_idc.get()),
+                    v => format!("{v}"),
+                },
+                b.hvcc_box
+                    .general_profile_compatibility_flags
+                    .reverse_bits(),
+                format!(
+                    "{}{}",
+                    if b.hvcc_box.general_tier_flag.get() == 0 {
+                        'L'
+                    } else {
+                        'H'
+                    },
+                    b.hvcc_box.general_level_idc
+                ),
+                constraints
+                    .into_iter()
+                    .map(|b| format!("{:02X}", b))
+                    .collect::<Vec<_>>()
+                    .join(".")
             ),
             description,
             coded_width: b.visual.width,
