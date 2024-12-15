@@ -28,7 +28,6 @@
   ],
   "devDependencies": {
     "@mediapipe/selfie_segmentation": "0.1.1675465747",
-    "@rollup/plugin-replace": "5.0.7",
     "@shiguredo/video-track-processor": "workspace:*",
     "@types/offscreencanvas": "2019.7.3",
     "stackblur-canvas": "2.7.0"
