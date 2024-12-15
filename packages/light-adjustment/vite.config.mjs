@@ -21,10 +21,10 @@ export default defineConfig({
     emptyOutDir: true,
     manifest: true,
     lib: {
-      entry: resolve(__dirname, 'src/virtual_background.ts'),
+      entry: resolve(__dirname, 'src/light_adjustment.ts'),
       formats: ['es'],
       name: 'Shiguredo',
-      fileName: 'virtual_background',
+      fileName: 'light_adjustment',
     },
     rollupOptions: {
       output: {
