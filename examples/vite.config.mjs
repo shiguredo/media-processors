@@ -4,6 +4,7 @@ import { resolve } from 'node:path'
 import { defineConfig } from 'vite'
 
 export default defineConfig({
+  root: resolve(__dirname),
   base: process.env.NODE_ENV === 'production' ? '/media-processors/' : '/',
   resolve: {
     preserveSymlinks: true,
@@ -53,7 +54,7 @@ export default defineConfig({
       },
     },
   },
-  envDir: resolve(__dirname, './'),
+  envDir: resolve(__dirname, '..'),
   plugins: [
     viteStaticCopy({
       targets: [

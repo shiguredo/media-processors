@@ -2,29 +2,26 @@
   "author": "Shiguredo Inc.",
   "license": "Apache-2.0",
   "scripts": {
+    "dev": "vite --config examples/vite.config.mjs",
     "build": "pnpm -r --filter=./packages/* build",
+    "doc": "pnpm -r --filter=./packages/* doc",
     "lint": "pnpm -r --filter=./packages/* lint",
     "fmt": "pnpm -r --filter=./packages/* fmt",
-    "doc": "pnpm -r --filter=./packages/* doc",
-    "start": "serve -S -l 8080 ."
+    "check": "pnpm -r --filter=./packages/* check"
   },
   "dependencies": {
     "@types/dom-mediacapture-transform": "0.1.9"
   },
   "devDependencies": {
-    "@biomejs/biome": "1.8.3",
-    "@rollup/plugin-commonjs": "26.0.1",
-    "@rollup/plugin-node-resolve": "15.2.3",
-    "@rollup/plugin-typescript": "11.1.6",
-    "rollup": "4.20.0",
-    "rollup-plugin-copy": "3.5.0",
-    "serve": "14.2.3",
-    "tslib": "2.6.3",
-    "typedoc": "0.26.5",
-    "typescript": "5.5.4",
-    "vite": "5.4.8"
+    "@biomejs/biome": "1.9.4",
+    "tslib": "2.8.1",
+    "typedoc": "0.27.5",
+    "typescript": "5.7.2",
+    "vite": "6.0.3",
+    "vite-plugin-dts": "4.3.0",
+    "vite-plugin-static-copy": "2.2.0"
   },
-  "packageManager": "pnpm@9.12.0",
+  "packageManager": "pnpm@9.15.0",
   "engines": {
     "node": ">=18"
   }

@@ -8,9 +8,10 @@
   "module": "dist/light_adjustment.mjs",
   "types": "dist/light_adjustment.d.ts",
   "scripts": {
-    "build": "./build-wasm.sh && rollup -c ./rollup.config.mjs --bundleConfigAsCjs && tsc --emitDeclarationOnly",
+    "build": "./build-wasm.sh && vite build && tsc --emitDeclarationOnly",
     "lint": "biome lint ./src",
     "fmt": "biome format --write src",
+    "check": "tsc --noEmit",
     "doc": "typedoc"
   },
   "repository": {
@@ -27,7 +28,6 @@
   ],
   "devDependencies": {
     "@mediapipe/selfie_segmentation": "0.1.1675465747",
-    "@rollup/plugin-replace": "5.0.7",
     "@shiguredo/video-track-processor": "workspace:*",
     "@types/offscreencanvas": "2019.7.3",
     "stackblur-canvas": "2.7.0"

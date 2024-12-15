@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ES2022",
+    "strict": true,
+    "declaration": true,
+    "strictNullChecks": true,
+    "importHelpers": true,
+    "moduleResolution": "bundler",
+    "experimentalDecorators": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "resolveJsonModule": true,
+    "stripInternal": true,
+    "newLine": "LF",
+    "lib": ["ES2022", "dom"],
+    "outDir": "dist"
+  }
+}

@@ -8,9 +8,10 @@
   "module": "dist/mp4_media_stream.mjs",
   "types": "dist/mp4_media_stream.d.ts",
   "scripts": {
-    "build": "cargo build --release --target wasm32-unknown-unknown -p mp4_media_stream && rollup -c ./rollup.config.mjs --bundleConfigAsCjs && tsc --emitDeclarationOnly",
+    "build": "cargo build --release --target wasm32-unknown-unknown -p mp4_media_stream && vite build && tsc --emitDeclarationOnly",
     "lint": "biome lint ./src",
     "fmt": "biome format --write src",
+    "check": "tsc --noEmit",
     "doc": "typedoc"
   },
   "repository": {

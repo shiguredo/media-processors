@@ -7,9 +7,10 @@
   "module": "dist/image_to_image_video_processor.mjs",
   "types": "dist/image_to_image_video_processor.d.ts",
   "scripts": {
-    "build": "rollup -c ./rollup.config.mjs --bundleConfigAsCjs && tsc --emitDeclarationOnly",
+    "build": "vite build",
     "lint": "biome lint ./src",
     "fmt": "biome format --write src",
+    "check": "tsc --noEmit",
     "doc": "typedoc"
   },
   "repository": {
@@ -28,7 +29,6 @@
     "@shiguredo/video-track-processor": "workspace:*",
     "@tensorflow/tfjs": "4.20.0",
     "@tensorflow/tfjs-backend-webgl": "4.20.0",
-    "@tensorflow/tfjs-backend-webgpu": "4.20.0",
-    "typescript": "5.5.4"
+    "@tensorflow/tfjs-backend-webgpu": "4.20.0"
   }
 }
