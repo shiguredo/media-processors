@@ -2,7 +2,6 @@ import fs from 'node:fs'
 import { resolve } from 'node:path'
 import { defineConfig } from 'vite'
 import dts from 'vite-plugin-dts'
-import { viteStaticCopy } from 'vite-plugin-static-copy';
 import pkg from './package.json'
 
 const banner = `/**
@@ -41,6 +40,15 @@ export default defineConfig({
                 "base64"
               )
             )
+          }
+        },
+        {
+          name: 'audio-processor-loader',
+          transform(code) {
+            return code.replace(
+              /__AUDIO_PROCESSOR__/g,
+              () => fs.readFileSync("src/audio_processor.js")
+            );
           }
         }
       ],
