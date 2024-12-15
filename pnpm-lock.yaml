@@ -19,7 +19,7 @@ importers:
         specifier: 2.6.3
         version: 2.8.1
       typedoc:
-        specifier: 0.26.5
+        specifier: 0.27.5
         version: 0.27.5(typescript@5.7.2)
       typescript:
         specifier: 5.7.2
