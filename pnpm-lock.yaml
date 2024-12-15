@@ -23,7 +23,7 @@ importers:
         version: 15.2.3(rollup@4.20.0)
       '@rollup/plugin-typescript':
         specifier: 11.1.6
-        version: 11.1.6(rollup@4.20.0)(tslib@2.6.3)(typescript@5.5.4)
+        version: 11.1.6(rollup@4.20.0)(tslib@2.6.3)(typescript@5.7.2)
       rollup:
         specifier: 4.20.0
         version: 4.20.0
@@ -38,16 +38,16 @@ importers:
         version: 2.6.3
       typedoc:
         specifier: 0.26.5
-        version: 0.26.5(typescript@5.5.4)
+        version: 0.26.5(typescript@5.7.2)
       typescript:
-        specifier: 5.5.4
-        version: 5.5.4
+        specifier: 5.7.2
+        version: 5.7.2
       vite:
         specifier: 6.0.3
         version: 6.0.3(@types/node@22.10.2)(yaml@2.6.1)
       vite-plugin-dts:
         specifier: 4.3.0
-        version: 4.3.0(@types/node@22.10.2)(rollup@4.20.0)(typescript@5.5.4)(vite@6.0.3(@types/node@22.10.2)(yaml@2.6.1))
+        version: 4.3.0(@types/node@22.10.2)(rollup@4.20.0)(typescript@5.7.2)(vite@6.0.3(@types/node@22.10.2)(yaml@2.6.1))
       vite-plugin-static-copy:
         specifier: 2.2.0
         version: 2.2.0(vite@6.0.3(@types/node@22.10.2)(yaml@2.6.1))
@@ -88,9 +88,6 @@ importers:
       '@tensorflow/tfjs-backend-webgpu':
         specifier: 4.20.0
         version: 4.20.0(@tensorflow/tfjs-core@4.20.0)
-      typescript:
-        specifier: 5.5.4
-        version: 5.5.4
 
   packages/light-adjustment:
     devDependencies:
@@ -1691,8 +1688,8 @@ packages:
     engines: {node: '>=14.17'}
     hasBin: true
 
-  typescript@5.5.4:
-    resolution: {integrity: sha512-Mtq29sKDAEYP7aljRgtPOpTvOfbwRWlS6dPRzwjdE+C0R4brX/GUyhHSecbHMFLNBLcJIPt9nl9yG5TZ1weH+Q==}
+  typescript@5.7.2:
+    resolution: {integrity: sha512-i5t66RHxDvVN40HfDd1PsEThGNnlMCMT3jMUuoh9/0TaqWevNontacunWyN02LA9/fIbEWlcHZcgTKb9QoaLfg==}
     engines: {node: '>=14.17'}
     hasBin: true
 
@@ -2075,11 +2072,11 @@ snapshots:
     optionalDependencies:
       rollup: 4.28.1
 
-  '@rollup/plugin-typescript@11.1.6(rollup@4.20.0)(tslib@2.6.3)(typescript@5.5.4)':
+  '@rollup/plugin-typescript@11.1.6(rollup@4.20.0)(tslib@2.6.3)(typescript@5.7.2)':
     dependencies:
       '@rollup/pluginutils': 5.1.3(rollup@4.20.0)
       resolve: 1.22.9
-      typescript: 5.5.4
+      typescript: 5.7.2
     optionalDependencies:
       rollup: 4.20.0
       tslib: 2.6.3
@@ -2422,7 +2419,7 @@ snapshots:
       de-indent: 1.0.2
       he: 1.2.0
 
-  '@vue/language-core@2.1.6(typescript@5.5.4)':
+  '@vue/language-core@2.1.6(typescript@5.7.2)':
     dependencies:
       '@volar/language-core': 2.4.11
       '@vue/compiler-dom': 3.5.13
@@ -2433,7 +2430,7 @@ snapshots:
       muggle-string: 0.4.1
       path-browserify: 1.0.1
     optionalDependencies:
-      typescript: 5.5.4
+      typescript: 5.7.2
 
   '@vue/shared@3.5.13': {}
 
@@ -3345,18 +3342,18 @@ snapshots:
 
   type-fest@2.19.0: {}
 
-  typedoc@0.26.5(typescript@5.5.4):
+  typedoc@0.26.5(typescript@5.7.2):
     dependencies:
       lunr: 2.3.9
       markdown-it: 14.1.0
       minimatch: 9.0.5
       shiki: 1.24.2
-      typescript: 5.5.4
+      typescript: 5.7.2
       yaml: 2.6.1
 
   typescript@5.4.2: {}
 
-  typescript@5.5.4: {}
+  typescript@5.7.2: {}
 
   uc.micro@2.1.0: {}
 
@@ -3414,18 +3411,18 @@ snapshots:
       '@types/unist': 3.0.3
       vfile-message: 4.0.2
 
-  vite-plugin-dts@4.3.0(@types/node@22.10.2)(rollup@4.20.0)(typescript@5.5.4)(vite@6.0.3(@types/node@22.10.2)(yaml@2.6.1)):
+  vite-plugin-dts@4.3.0(@types/node@22.10.2)(rollup@4.20.0)(typescript@5.7.2)(vite@6.0.3(@types/node@22.10.2)(yaml@2.6.1)):
     dependencies:
       '@microsoft/api-extractor': 7.48.1(@types/node@22.10.2)
       '@rollup/pluginutils': 5.1.3(rollup@4.20.0)
       '@volar/typescript': 2.4.11
-      '@vue/language-core': 2.1.6(typescript@5.5.4)
+      '@vue/language-core': 2.1.6(typescript@5.7.2)
       compare-versions: 6.1.1
       debug: 4.4.0
       kolorist: 1.8.0
       local-pkg: 0.5.1
       magic-string: 0.30.15
-      typescript: 5.5.4
+      typescript: 5.7.2
     optionalDependencies:
       vite: 6.0.3(@types/node@22.10.2)(yaml@2.6.1)
     transitivePeerDependencies:
