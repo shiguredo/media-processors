@@ -2,6 +2,7 @@
   "author": "Shiguredo Inc.",
   "license": "Apache-2.0",
   "scripts": {
+    "dev": "vite --config examples/vite.config.mjs",
     "build": "pnpm -r --filter=./packages/* build",
     "lint": "pnpm -r --filter=./packages/* lint",
     "fmt": "pnpm -r --filter=./packages/* fmt",
