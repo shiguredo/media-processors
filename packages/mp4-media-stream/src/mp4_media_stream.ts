@@ -1,5 +1,9 @@
 const WASM_BASE64 = '__WASM__'
 
+// biome-ignore lint/style/noUnusedTemplateLiteral: audio_processor.js 内で文字列を扱いたいので `` で囲んでいる
+const AUDIO_WORKLET_PROCESSOR_CODE = `__AUDIO_PROCESSOR__`
+const AUDIO_WORKLET_PROCESSOR_NAME = 'mp4-media-stream-audio-worklet-processor'
+
 /**
  * {@link Mp4MediaStream.play} に指定可能なオプション
  */
@@ -36,18 +40,13 @@ class Mp4MediaStream {
    * 実行環境が必要な機能をサポートしているかどうかを判定します
    *
    * 以下のクラスが利用可能である必要があります:
-   * - MediaStreamTrackGenerator
    * - AudioDecoder
    * - VideoDecoder
    *
    * @returns サポートされているかどうか
    */
   static isSupported(): boolean {
-    return !(
-      typeof MediaStreamTrackGenerator === 'undefined' ||
-      typeof AudioDecoder === 'undefined' ||
-      typeof VideoDecoder === 'undefined'
-    )
+    return typeof AudioDecoder !== 'undefined' && typeof VideoDecoder !== 'undefined'
   }
 
   /**
@@ -141,7 +140,7 @@ class Mp4MediaStream {
    * ようにしないと、WebRTC の受信側で映像のフレームレートが極端に下がったり、止まったりする現象が確認されています。
    * なお、VideoElement はミュートかつ hidden visibility でも問題ありません。
    */
-  play(options: PlayOptions = {}): MediaStream {
+  play(options: PlayOptions = {}): Promise<MediaStream> {
     if (this.info === undefined) {
       // ここには来ないはず
       throw new Error('bug')
@@ -150,7 +149,7 @@ class Mp4MediaStream {
     const playerId = this.nextPlayerId
     this.nextPlayerId += 1
 
-    const player = new Player(this.info.audioConfigs.length > 0, this.info.videoConfigs.length > 0)
+    const player = new Player(this.info.audioConfigs, this.info.videoConfigs)
     this.players.set(playerId, player)
     ;(this.wasm.exports.play as CallableFunction)(
       this.engine,
@@ -202,6 +201,10 @@ class Mp4MediaStream {
       // JSON.parse() の結果では config.description の型は number[] となって期待とは異なるので
       // ここで適切な型に変換している
       config.description = new Uint8Array(config.description as object as number[])
+      if (config.description.byteLength === 0) {
+        // コーデックによっては description が存在しないので空なら削除する
+        config.description = undefined
+      }
 
       if (!(await VideoDecoder.isConfigSupported(config)).supported) {
         throw new Error(`Unsupported video decoder configuration: ${JSON.stringify(config)}`)
@@ -239,31 +242,29 @@ class Mp4MediaStream {
     // JSON.parse() の結果では config.description の型は number[] となって期待とは異なるので
     // ここで適切な型に変換している
     config.description = new Uint8Array(config.description as object as number[])
+    if (config.description.byteLength === 0) {
+      // コーデックによっては description が存在しないので空なら削除する
+      config.description = undefined
+    }
 
     const init = {
       output: async (frame: VideoFrame) => {
-        if (player.videoWriter === undefined) {
-          // writer の出力先がすでに閉じられている場合などにここに来る可能性がある
-          return
-        }
-
         try {
-          await player.videoWriter.write(frame)
-        } catch (error) {
-          // 書き込みエラーが発生した場合には再生を停止する
-
-          if (error instanceof DOMException && error.name === 'InvalidStateError') {
-            // 出力先の MediaStreamTrack が停止済み、などの理由で write() が失敗した場合にここに来る。
-            // このケースは普通に発生し得るので正常系の一部。
-            // writer はすでに閉じているので、重複 close() による警告ログ出力を避けるために undefined に設定する。
-            player.videoWriter = undefined
-            await this.stopPlayer(playerId)
+          if (player.canvas === undefined || player.canvasCtx === undefined) {
             return
           }
 
-          // 想定外のエラーの場合は再送する
-          await this.stopPlayer(playerId)
-          throw error
+          try {
+            player.canvas.width = frame.displayWidth
+            player.canvas.height = frame.displayHeight
+            player.canvasCtx.drawImage(frame, 0, 0)
+          } catch (error) {
+            // エラーが発生した場合には再生を停止する
+            await this.stopPlayer(playerId)
+            throw error
+          }
+        } finally {
+          frame.close()
         }
       },
       error: async (error: DOMException) => {
@@ -296,28 +297,24 @@ class Mp4MediaStream {
     const config = this.wasmJsonToValue(configWasmJson) as AudioDecoderConfig
     const init = {
       output: async (data: AudioData) => {
-        if (player.audioWriter === undefined) {
-          // writer の出力先がすでに閉じられている場合などにここに来る可能性がある
-          return
-        }
-
         try {
-          await player.audioWriter.write(data)
-        } catch (e) {
-          // 書き込みエラーが発生した場合には再生を停止する
-
-          if (e instanceof DOMException && e.name === 'InvalidStateError') {
-            // 出力先の MediaStreamTrack が停止済み、などの理由で write() が失敗した場合にここに来る。
-            // このケースは普通に発生し得るので正常系の一部。
-            // writer はすでに閉じているので、重複 close() による警告ログ出力を避けるために undefined に設定する。
-            player.audioWriter = undefined
-            await this.stopPlayer(playerId)
+          if (player.audioInputNode === undefined) {
             return
           }
 
-          // 想定外のエラーの場合は再送する
-          await this.stopPlayer(playerId)
-          throw e
+          try {
+            const samples = new Float32Array(data.numberOfFrames * data.numberOfChannels)
+            data.copyTo(samples, { planeIndex: 0, format: 'f32' })
+
+            const timestamp = data.timestamp
+            player.audioInputNode.port.postMessage({ timestamp, samples }, [samples.buffer])
+          } catch (e) {
+            // エラーが発生した場合には再生を停止する
+            await this.stopPlayer(playerId)
+            throw e
+          }
+        } finally {
+          data.close()
         }
       },
       error: async (error: DOMException) => {
@@ -433,27 +430,49 @@ type Mp4Info = {
 class Player {
   private audio: boolean
   private video: boolean
+  private numberOfChannels = 1
+  private sampleRate = 48000
   audioDecoder?: AudioDecoder
   videoDecoder?: VideoDecoder
-  audioWriter?: WritableStreamDefaultWriter
-  videoWriter?: WritableStreamDefaultWriter
+  canvas?: HTMLCanvasElement
+  canvasCtx?: CanvasRenderingContext2D
+  audioContext?: AudioContext
+  audioInputNode?: AudioWorkletNode
 
-  constructor(audio: boolean, video: boolean) {
-    this.audio = audio
-    this.video = video
+  constructor(audioConfigs: AudioDecoderConfig[], videoConfigs: VideoDecoderConfig[]) {
+    this.audio = audioConfigs.length > 0
+    this.video = videoConfigs.length > 0
+
+    if (audioConfigs.length > 0) {
+      // [NOTE] 今は複数音声入力トラックには未対応なので、最初の一つに決め打ちでいい
+      this.numberOfChannels = audioConfigs[0].numberOfChannels
+      this.sampleRate = audioConfigs[0].sampleRate
+    }
   }
 
-  createMediaStream(): MediaStream {
+  async createMediaStream(): Promise<MediaStream> {
     const tracks = []
     if (this.audio) {
-      const generator = new MediaStreamTrackGenerator({ kind: 'audio' })
-      tracks.push(generator)
-      this.audioWriter = generator.writable.getWriter()
+      const blob = new Blob([AUDIO_WORKLET_PROCESSOR_CODE], { type: 'application/javascript' })
+      this.audioContext = new AudioContext({ sampleRate: this.sampleRate })
+      await this.audioContext.audioWorklet.addModule(URL.createObjectURL(blob))
+
+      this.audioInputNode = new AudioWorkletNode(this.audioContext, AUDIO_WORKLET_PROCESSOR_NAME, {
+        outputChannelCount: [this.numberOfChannels],
+      })
+
+      const destination = this.audioContext.createMediaStreamDestination()
+      this.audioInputNode.connect(destination)
+      tracks.push(destination.stream.getAudioTracks()[0])
     }
     if (this.video) {
-      const generator = new MediaStreamTrackGenerator({ kind: 'video' })
-      tracks.push(generator)
-      this.videoWriter = generator.writable.getWriter()
+      this.canvas = document.createElement('canvas')
+      const canvasCtx = this.canvas.getContext('2d')
+      if (canvasCtx === null) {
+        throw Error('Failed to create 2D canvas context')
+      }
+      this.canvasCtx = canvasCtx
+      tracks.push(this.canvas.captureStream().getVideoTracks()[0])
     }
     return new MediaStream(tracks)
   }
@@ -512,25 +531,14 @@ class Player {
     await this.closeAudioDecoder()
     await this.closeVideoDecoder()
 
-    if (this.audioWriter !== undefined) {
-      try {
-        await this.audioWriter.close()
-      } catch (e) {
-        // writer がエラー状態になっている場合などには close() に失敗する模様
-        // 特に対処法も実害もなさそうなので、ログだけ出して無視しておく
-        console.log(`[WARNING] ${e}`)
-      }
-      this.audioWriter = undefined
+    if (this.audioContext !== undefined) {
+      await this.audioContext.close()
+      this.audioContext = undefined
+      this.audioInputNode = undefined
     }
-    if (this.videoWriter !== undefined) {
-      try {
-        await this.videoWriter.close()
-      } catch (e) {
-        // writer がエラー状態になっている場合などには close() に失敗する模様
-        // 特に対処法も実害もなさそうなので、ログだけ出して無視しておく
-        console.log(`[WARNING] ${e}`)
-      }
-      this.videoWriter = undefined
+    if (this.canvas !== undefined) {
+      this.canvas = undefined
+      this.canvasCtx = undefined
     }
   }
 }

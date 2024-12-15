@@ -39,6 +39,7 @@ Please read <https://github.com/shiguredo/oss/blob/master/README.en.md> before u
 - [@shiguredo/noise\-suppression \- npm](https://www.npmjs.com/package/@shiguredo/noise-suppression)
 - [@shiguredo/light\-adjustment \- npm](https://www.npmjs.com/package/@shiguredo/light-adjustment)
 - [@shiguredo/light\-adjustment\-gpu \- npm](https://www.npmjs.com/package/@shiguredo/light-adjustment-gpu)
+- [@shiguredo/mp4\-media\-stream \- npm](https://www.npmjs.com/package/@shiguredo/mp4-media-stream)
 
 ## サンプル
 

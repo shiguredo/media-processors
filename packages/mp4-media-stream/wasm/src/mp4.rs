@@ -5,7 +5,8 @@ use serde::Serialize;
 use shiguredo_mp4::{
     aux::SampleTableAccessor,
     boxes::{
-        Avc1Box, FtypBox, HdlrBox, IgnoredBox, MoovBox, OpusBox, SampleEntry, StblBox, TrakBox,
+        Av01Box, Avc1Box, FtypBox, HdlrBox, Hev1Box, IgnoredBox, MoovBox, Mp4aBox, OpusBox,
+        SampleEntry, StblBox, TrakBox, Vp08Box, Vp09Box,
     },
     BaseBox, Decode, Either, Encode,
 };
@@ -37,6 +38,107 @@ impl VideoDecoderConfig {
             coded_height: b.visual.height,
         }
     }
+
+    pub fn from_hev1_box(b: &Hev1Box) -> Self {
+        let mut description = Vec::new();
+        b.hvcc_box.encode(&mut description).expect("unreachable");
+        description.drain(..8); // ボックスヘッダ部分を取り除く
+
+        let mut constraints = b
+            .hvcc_box
+            .general_constraint_indicator_flags
+            .get()
+            .to_be_bytes()
+            .to_vec();
+        while constraints.len() > 1 && constraints.last() == Some(&0) {
+            constraints.pop();
+        }
+
+        Self {
+            // ISO / IEC 14496-15 E.3
+            codec: format!(
+                "hev1.{}.{:X}.{}.{}",
+                match b.hvcc_box.general_profile_space.get() {
+                    1 => format!("A{}", b.hvcc_box.general_profile_idc.get()),
+                    2 => format!("B{}", b.hvcc_box.general_profile_idc.get()),
+                    3 => format!("C{}", b.hvcc_box.general_profile_idc.get()),
+                    v => format!("{v}"),
+                },
+                b.hvcc_box
+                    .general_profile_compatibility_flags
+                    .reverse_bits(),
+                format!(
+                    "{}{}",
+                    if b.hvcc_box.general_tier_flag.get() == 0 {
+                        'L'
+                    } else {
+                        'H'
+                    },
+                    b.hvcc_box.general_level_idc
+                ),
+                constraints
+                    .into_iter()
+                    .map(|b| format!("{:02X}", b))
+                    .collect::<Vec<_>>()
+                    .join(".")
+            ),
+            description,
+            coded_width: b.visual.width,
+            coded_height: b.visual.height,
+        }
+    }
+
+    pub fn from_vp08_box(b: &Vp08Box) -> Self {
+        Self {
+            codec: "vp8".to_owned(),
+            description: Vec::new(),
+            coded_width: b.visual.width,
+            coded_height: b.visual.height,
+        }
+    }
+
+    pub fn from_vp09_box(b: &Vp09Box) -> Self {
+        Self {
+            codec: format!(
+                "vp09.{:02}.{:02}.{:02}",
+                b.vpcc_box.profile,
+                b.vpcc_box.level,
+                b.vpcc_box.bit_depth.get()
+            ),
+            description: Vec::new(),
+            coded_width: b.visual.width,
+            coded_height: b.visual.height,
+        }
+    }
+
+    pub fn from_av01_box(b: &Av01Box) -> Self {
+        Self {
+            // https://aomediacodec.github.io/av1-isobmff/#codecsparam
+            codec: format!(
+                "av01.{}.{:02}{}.{:02}",
+                b.av1c_box.seq_profile.get(),
+                b.av1c_box.seq_level_idx_0.get(),
+                if b.av1c_box.seq_tier_0.get() == 0 {
+                    'M'
+                } else {
+                    'H'
+                },
+                match (
+                    b.av1c_box.seq_profile.get(),
+                    b.av1c_box.high_bitdepth.get(),
+                    b.av1c_box.twelve_bit.get()
+                ) {
+                    (2, 1, 1) => 12,
+                    (2, 1, 0) => 10,
+                    (_, 1, _) => 10,
+                    (_, _, _) => 8,
+                }
+            ),
+            description: Vec::new(),
+            coded_width: b.visual.width,
+            coded_height: b.visual.height,
+        }
+    }
 }
 
 #[derive(Debug, Serialize)]
@@ -51,6 +153,31 @@ impl AudioDecoderConfig {
     pub fn from_opus_box(b: &OpusBox) -> Self {
         Self {
             codec: "opus".to_owned(),
+            sample_rate: b.audio.samplerate.integer,
+            number_of_channels: b.audio.channelcount as u8,
+        }
+    }
+
+    pub fn from_mp4a_box(b: &Mp4aBox) -> Self {
+        let mut codec = format!(
+            "mp4a.{:02X}",
+            b.esds_box.es.dec_config_descr.object_type_indication
+        );
+        if b.esds_box.es.dec_config_descr.object_type_indication == 0x40 {
+            if let Some(b) = b
+                .esds_box
+                .es
+                .dec_config_descr
+                .dec_specific_info
+                .payload
+                .get(0)
+            {
+                let audio_object_type = b >> 3;
+                codec.push_str(&format!(".{audio_object_type}"));
+            }
+        };
+        Self {
+            codec,
             sample_rate: b.audio.samplerate.integer,
             number_of_channels: b.audio.channelcount as u8,
         }
@@ -85,7 +212,12 @@ impl Track {
 
         match sample_table.stbl_box().stsd_box.entries.first() {
             Some(SampleEntry::Avc1(_)) => (),
+            Some(SampleEntry::Hev1(_)) => (),
+            Some(SampleEntry::Vp08(_)) => (),
+            Some(SampleEntry::Vp09(_)) => (),
+            Some(SampleEntry::Av01(_)) => (),
             Some(SampleEntry::Opus(_)) => (),
+            Some(SampleEntry::Mp4a(_)) => (),
             Some(b) => {
                 return Err(Failure::new(format!(
                     "Unsupported {kind}codec: {}",
@@ -174,8 +306,23 @@ impl Mp4 {
                     SampleEntry::Avc1(b) => {
                         video_configs.push(VideoDecoderConfig::from_avc1_box(b));
                     }
+                    SampleEntry::Hev1(b) => {
+                        video_configs.push(VideoDecoderConfig::from_hev1_box(b));
+                    }
+                    SampleEntry::Vp08(b) => {
+                        video_configs.push(VideoDecoderConfig::from_vp08_box(b));
+                    }
+                    SampleEntry::Vp09(b) => {
+                        video_configs.push(VideoDecoderConfig::from_vp09_box(b));
+                    }
+                    SampleEntry::Av01(b) => {
+                        video_configs.push(VideoDecoderConfig::from_av01_box(b));
+                    }
                     SampleEntry::Opus(b) => {
                         audio_configs.push(AudioDecoderConfig::from_opus_box(b));
+                    }
+                    SampleEntry::Mp4a(b) => {
+                        audio_configs.push(AudioDecoderConfig::from_mp4a_box(b));
                     }
                     _ => {
                         // `Track` 作成時にチェックしているのでここには来ない
