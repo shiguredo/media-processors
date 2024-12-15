@@ -13,6 +13,11 @@
 
 ### misc
 
+- [CHANGE] tsconfig.json を共通化する
+  - @voluntas
+- [CHANGE] rollup を vite に置き換える
+  - @voluntas
+
 ## mp4-media-stream-2024.3.0
 
 - [ADD] `Mp4MediaStream` の対応コーデックに H.265 を追加する
