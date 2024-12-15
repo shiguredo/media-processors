@@ -30,7 +30,18 @@ export default defineConfig({
       output: {
         banner: banner,
       },
-      plugins: [mediapipeWorkaround],
+      plugins: [
+        mediapipeWorkaround,
+        {
+          name: 'wasm-loader',
+          transform(code) {
+            return code.replace(
+              /__LIGHT_ADJUSTMENT_WASM__/g,
+              () => fs.readFileSync("dist/light_adjustment.wasm", "base64")
+            )
+          }
+        },
+      ],
     },
   },
   plugins: [
@@ -50,7 +61,7 @@ export default defineConfig({
             '../../node_modules/@mediapipe/selfie_segmentation/*.wasm',
             '../../node_modules/@mediapipe/selfie_segmentation/*.tflite',
             '../../node_modules/@mediapipe/selfie_segmentation/*.binarypb',
-            '../../node_modules/@mediapipe/selfie_segmentation/*wasm_bin.js',
+            '../../node_modules/@mediapipe/selfie_segmentation/*wasm_bin.js'
           ],
           dest: '.',
         },
@@ -73,3 +84,4 @@ function mediapipeWorkaround() {
     },
   }
 }
+
