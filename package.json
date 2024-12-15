@@ -4,17 +4,16 @@
   "scripts": {
     "dev": "vite --config examples/vite.config.mjs",
     "build": "pnpm -r --filter=./packages/* build",
+    "doc": "pnpm -r --filter=./packages/* doc",
     "lint": "pnpm -r --filter=./packages/* lint",
     "fmt": "pnpm -r --filter=./packages/* fmt",
-    "doc": "pnpm -r --filter=./packages/* doc",
-    "start": "serve -S -l 8080 ."
+    "check": "pnpm -r --filter=./packages/* check"
   },
   "dependencies": {
     "@types/dom-mediacapture-transform": "0.1.9"
   },
   "devDependencies": {
     "@biomejs/biome": "1.8.3",
-    "serve": "14.2.3",
     "tslib": "2.6.3",
     "typedoc": "0.26.5",
     "typescript": "5.7.2",
