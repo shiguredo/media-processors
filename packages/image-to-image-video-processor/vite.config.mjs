@@ -1,8 +1,6 @@
-import fs from 'node:fs'
 import { resolve } from 'node:path'
 import { defineConfig } from 'vite'
 import dts from 'vite-plugin-dts'
-import { viteStaticCopy } from 'vite-plugin-static-copy';
 import pkg from './package.json'
 
 const banner = `/**
@@ -21,10 +19,10 @@ export default defineConfig({
     emptyOutDir: true,
     manifest: true,
     lib: {
-      entry: resolve(__dirname, 'src/light_adjustment_gpu.ts'),
+      entry: resolve(__dirname, 'src/image_to_image_video_processor.ts'),
       formats: ['es'],
       name: 'Shiguredo',
-      fileName: 'light_adjustment_gpu',
+      fileName: 'image_to_image_video_processor',
     },
     rollupOptions: {
       output: {
@@ -35,14 +33,6 @@ export default defineConfig({
   plugins: [
     dts({
       include: ['src/**/*'],
-    }),
-    viteStaticCopy({
-      targets: [
-        {
-          src: ["./model/tfjs_model_*"],
-          dest: '.',
-        },
-      ],
     }),
   ],
 })

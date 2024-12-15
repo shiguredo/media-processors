@@ -44,7 +44,7 @@ export default defineConfig({
             './node_modules/@shiguredo/rnnoise-wasm/dist/*.wasm',
             '../../node_modules/@shiguredo/rnnoise-wasm/dist/*.wasm'
           ],
-          dest: 'dist/',
+          dest: '.',
         },
       ],
     }),
