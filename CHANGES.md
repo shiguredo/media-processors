@@ -13,6 +13,8 @@
 
 ### misc
 
+- [CHANGE] GitHub Actions のビルド環境を ubuntu-latest から ubuntu-24.04 に変更する
+  - @voluntas
 - [CHANGE] tsconfig.json を共通化する
   - @voluntas
 - [CHANGE] rollup を vite に置き換える
