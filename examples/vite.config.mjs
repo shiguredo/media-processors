@@ -40,20 +40,6 @@ export default defineConfig({
       '@shiguredo/mp4-media-stream',
     ],
   },
-  build: {
-    rollupOptions: {
-      input: {
-        index: resolve(__dirname, 'index.html'),
-        virtualBackground: resolve(__dirname, 'virtual-background/index.html'),
-        lightAdjustment: resolve(__dirname, 'light-adjustment/index.html'),
-        lightAdjustmentGpu: resolve(__dirname, 'light-adjustment-gpu/index.html'),
-        noiseSuppression: resolve(__dirname, 'noise-suppression/index.html'),
-        videoMultiProcessors: resolve(__dirname, 'video-multi-processors/index.html'),
-        videoMultiProcessorsGpu: resolve(__dirname, 'video-multi-processors-gpu/index.html'),
-        mp4MediaStream: resolve(__dirname, 'mp4-media-stream/index.html'),
-      },
-    },
-  },
   envDir: resolve(__dirname, '..'),
   plugins: [
     viteStaticCopy({
