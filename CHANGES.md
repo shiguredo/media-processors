@@ -11,6 +11,9 @@
 
 ## develop
 
+- [UPDATE] pnpm 10 系に上げる
+  - @voluntas
+
 ### misc
 
 - [CHANGE] GitHub Actions のビルド環境を ubuntu-latest から ubuntu-24.04 に変更する
