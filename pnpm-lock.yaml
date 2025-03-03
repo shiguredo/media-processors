@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@types/dom-mediacapture-transform':
-        specifier: 0.1.10
-        version: 0.1.10
+        specifier: 0.1.11
+        version: 0.1.11
     devDependencies:
       '@biomejs/biome':
         specifier: 1.9.4
@@ -555,11 +555,11 @@ packages:
   '@types/argparse@1.0.38':
     resolution: {integrity: sha512-ebDJ9b0e702Yr7pWgB0jzm+CX4Srzz8RcXtLJDJB+BSccqMa36uyH/zUsSYao5+BD1ytv3k3rPYCq4mAE1hsXA==}
 
-  '@types/dom-mediacapture-transform@0.1.10':
-    resolution: {integrity: sha512-zUxMN2iShu7p3Fz5sqfvLp93qW/3sLs+RwXWWOkMb969hsuoVqUUokqrENjXqTMNmEEcVXKoHuMMbIGcWyrVVA==}
+  '@types/dom-mediacapture-transform@0.1.11':
+    resolution: {integrity: sha512-Y2p+nGf1bF2XMttBnsVPHUWzRRZzqUoJAKmiP10b5umnO6DDrWI0BrGDJy1pOHoOULVmGSfFNkQrAlC5dcj6nQ==}
 
-  '@types/dom-webcodecs@0.1.13':
-    resolution: {integrity: sha512-O5hkiFIcjjszPIYyUSyvScyvrBoV3NOEEZx/pMlsu44TKzWNkLVBBxnxJz42in5n3QIolYOcBYFCPZZ0h8SkwQ==}
+  '@types/dom-webcodecs@0.1.14':
+    resolution: {integrity: sha512-ba9aF0qARLLQpLihONIRbj8VvAdUxO+5jIxlscVcDAQTcJmq5qVr781+ino5qbQUJUmO21cLP2eLeXYWzao5Vg==}
 
   '@types/estree@1.0.6':
     resolution: {integrity: sha512-AYnb1nQyY49te+VRAVgmzfcgjYS91mY5P0TKUDCLEM+gNnA+3T6rWITXRLYCpahpqSQbN5cE+gHpnPyXjHWxcw==}
@@ -1599,11 +1599,11 @@ snapshots:
 
   '@types/argparse@1.0.38': {}
 
-  '@types/dom-mediacapture-transform@0.1.10':
+  '@types/dom-mediacapture-transform@0.1.11':
     dependencies:
-      '@types/dom-webcodecs': 0.1.13
+      '@types/dom-webcodecs': 0.1.14
 
-  '@types/dom-webcodecs@0.1.13': {}
+  '@types/dom-webcodecs@0.1.14': {}
 
   '@types/estree@1.0.6': {}
 
