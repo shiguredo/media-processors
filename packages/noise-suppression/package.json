@@ -1,6 +1,6 @@
 {
   "name": "@shiguredo/noise-suppression",
-  "version": "2025.1.0-canary.0",
+  "version": "2025.1.0-canary.1",
   "description": "Noise Suppression Library",
   "author": "Shiguredo Inc.",
   "license": "Apache-2.0",
@@ -28,6 +28,6 @@
     "dist"
   ],
   "devDependencies": {
-    "@shiguredo/rnnoise-wasm": "2025.1.0-canary.12"
+    "@shiguredo/rnnoise-wasm": "2025.1.1"
   }
 }
