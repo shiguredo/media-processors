@@ -11,7 +11,7 @@
 
 ## develop
 
-- [CHANGE] noise-suppression の  modelPath を削除
+- [CHANGE] noise-suppression の modelPath を削除
   - @voluntas
 - [CHANGE] noise-suppression の assetsPath を削除
   - @voluntas
