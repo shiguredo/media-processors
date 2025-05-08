@@ -1,35 +1,13 @@
 import { type DenoiseState, Rnnoise } from '@shiguredo/rnnoise-wasm'
 
 /**
- * {@link NoiseSuppressionProcessor.startProcessing} メソッドに指定可能なオプション
- */
-interface NoiseSuppressionProcessorOptions {
-  /**
-   * 使用する RNNoise のモデルのパスないし URL
-   *
-   * 省略された場合は、デフォルトモデルが使用されます
-   */
-  modelPath?: string
-}
-
-/**
  * 音声トラックにノイズ抑制処理を適用するためのプロセッサ
  */
 class NoiseSuppressionProcessor {
-  private assetsPath: string
   private rnnoise?: Rnnoise
   private trackProcessor?: TrackProcessor
   private processedTrack?: MediaStreamAudioTrack
   private originalTrack?: MediaStreamAudioTrack
-
-  /**
-   * {@link NoiseSuppressionProcessor}インスタンスを生成します
-   *
-   * @param assetsPath wasm ファイルの配置先ディレクトリパスないしURL
-   */
-  constructor(assetsPath: string) {
-    this.assetsPath = trimLastSlash(assetsPath)
-  }
 
   /**
    * 実行環境が必要な機能をサポートしているかどうかを判定します
@@ -61,27 +39,17 @@ class NoiseSuppressionProcessor {
    * 実行時にエラーが送出されます。
 
    */
-  async startProcessing(
-    track: MediaStreamAudioTrack,
-    options: NoiseSuppressionProcessorOptions = {},
-  ): Promise<MediaStreamAudioTrack> {
+  async startProcessing(track: MediaStreamAudioTrack): Promise<MediaStreamAudioTrack> {
     if (this.isProcessing()) {
       throw Error('Noise suppression processing has already started.')
     }
 
     if (this.rnnoise === undefined) {
       // 最初の `startProcessing` 呼び出し時に RNNoise をロードする
-      this.rnnoise = await Rnnoise.load({ assetsPath: this.assetsPath })
+      this.rnnoise = await Rnnoise.load()
     }
 
-    let denoiseState: DenoiseState
-    if (options.modelPath === undefined) {
-      denoiseState = this.rnnoise.createDenoiseState()
-    } else {
-      const modelString = await fetch(options.modelPath).then((res) => res.text())
-      const model = this.rnnoise.createModel(modelString)
-      denoiseState = this.rnnoise.createDenoiseState(model)
-    }
+    const denoiseState = this.rnnoise.createDenoiseState()
 
     this.trackProcessor = new TrackProcessor(track, this.rnnoise, denoiseState)
     this.originalTrack = track
@@ -199,9 +167,6 @@ class TrackProcessor {
   stopProcessing() {
     this.abortController.abort()
     this.denoiseState.destroy()
-    if (this.denoiseState.model !== undefined) {
-      this.denoiseState.model.free()
-    }
   }
 
   private transform(
@@ -284,11 +249,4 @@ class TrackProcessor {
   }
 }
 
-function trimLastSlash(s: string): string {
-  if (s.slice(-1) === '/') {
-    return s.slice(0, -1)
-  }
-  return s
-}
-
-export { NoiseSuppressionProcessor, type NoiseSuppressionProcessorOptions }
+export { NoiseSuppressionProcessor }
