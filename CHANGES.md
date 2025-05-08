@@ -23,6 +23,8 @@
 
 ### misc
 
+- [ADD] Nodejs 24 系をテスト対象に追加する
+  - @voluntas
 - [CHANGE] GitHub Actions のビルド環境を ubuntu-latest から ubuntu-24.04 に変更する
   - @voluntas
 - [CHANGE] tsconfig.json を共通化する
