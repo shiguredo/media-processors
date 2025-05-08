@@ -28,6 +28,6 @@
     "dist"
   ],
   "devDependencies": {
-    "@shiguredo/rnnoise-wasm": "2025.1.0-canary.6"
+    "@shiguredo/rnnoise-wasm": "2025.1.0-canary.12"
   }
 }
