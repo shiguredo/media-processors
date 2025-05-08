@@ -11,7 +11,11 @@
 
 ## develop
 
-- [CHANGE] noise-suppression が依存している rnnoise-wasm のバージョンを 2025.1.0-canary.6 に上げる
+- [CHANGE] noise-suppression の modelPath を削除
+  - @voluntas
+- [CHANGE] noise-suppression の assetsPath を削除
+  - @voluntas
+- [CHANGE] noise-suppression が依存している rnnoise-wasm のバージョンを 2025.1.0-canary.12 に上げる
   - 2025.1.0 になるまでこれをアップデートしていく
   - @voluntas
 - [UPDATE] pnpm 10 系に上げる
