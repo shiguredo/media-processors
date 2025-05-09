@@ -4,9 +4,15 @@
   "description": "Noise Suppression Library",
   "author": "Shiguredo Inc.",
   "license": "Apache-2.0",
-  "main": "dist/noise_suppression.js",
+  "type": "module",
+  "main": "dist/noise_suppression.mjs",
   "module": "dist/noise_suppression.mjs",
-  "types": "dist/noise_suppression.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/noise_suppression.mjs",
+      "types": "./dist/noise_suppression.d.ts"
+    }
+  },
   "scripts": {
     "build": "vite build",
     "lint": "biome lint ./src",
