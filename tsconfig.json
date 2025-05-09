@@ -14,6 +14,7 @@
     "stripInternal": true,
     "newLine": "LF",
     "lib": ["ES2022", "dom"],
-    "outDir": "dist"
+    "outDir": "dist",
+    "skipLibCheck": true
   }
 }
