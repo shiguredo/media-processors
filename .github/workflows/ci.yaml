@@ -17,10 +17,6 @@ jobs:
         node: ["18", "20", "22", "24"]
     steps:
       - uses: actions/checkout@v4
-      - uses: goto-bus-stop/setup-zig@v2
-        with:
-          version: 0.12.0
-      - run: zig version
       - run: rustup update stable && rustup target add wasm32-unknown-unknown
       - uses: actions/setup-node@v4
         with:
@@ -33,7 +29,6 @@ jobs:
       - run: pnpm run build
       - run: pnpm run lint
       - run: pnpm run doc
-      - run: cd packages/light-adjustment/zig/ && zig build test
       - name: Slack Notification
         if: failure()
         uses: rtCamp/action-slack-notify@v2

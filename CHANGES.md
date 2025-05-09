@@ -11,6 +11,10 @@
 
 ## develop
 
+- [CHANGE] light-adjustment を廃止
+  - @voluntas
+- [CHANGE] light-adjustment-gpu を廃止
+  - @voluntas
 - [CHANGE] noise-suppression の modelPath を削除
   - @voluntas
 - [CHANGE] noise-suppression の assetsPath を削除
@@ -22,6 +26,8 @@
 
 ### misc
 
+- [UPDATE] build.yml のノードのバージョンを 18 から 24 に上げる
+  - @voluntas
 - [ADD] Nodejs 24 系をテスト対象に追加する
   - @voluntas
 - [CHANGE] GitHub Actions のビルド環境を ubuntu-latest から ubuntu-24.04 に変更する

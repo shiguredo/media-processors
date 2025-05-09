@@ -3,7 +3,7 @@
 ![Static Badge](https://img.shields.io/badge/Checked_with-Biome-60a5fa?style=flat&logo=biome)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
-仮想背景やノイズ抑制、ライト調整といったメディア処理をブラウザで簡単に行えるようにするためのライブラリです。
+仮想背景やノイズ抑制、MP4 メディアストリームといったメディア処理をブラウザで簡単に行えるようにするためのライブラリです。
 
 ## About Shiguredo's open source software
 
@@ -22,23 +22,17 @@ Please read <https://github.com/shiguredo/oss/blob/master/README.en.md> before u
 ただし、以下の機能は Safari でも動作します。
 
 - 仮想背景 / 背景ぼかし
-- ライト調整
-- ライト調整（GPU版）
 
 ## 機能
 
 - [仮想背景 / 背景ぼかし](https://github.com/shiguredo/media-processors/tree/develop/packages/virtual-background)
 - [ノイズ抑制](https://github.com/shiguredo/media-processors/tree/develop/packages/noise-suppression)
-- [ライト調整](https://github.com/shiguredo/media-processors/tree/develop/packages/light-adjustment)
-- [ライト調整（GPU版）](https://github.com/shiguredo/media-processors/tree/develop/packages/light-adjustment-gpu)
 - [MP4 メディアストリーム](https://github.com/shiguredo/media-processors/tree/develop/packages/mp4-media-stream)
 
 ## npm
 
 - [@shiguredo/virtual\-background \- npm](https://www.npmjs.com/package/@shiguredo/virtual-background)
 - [@shiguredo/noise\-suppression \- npm](https://www.npmjs.com/package/@shiguredo/noise-suppression)
-- [@shiguredo/light\-adjustment \- npm](https://www.npmjs.com/package/@shiguredo/light-adjustment)
-- [@shiguredo/light\-adjustment\-gpu \- npm](https://www.npmjs.com/package/@shiguredo/light-adjustment-gpu)
 - [@shiguredo/mp4\-media\-stream \- npm](https://www.npmjs.com/package/@shiguredo/mp4-media-stream)
 
 ## サンプル
@@ -47,8 +41,6 @@ GitHub Pages にサンプルを用意しています。完全にクライアン�
 
 - [仮想背景 / 背景ぼかし](https://shiguredo.github.io/media-processors/virtual-background/)
 - [ノイズ抑制](https://shiguredo.github.io/media-processors/noise-suppression/)
-- [ライト調整](https://shiguredo.github.io/media-processors/light-adjustment/)
-- [ライト調整（GPU版）](https://shiguredo.github.io/media-processors/light-adjustment-gpu/)
 - [MP4 メディアストリーム](https://shiguredo.github.io/media-processors/mp4-media-stream/)
 
 ## 優先実装
@@ -59,6 +51,7 @@ GitHub Pages にサンプルを用意しています。完全にクライアン�
 
 **詳細は Discord やメールなどでお気軽にお問い合わせください**
 
+- シャープネス
 - フェイスフレーミング
 
 すでに存在するライブラリや仕組みを利用する前提となります。
@@ -83,7 +76,7 @@ Discord へお願いします。
 
 [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0)
 
-```
+```text
 Copyright 2022-2025, Takeru Ohta (Original Author)
 Copyright 2022-2025, Shiguredo Inc.
 
