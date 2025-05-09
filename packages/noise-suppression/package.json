@@ -28,6 +28,6 @@
     "dist"
   ],
   "devDependencies": {
-    "@shiguredo/rnnoise-wasm": "2025.1.1"
+    "@shiguredo/rnnoise-wasm": "2025.1.5"
   }
 }

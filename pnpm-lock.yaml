@@ -66,8 +66,8 @@ importers:
   packages/noise-suppression:
     devDependencies:
       '@shiguredo/rnnoise-wasm':
-        specifier: 2025.1.1
-        version: 2025.1.1
+        specifier: 2025.1.5
+        version: 2025.1.5
 
   packages/video-track-processor:
     devDependencies:
@@ -477,8 +477,8 @@ packages:
   '@rushstack/ts-command-line@5.0.1':
     resolution: {integrity: sha512-bsbUucn41UXrQK7wgM8CNM/jagBytEyJqXw/umtI8d68vFm1Jwxh1OtLrlW7uGZgjCWiiPH6ooUNa1aVsuVr3Q==}
 
-  '@shiguredo/rnnoise-wasm@2025.1.1':
-    resolution: {integrity: sha512-DhwnGiS6aL/x88GWRCsP86YWI18Dbb8+WJos6yFoyrUmn975jAwEUt74v/Y9I8AshCGXRCIYhbJmYf4qA5pEmA==}
+  '@shiguredo/rnnoise-wasm@2025.1.5':
+    resolution: {integrity: sha512-9YJxzzHftlW936E5z9aEKK2CrPfUgc3HgZ2keyQ5e2Pb5bx+6tykYQ2Gyudvxd7Sxmlnar7SemDMFfx0OuVuGA==}
     engines: {node: '>=20', pnpm: '>=10'}
 
   '@shikijs/engine-oniguruma@3.4.0':
@@ -1535,7 +1535,7 @@ snapshots:
     transitivePeerDependencies:
       - '@types/node'
 
-  '@shiguredo/rnnoise-wasm@2025.1.1': {}
+  '@shiguredo/rnnoise-wasm@2025.1.5': {}
 
   '@shikijs/engine-oniguruma@3.4.0':
     dependencies:
