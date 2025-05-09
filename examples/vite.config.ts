@@ -45,11 +45,7 @@ export default defineConfig({
       input: {
         index: resolve(__dirname, 'index.html'),
         virtualBackground: resolve(__dirname, 'virtual-background/index.html'),
-        lightAdjustment: resolve(__dirname, 'light-adjustment/index.html'),
-        lightAdjustmentGpu: resolve(__dirname, 'light-adjustment-gpu/index.html'),
         noiseSuppression: resolve(__dirname, 'noise-suppression/index.html'),
-        videoMultiProcessors: resolve(__dirname, 'video-multi-processors/index.html'),
-        videoMultiProcessorsGpu: resolve(__dirname, 'video-multi-processors-gpu/index.html'),
         mp4MediaStream: resolve(__dirname, 'mp4-media-stream/index.html'),
       },
     },
@@ -64,18 +60,6 @@ export default defineConfig({
             '../packages/virtual-background/dist/*wasm_bin.js',
           ],
           dest: 'virtual-background',
-        },
-        {
-          src: [
-            '../packages/light-adjustment/dist/*.{tflite,binarypb,wasm}',
-            '../packages/light-adjustment/dist/*wasm_bin.js',
-            '../packages/light-adjustment/dist/tfjs_model*',
-          ],
-          dest: 'light-adjustment',
-        },
-        {
-          src: ['../packages/light-adjustment-gpu/dist/tfjs_model*'],
-          dest: 'light-adjustment-gpu',
         },
       ],
     }),

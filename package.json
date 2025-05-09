@@ -3,7 +3,7 @@
   "license": "Apache-2.0",
   "private": true,
   "scripts": {
-    "dev": "vite --config examples/vite.config.mjs",
+    "dev": "vite --config examples/vite.config.ts",
     "build": "pnpm -r --filter=./packages/* build",
     "doc": "pnpm -r --filter=./packages/* doc",
     "lint": "pnpm -r --filter=./packages/* lint",

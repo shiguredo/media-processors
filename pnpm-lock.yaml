@@ -36,12 +36,6 @@ importers:
 
   examples:
     dependencies:
-      '@shiguredo/light-adjustment':
-        specifier: workspace:*
-        version: link:../packages/light-adjustment
-      '@shiguredo/light-adjustment-gpu':
-        specifier: workspace:*
-        version: link:../packages/light-adjustment-gpu
       '@shiguredo/mp4-media-stream':
         specifier: workspace:*
         version: link:../packages/mp4-media-stream
@@ -66,27 +60,6 @@ importers:
       '@tensorflow/tfjs-backend-webgpu':
         specifier: 4.22.0
         version: 4.22.0(@tensorflow/tfjs-core@4.22.0)
-
-  packages/light-adjustment:
-    devDependencies:
-      '@mediapipe/selfie_segmentation':
-        specifier: 0.1.1675465747
-        version: 0.1.1675465747
-      '@shiguredo/video-track-processor':
-        specifier: workspace:*
-        version: link:../video-track-processor
-      '@types/offscreencanvas':
-        specifier: 2019.7.3
-        version: 2019.7.3
-      stackblur-canvas:
-        specifier: 2.7.0
-        version: 2.7.0
-
-  packages/light-adjustment-gpu:
-    devDependencies:
-      '@shiguredo/image-to-image-video-processor':
-        specifier: workspace:*
-        version: link:../image-to-image-video-processor
 
   packages/mp4-media-stream: {}
 
