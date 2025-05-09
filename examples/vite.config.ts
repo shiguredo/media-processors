@@ -15,15 +15,7 @@ export default defineConfig({
       ),
       '@shiguredo/noise-suppression': resolve(
         __dirname,
-        '../packages/noise-suppression/dist/noise_suppression.mjs',
-      ),
-      '@shiguredo/light-adjustment': resolve(
-        __dirname,
-        '../packages/light-adjustment/dist/light_adjustment.mjs',
-      ),
-      '@shiguredo/light-adjustment-gpu': resolve(
-        __dirname,
-        '../packages/light-adjustment-gpu/dist/light_adjustment_gpu.mjs',
+        '../packages/noise-suppression/dist/noise_suppression.js',
       ),
       '@shiguredo/mp4-media-stream': resolve(
         __dirname,
@@ -35,8 +27,6 @@ export default defineConfig({
     exclude: [
       '@shiguredo/virtual-background',
       '@shiguredo/noise-suppression',
-      '@shiguredo/light-adjustment',
-      '@shiguredo/light-adjustment-gpu',
       '@shiguredo/mp4-media-stream',
     ],
   },
