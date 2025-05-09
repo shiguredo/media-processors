@@ -4,9 +4,15 @@
   "description": "Library to generate MediaStream from MP4 file",
   "author": "Shiguredo Inc.",
   "license": "Apache-2.0",
+  "type": "module",
   "main": "dist/mp4_media_stream.js",
-  "module": "dist/mp4_media_stream.mjs",
-  "types": "dist/mp4_media_stream.d.ts",
+  "module": "dist/mp4_media_stream.js",
+  "exports": {
+    ".": {
+      "import": "./dist/mp4_media_stream.js",
+      "types": "./dist/mp4_media_stream.d.ts"
+    }
+  },
   "scripts": {
     "build": "cargo build --release --target wasm32-unknown-unknown -p mp4_media_stream && vite build && tsc --emitDeclarationOnly",
     "lint": "biome lint ./src",

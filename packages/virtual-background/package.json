@@ -4,9 +4,15 @@
   "description": "Virtual Background Library",
   "author": "Shiguredo Inc.",
   "license": "Apache-2.0",
+  "type": "module",
   "main": "dist/virtual_background.js",
-  "module": "dist/virtual_background.mjs",
-  "types": "dist/virtual_background.d.ts",
+  "module": "dist/virtual_background.js",
+  "exports": {
+    ".": {
+      "import": "./dist/virtual_background.js",
+      "types": "./dist/virtual_background.d.ts"
+    }
+  },
   "scripts": {
     "build": "vite build",
     "lint": "biome lint ./src",

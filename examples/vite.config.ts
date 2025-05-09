@@ -11,7 +11,7 @@ export default defineConfig({
     alias: {
       '@shiguredo/virtual-background': resolve(
         __dirname,
-        '../packages/virtual-background/dist/virtual_background.mjs',
+        '../packages/virtual-background/dist/virtual_background.js',
       ),
       '@shiguredo/noise-suppression': resolve(
         __dirname,
@@ -19,7 +19,7 @@ export default defineConfig({
       ),
       '@shiguredo/mp4-media-stream': resolve(
         __dirname,
-        '../packages/mp4-media-stream/dist/mp4_media_stream.mjs',
+        '../packages/mp4-media-stream/dist/mp4_media_stream.js',
       ),
     },
   },

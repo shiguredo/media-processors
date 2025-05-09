@@ -5,11 +5,11 @@
   "author": "Shiguredo Inc.",
   "license": "Apache-2.0",
   "type": "module",
-  "main": "dist/noise_suppression.mjs",
-  "module": "dist/noise_suppression.mjs",
+  "main": "dist/noise_suppression.js",
+  "module": "dist/noise_suppression.js",
   "exports": {
     ".": {
-      "import": "./dist/noise_suppression.mjs",
+      "import": "./dist/noise_suppression.js",
       "types": "./dist/noise_suppression.d.ts"
     }
   },
