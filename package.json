@@ -19,8 +19,8 @@
     "typedoc": "0.28.4",
     "typescript": "5.8.3",
     "vite": "6.3.5",
-    "vite-plugin-dts": "4.5.3",
-    "vite-plugin-static-copy": "2.3.1"
+    "vite-plugin-dts": "4.5.4",
+    "vite-plugin-static-copy": "3.0.0"
   },
   "engines": {
     "node": ">=18",
