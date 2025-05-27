@@ -11,7 +11,33 @@
 
 ## develop
 
+## noise-suppression-2025.1.0
+
+- [CHANGE] light-adjustment を廃止
+  - @voluntas
+- [CHANGE] light-adjustment-gpu を廃止
+  - @voluntas
+- [CHANGE] noise-suppression の modelPath を削除
+  - @voluntas
+- [CHANGE] noise-suppression の assetsPath を削除
+  - @voluntas
+- [UPDATE] noise-suppression が依存している rnnoise-wasm のバージョンを 2025.1.5 に上げる
+  - @voluntas
+- [UPDATE] pnpm 10 系に上げる
+  - @voluntas
+
 ### misc
+
+- [UPDATE] build.yml のノードのバージョンを 18 から 24 に上げる
+  - @voluntas
+- [ADD] Nodejs 24 系をテスト対象に追加する
+  - @voluntas
+- [CHANGE] GitHub Actions のビルド環境を ubuntu-latest から ubuntu-24.04 に変更する
+  - @voluntas
+- [CHANGE] tsconfig.json を共通化する
+  - @voluntas
+- [CHANGE] rollup を vite に置き換える
+  - @voluntas
 
 ## mp4-media-stream-2024.3.0
 

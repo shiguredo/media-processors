@@ -6,8 +6,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     throw Error('Unsupported platform')
   }
 
-  const assetsPath = '.'
-  const processor = new NoiseSuppressionProcessor(assetsPath)
+  const processor = new NoiseSuppressionProcessor()
 
   let audioCtx
   let analyserOriginal

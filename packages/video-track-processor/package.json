@@ -1,15 +1,24 @@
 {
   "name": "@shiguredo/video-track-processor",
+  "private": true,
   "version": "0.0.0",
   "description": "Unpublished internal utility package for video track processing",
   "author": "Shiguredo Inc.",
   "license": "Apache-2.0",
-  "module": "dist/video_track_processor.mjs",
-  "types": "dist/video_track_processor.d.ts",
+  "type": "module",
+  "main": "dist/video_track_processor.js",
+  "module": "dist/video_track_processor.js",
+  "exports": {
+    ".": {
+      "import": "./dist/video_track_processor.js",
+      "types": "./dist/video_track_processor.d.ts"
+    }
+  },
   "scripts": {
-    "build": "rollup -c ./rollup.config.mjs --bundleConfigAsCjs && tsc --emitDeclarationOnly",
+    "build": "vite build",
     "lint": "biome lint ./src",
     "fmt": "biome format --write src",
+    "check": "tsc --noEmit",
     "doc": "typedoc"
   },
   "repository": {

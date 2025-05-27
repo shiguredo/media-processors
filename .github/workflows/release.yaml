@@ -8,7 +8,7 @@ on:
 jobs:
   create-release-draft:
     name: Create GitHub Release Draft
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Get the version
         id: get_version
@@ -24,7 +24,7 @@ jobs:
 
   notification:
     name: Slack Notification
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs:
       - create-release-draft
     if: always()
