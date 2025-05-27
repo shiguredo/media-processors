@@ -11,6 +11,8 @@
 
 ## develop
 
+## noise-suppression-2025.1.0
+
 - [CHANGE] light-adjustment を廃止
   - @voluntas
 - [CHANGE] light-adjustment-gpu を廃止
