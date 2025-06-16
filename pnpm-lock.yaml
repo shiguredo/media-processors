@@ -31,8 +31,8 @@ importers:
         specifier: 4.5.4
         version: 4.5.4(@types/node@22.15.17)(rollup@4.41.1)(typescript@5.8.3)(vite@6.3.5(@types/node@22.15.17)(yaml@2.8.0))
       vite-plugin-static-copy:
-        specifier: 3.0.0
-        version: 3.0.0(vite@6.3.5(@types/node@22.15.17)(yaml@2.8.0))
+        specifier: 3.0.2
+        version: 3.0.2(vite@6.3.5(@types/node@22.15.17)(yaml@2.8.0))
 
   examples:
     dependencies:
@@ -633,6 +633,14 @@ packages:
       picomatch:
         optional: true
 
+  fdir@6.4.6:
+    resolution: {integrity: sha512-hiFoqpyZcfNm1yc4u8oWCf9A2c4D3QjCrks3zmoVKVxpQRzmPNar1hUJcBG2RQHvEVGDN+Jm81ZheVLAQMK6+w==}
+    peerDependencies:
+      picomatch: ^3 || ^4
+    peerDependenciesMeta:
+      picomatch:
+        optional: true
+
   fill-range@7.1.1:
     resolution: {integrity: sha512-YsGpe3WHLK8ZYi4tWDg2Jy3ebRz2rXowDxnld4bkQB00cc/1Zw9AWnC0i9ztDJitivtQvaI9KaLyKrc+hBW0yg==}
     engines: {node: '>=8'}
@@ -908,8 +916,8 @@ packages:
       vite:
         optional: true
 
-  vite-plugin-static-copy@3.0.0:
-    resolution: {integrity: sha512-Uki9pPUQ4ZnoMEdIFabvoh9h6Bh9Q1m3iF7BrZvoiF30reREpJh2gZb4jOnW1/uYFzyRiLCmFSkM+8hwiq1vWQ==}
+  vite-plugin-static-copy@3.0.2:
+    resolution: {integrity: sha512-/seLvhUg44s1oU9RhjTZZy/0NPbfNctozdysKcvPovxxXZdI5l19mGq6Ri3IaTf1Dy/qChS4BSR7ayxeu8o9aQ==}
     engines: {node: ^18.0.0 || >=20.0.0}
     peerDependencies:
       vite: ^5.0.0 || ^6.0.0
@@ -1449,6 +1457,10 @@ snapshots:
     optionalDependencies:
       picomatch: 4.0.2
 
+  fdir@6.4.6(picomatch@4.0.2):
+    optionalDependencies:
+      picomatch: 4.0.2
+
   fill-range@7.1.1:
     dependencies:
       to-regex-range: 5.0.1
@@ -1664,7 +1676,7 @@ snapshots:
 
   tinyglobby@0.2.14:
     dependencies:
-      fdir: 6.4.4(picomatch@4.0.2)
+      fdir: 6.4.6(picomatch@4.0.2)
       picomatch: 4.0.2
 
   to-regex-range@5.0.1:
@@ -1718,7 +1730,7 @@ snapshots:
       - rollup
       - supports-color
 
-  vite-plugin-static-copy@3.0.0(vite@6.3.5(@types/node@22.15.17)(yaml@2.8.0)):
+  vite-plugin-static-copy@3.0.2(vite@6.3.5(@types/node@22.15.17)(yaml@2.8.0)):
     dependencies:
       chokidar: 3.6.0
       fs-extra: 11.3.0
