@@ -9,7 +9,7 @@ class Mp4MediaStreamAudioWorkletProcessor extends AudioWorkletProcessor {
     }
   }
 
-  process(inputs, outputs, parameters) {
+  process(_inputs, outputs, _parameters) {
     for (let sampleIdx = 0; sampleIdx < outputs[0][0].length; sampleIdx++) {
       for (let channelIdx = 0; channelIdx < outputs[0].length; channelIdx++) {
         const outputChannel = outputs[0][channelIdx]

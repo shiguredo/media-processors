@@ -11,78 +11,47 @@ JavaScript/TypeScriptでノイズ抑制機能を実現するためのライブ�
 
 ## 使い方
 
-### ブラウザから利用する場合
-
-まずは script タグで JavaScript ファイルを読み込みます:
-```html
-<script src="https://cdn.jsdelivr.net/npm/@shiguredo/noise-suppression@latest/dist/noise_suppression.js"></script>
+```bash
+pnpm add @shiguredo/noise-suppression
 ```
 
-ノイズ抑制を行うコードは、以下のようになります:
-```html
-<script>
-    // wasm ファイルの配置先
-    const assetsPath = "https://cdn.jsdelivr.net/npm/@shiguredo/noise-suppression@latest/dist";
-    const processor = new Shiguredo.NoiseSuppressionProcessor(assetsPath);
-
-    // RNNoiseの推奨設定
-    const constraints = {
-        sampleRate: {ideal: 48000},
-        sampleSize: {ideal: 480},
-        channelCount: {exact: 1}
-    }
-
-    navigator.mediaDevices.getUserMedia({audio: constraints}).then((stream) => {
-        const track = stream.getAudioTracks()[0];
-
-        // ノイズ抑制処理開始
-        processor.startProcessing(track).then((processed_track) => {
-            const audioElement = document.getElementById("outputAudio"); // 音声の出力先を取得
-            audioElement.srcObject = new MediaStream([processed_track]);
-        });
-    });
-    ...
-
-    // 処理を終了
-    processor.stopProcessing();
-</script>
-```
-
-実際の動作は[デモページ](https://shiguredo.github.io/media-processors/noise-suppression/)（
-[ソースコード](https://github.com/shiguredo/media-processors/blob/develop/examples/noise-suppression/main.mts)）で確認できます。
-
-### JavaScript/TypeScript から利用する場合
-
-以下のコマンドでパッケージがインストールできます:
-```
-$ npm install --save @shiguredo/noise-suppression
-```
-
-TypeScript での使用方法は次のようになります:
 ```typescript
 import { NoiseSuppressionProcessor } from "@shiguredo/noise-suppression";
 
-const assetsPath = "https://cdn.jsdelivr.net/npm/@shiguredo/noise-suppression@latest/dist";
-const processor = new NoiseSuppressionProcessor(assetsPath);
-const processed_audio_track = await processor.startProcessing(original_audio_track);
+const processor = new Shiguredo.NoiseSuppressionProcessor();
 
-...
+// RNNoiseの推奨設定
+const constraints = {
+    sampleRate: {ideal: 48000},
+    sampleSize: {ideal: 480},
+    channelCount: {exact: 1}
+}
 
-processor.stopProcessing();
+navigator.mediaDevices.getUserMedia({audio: constraints}).then((stream) => {
+    const track = stream.getAudioTracks()[0];
+
+    // ノイズ抑制処理開始
+    processor.startProcessing(track).then((processed_track) => {
+        const audioElement = document.getElementById("outputAudio"); // 音声の出力先を取得
+        audioElement.srcObject = new MediaStream([processed_track]);
+    });
+});
 ```
+
+実際の動作は[デモページ](https://shiguredo.github.io/media-processors/noise-suppression/)（
+[ソースコード](https://github.com/shiguredo/media-processors/blob/develop/examples/noise-suppression/main.ts)）で確認できます。
 
 ## サポートブラウザ
 
-本ライブラリは MediaStreamTrack Insertable Streams (aka Breakout Box) というブラウザの機能を利用しています。
-そのため2022年1月現在では、ChromeやEdge等のChromiumベースのブラウザでのみ動作します。
+本ライブラリは MediaStreamTrack Insertable Streams (aka Breakout Box) というブラウザの機能を利用しています。そのため 2025 年 5 月現在では、Chrome や Edge 等の Chromium ベースのブラウザでのみ動作します。
 
 ## ライセンス
 
 [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0)
 
-```
-Copyright 2022-2022, Takeru Ohta (Original Author)
-Copyright 2022-2022, Shiguredo Inc.
+```text
+Copyright 2022-2025, Takeru Ohta (Original Author)
+Copyright 2022-2025, Shiguredo Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -97,9 +66,5 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ```
 
-npm パッケージに同梱されている以下のファイルのライセンスについては
+同梱されている RNNoise のライセンスについては
 [rnnoise/COPYING](https://github.com/shiguredo/rnnoise/) を参照してください:
-```
-- rnnoise.wasm
-- rnnoise-simd.wasm
-```
