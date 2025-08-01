@@ -17,8 +17,7 @@
     "build": "vite build",
     "lint": "biome lint ./src",
     "fmt": "biome format --write src",
-    "typecheck": "tsc --noEmit",
-    "doc": "typedoc"
+    "typecheck": "tsc --noEmit"
   },
   "repository": {
     "type": "git",

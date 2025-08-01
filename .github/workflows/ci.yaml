@@ -29,7 +29,6 @@ jobs:
       - run: pnpm run typecheck
       - run: pnpm run build
       - run: pnpm run lint
-      - run: pnpm run doc
       - name: Slack Notification
         if: failure()
         uses: rtCamp/action-slack-notify@v2
