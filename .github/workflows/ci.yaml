@@ -26,6 +26,7 @@ jobs:
           version: 10
       - run: pnpm --version
       - run: pnpm install
+      - run: pnpm run typecheck
       - run: pnpm run build
       - run: pnpm run lint
       - run: pnpm run doc
