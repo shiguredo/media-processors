@@ -5,7 +5,6 @@
   "scripts": {
     "dev": "vite --config examples/vite.config.ts",
     "build": "pnpm -r --filter=./packages/* build",
-    "doc": "pnpm -r --filter=./packages/* doc",
     "lint": "pnpm -r --filter=./packages/* lint",
     "fmt": "pnpm -r --filter=./packages/* fmt",
     "typecheck": "pnpm -r --filter=./packages/* typecheck"
