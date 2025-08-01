@@ -16,8 +16,7 @@
   "scripts": {
     "build": "vite build",
     "lint": "biome lint ./src",
-    "fmt": "biome format --write src",
-    "doc": "typedoc"
+    "fmt": "biome format --write src"
   },
   "repository": {
     "type": "git",

@@ -11,6 +11,11 @@
 
 ## develop
 
+### misc
+
+- [CHANGE] 利用していなかった typedoc を削除する
+  - @voluntas
+
 ## noise-suppression-2025.1.0
 
 - [CHANGE] light-adjustment を廃止
