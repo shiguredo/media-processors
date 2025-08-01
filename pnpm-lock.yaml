@@ -61,19 +61,20 @@ importers:
         version: 2019.7.3
 
   packages/virtual-background:
-    devDependencies:
+    dependencies:
       '@mediapipe/selfie_segmentation':
         specifier: 0.1.1675465747
         version: 0.1.1675465747
-      '@shiguredo/video-track-processor':
-        specifier: workspace:*
-        version: link:../video-track-processor
-      '@types/offscreencanvas':
-        specifier: 2019.7.3
-        version: 2019.7.3
       stackblur-canvas:
         specifier: 2.7.0
         version: 2.7.0
+      video-track-processor:
+        specifier: workspace:*
+        version: link:../video-track-processor
+    devDependencies:
+      '@types/offscreencanvas':
+        specifier: 2019.7.3
+        version: 2019.7.3
 
 packages:
 

@@ -34,10 +34,12 @@
   "files": [
     "dist"
   ],
-  "devDependencies": {
+  "dependencies": {
     "@mediapipe/selfie_segmentation": "0.1.1675465747",
-    "@shiguredo/video-track-processor": "workspace:*",
-    "@types/offscreencanvas": "2019.7.3",
+    "video-track-processor": "workspace:*",
     "stackblur-canvas": "2.7.0"
+  },
+  "devDependencies": {
+    "@types/offscreencanvas": "2019.7.3"
   }
 }

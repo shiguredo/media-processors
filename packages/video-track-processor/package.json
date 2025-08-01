@@ -1,7 +1,7 @@
 {
-  "name": "@shiguredo/video-track-processor",
-  "private": true,
+  "name": "video-track-processor",
   "version": "0.0.0",
+  "private": true,
   "description": "Unpublished internal utility package for video track processing",
   "author": "Shiguredo Inc.",
   "license": "Apache-2.0",

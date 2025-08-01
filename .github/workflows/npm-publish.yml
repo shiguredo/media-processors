@@ -1,0 +1,161 @@
+name: npm-publish
+
+on:
+  push:
+    tags:
+      - 'mp4-media-stream-*'
+      - 'noise-suppression-*'
+      - 'virtual-background-*'
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  determine-package:
+    name: Determine Package
+    runs-on: ubuntu-24.04
+    outputs:
+      package_name: ${{ steps.package.outputs.name }}
+      package_dir: ${{ steps.package.outputs.dir }}
+      is_canary: ${{ steps.package.outputs.is_canary }}
+    steps:
+      - name: Extract package info from tag
+        id: package
+        run: |
+          TAG="${{ github.ref_name }}"
+          IS_CANARY="false"
+          
+          # canaryタグかチェック
+          if [[ "$TAG" == *-canary ]]; then
+            IS_CANARY="true"
+            # -canaryサフィックスを削除
+            TAG="${TAG%-canary}"
+          fi
+          
+          # パッケージ名を抽出（最後の-vXXXX部分を除去）
+          PACKAGE_NAME=$(echo "$TAG" | sed 's/-v[^-]*$//')
+          
+          # パッケージディレクトリを決定
+          case "$PACKAGE_NAME" in
+            "mp4-media-stream")
+              PACKAGE_DIR="packages/mp4-media-stream"
+              ;;
+            "noise-suppression")
+              PACKAGE_DIR="packages/noise-suppression"
+              ;;
+            "virtual-background")
+              PACKAGE_DIR="packages/virtual-background"
+              ;;
+            *)
+              echo "Unknown package: $PACKAGE_NAME"
+              exit 1
+              ;;
+          esac
+          
+          echo "name=$PACKAGE_NAME" >> $GITHUB_OUTPUT
+          echo "dir=$PACKAGE_DIR" >> $GITHUB_OUTPUT
+          echo "is_canary=$IS_CANARY" >> $GITHUB_OUTPUT
+          
+          echo "Package: $PACKAGE_NAME"
+          echo "Directory: $PACKAGE_DIR"
+          echo "Is Canary: $IS_CANARY"
+
+  build:
+    name: Build
+    runs-on: ubuntu-24.04
+    needs: [determine-package]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - run: pnpm --version
+      - run: pnpm install
+      - run: pnpm --filter @shiguredo/${{ needs.determine-package.outputs.package_name }} run build
+      - run: pnpm --filter @shiguredo/${{ needs.determine-package.outputs.package_name }} run lint
+      - run: pnpm --filter @shiguredo/${{ needs.determine-package.outputs.package_name }} run typecheck
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ needs.determine-package.outputs.package_name }}-dist
+          path: ${{ needs.determine-package.outputs.package_dir }}/dist/
+  
+  npm-publish-canary:
+    runs-on: ubuntu-24.04
+    needs: [determine-package, build]
+    permissions:
+      contents: read
+      id-token: write
+    if: ${{ needs.determine-package.outputs.is_canary == 'true' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      
+      - name: Download Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.determine-package.outputs.package_name }}-dist
+          path: ${{ needs.determine-package.outputs.package_dir }}/dist/
+      
+      # pnpm publish は CI では正常に動作しない
+      # https://github.com/pnpm/pnpm/issues/4937
+      - run: npm install -g npm@latest
+      - run: npm publish --no-git-checks --tag canary
+        working-directory: ${{ needs.determine-package.outputs.package_dir }}
+
+  npm-publish:
+    runs-on: ubuntu-24.04
+    needs: [determine-package, build]
+    permissions:
+      contents: read
+      id-token: write
+    if: ${{ needs.determine-package.outputs.is_canary == 'false' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+      
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Download Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.determine-package.outputs.package_name }}-dist
+          path: ${{ needs.determine-package.outputs.package_dir }}/dist/
+      
+      # pnpm publish は CI では正常に動作しない
+      # https://github.com/pnpm/pnpm/issues/4937
+      - run: npm install -g npm@latest
+      - run: npm publish --no-git-checks
+        working-directory: ${{ needs.determine-package.outputs.package_dir }}
+
+
+  slack_notify_failed:
+    needs: [npm-publish-canary, npm-publish]
+    runs-on: ubuntu-24.04
+    if: failure()
+    steps:
+      - name: Slack Notification
+        uses: rtCamp/action-slack-notify@v2
+        env:
+          SLACK_CHANNEL: media-processors
+          SLACK_COLOR: danger
+          SLACK_TITLE: Failed to publish ${{ github.ref_name }}
+          SLACK_ICON_EMOJI: ":japanese_ogre:"
+          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
