@@ -3,7 +3,7 @@ import {
   type SelfieSegmentationConfig,
   type Results as SelfieSegmentationResults,
 } from '@mediapipe/selfie_segmentation'
-import { VideoTrackProcessor } from 'video-track-processor'
+import { VideoTrackProcessor } from '../../video-track-processor/src/video_track_processor'
 import * as StackBlur from 'stackblur-canvas'
 
 /**
