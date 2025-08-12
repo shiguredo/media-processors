@@ -19,14 +19,14 @@ importers:
         specifier: 5.9.2
         version: 5.9.2
       vite:
-        specifier: 7.0.6
-        version: 7.0.6(@types/node@22.15.17)(yaml@2.8.0)
+        specifier: 7.1.1
+        version: 7.1.1(@types/node@22.15.17)(yaml@2.8.0)
       vite-plugin-dts:
         specifier: 4.5.4
-        version: 4.5.4(@types/node@22.15.17)(rollup@4.46.2)(typescript@5.9.2)(vite@7.0.6(@types/node@22.15.17)(yaml@2.8.0))
+        version: 4.5.4(@types/node@22.15.17)(rollup@4.46.2)(typescript@5.9.2)(vite@7.1.1(@types/node@22.15.17)(yaml@2.8.0))
       vite-plugin-static-copy:
         specifier: 3.1.1
-        version: 3.1.1(vite@7.0.6(@types/node@22.15.17)(yaml@2.8.0))
+        version: 3.1.1(vite@7.1.1(@types/node@22.15.17)(yaml@2.8.0))
 
   examples:
     dependencies:
@@ -861,8 +861,8 @@ packages:
     peerDependencies:
       vite: ^5.0.0 || ^6.0.0 || ^7.0.0
 
-  vite@7.0.6:
-    resolution: {integrity: sha512-MHFiOENNBd+Bd9uvc8GEsIzdkn1JxMmEeYX35tI3fv0sJBUTfW5tQsoaOwuY4KhBI09A3dUJ/DXf2yxPVPUceg==}
+  vite@7.1.1:
+    resolution: {integrity: sha512-yJ+Mp7OyV+4S+afWo+QyoL9jFWD11QFH0i5i7JypnfTcA1rmgxCbiA8WwAICDEtZ1Z1hzrVhN8R8rGTqkTY8ZQ==}
     engines: {node: ^20.19.0 || >=22.12.0}
     hasBin: true
     peerDependencies:
@@ -1581,7 +1581,7 @@ snapshots:
     dependencies:
       punycode: 2.3.1
 
-  vite-plugin-dts@4.5.4(@types/node@22.15.17)(rollup@4.46.2)(typescript@5.9.2)(vite@7.0.6(@types/node@22.15.17)(yaml@2.8.0)):
+  vite-plugin-dts@4.5.4(@types/node@22.15.17)(rollup@4.46.2)(typescript@5.9.2)(vite@7.1.1(@types/node@22.15.17)(yaml@2.8.0)):
     dependencies:
       '@microsoft/api-extractor': 7.52.10(@types/node@22.15.17)
       '@rollup/pluginutils': 5.2.0(rollup@4.46.2)
@@ -1594,22 +1594,22 @@ snapshots:
       magic-string: 0.30.17
       typescript: 5.9.2
     optionalDependencies:
-      vite: 7.0.6(@types/node@22.15.17)(yaml@2.8.0)
+      vite: 7.1.1(@types/node@22.15.17)(yaml@2.8.0)
     transitivePeerDependencies:
       - '@types/node'
       - rollup
       - supports-color
 
-  vite-plugin-static-copy@3.1.1(vite@7.0.6(@types/node@22.15.17)(yaml@2.8.0)):
+  vite-plugin-static-copy@3.1.1(vite@7.1.1(@types/node@22.15.17)(yaml@2.8.0)):
     dependencies:
       chokidar: 3.6.0
       fs-extra: 11.3.0
       p-map: 7.0.3
       picocolors: 1.1.1
       tinyglobby: 0.2.14
-      vite: 7.0.6(@types/node@22.15.17)(yaml@2.8.0)
+      vite: 7.1.1(@types/node@22.15.17)(yaml@2.8.0)
 
-  vite@7.0.6(@types/node@22.15.17)(yaml@2.8.0):
+  vite@7.1.1(@types/node@22.15.17)(yaml@2.8.0):
     dependencies:
       esbuild: 0.25.8
       fdir: 6.4.6(picomatch@4.0.3)
