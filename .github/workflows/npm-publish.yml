@@ -103,7 +103,7 @@ jobs:
           version: 10
       
       - name: Download Artifact
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v7
         with:
           name: ${{ needs.determine-package.outputs.package_name }}-dist
           path: ${{ needs.determine-package.outputs.package_dir }}/dist/
@@ -134,7 +134,7 @@ jobs:
           version: 10
 
       - name: Download Artifact
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v7
         with:
           name: ${{ needs.determine-package.outputs.package_name }}-dist
           path: ${{ needs.determine-package.outputs.package_dir }}/dist/
