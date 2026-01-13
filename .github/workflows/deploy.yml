@@ -25,7 +25,7 @@ jobs:
         run: pnpm build
         working-directory: examples
       - name: Upload files
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v4
         with:
           path: ./examples/dist
       - name: Slack Notification
