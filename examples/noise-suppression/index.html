@@ -1,33 +1,37 @@
 <html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Media Processors: ノイズ抑制サンプル</title>
+  </head>
 
-<head>
-  <meta charset="utf-8">
-  <title>Media Processors: ノイズ抑制サンプル</title>
-</head>
+  <body>
+    <h1>Media Processors: ノイズ抑制サンプル</h1>
 
-<body>
-  <h1>Media Processors: ノイズ抑制サンプル</h1>
+    <b
+      >GitHub:
+      <a
+        href="https://github.com/shiguredo/media-processors/tree/develop/packages/noise-suppression"
+        >https://github.com/shiguredo/media-processors/tree/develop/packages/noise-suppression</a
+      ></b
+    >
+    <br />
 
-  <b>GitHub: <a
-      href="https://github.com/shiguredo/media-processors/tree/develop/packages/noise-suppression">https://github.com/shiguredo/media-processors/tree/develop/packages/noise-suppression</a></b>
-  <br />
+    マイクに入力した音声が、ノイズ抑制されてスピーカから出力されます。<br />
+    <strong><span style="color: #f00">※ イヤホン推奨</span></strong
+    ><br />
+    <br />
 
-  マイクに入力した音声が、ノイズ抑制されてスピーカから出力されます。<br />
-  <strong><span style="color:#F00">※ イヤホン推奨</span></strong><br />
-  <br />
+    <input value="再生開始（ノイズ抑制ON）" type="button" id="playProcessedAudio" />
+    <input value="再生開始（ノイズ抑制OFF）" type="button" id="playOriginalAudio" />
+    <input value="再生停止" type="button" id="stopAudio" /><br />
 
-  <input value="再生開始（ノイズ抑制ON）" type="button" id="playProcessedAudio">
-  <input value="再生開始（ノイズ抑制OFF）" type="button" id="playOriginalAudio">
-  <input value="再生停止" type="button" id="stopAudio"><br />
+    <h3>波形: 左=オリジナル、右=ノイズ抑制後</h3>
+    <canvas id="oscilloscopeOriginal"></canvas>
+    <canvas id="oscilloscopeProcessed"></canvas>
 
-  <h3>波形: 左=オリジナル、右=ノイズ抑制後</h3>
-  <canvas id="oscilloscopeOriginal"></canvas>
-  <canvas id="oscilloscopeProcessed"></canvas>
+    <br />
+    <audio id="audio" autoplay playsinline></audio>
 
-  <br />
-  <audio id="audio" autoplay playsinline></audio>
-
-  <script type="module" src="./main.ts"></script>
-</body>
-
+    <script type="module" src="./main.ts"></script>
+  </body>
 </html>

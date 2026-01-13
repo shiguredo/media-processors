@@ -3,15 +3,27 @@
   "version": "0.0.0",
   "private": true,
   "description": "Unpublished internal utility package for video track processing",
-  "author": "Shiguredo Inc.",
+  "keywords": [],
+  "homepage": "https://github.com/shiguredo/media-processors#readme",
+  "bugs": {
+    "url": "https://discord.gg/shiguredo"
+  },
   "license": "Apache-2.0",
+  "author": "Shiguredo Inc.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/shiguredo/media-processors.git"
+  },
+  "files": [
+    "dist"
+  ],
   "type": "module",
   "main": "dist/video_track_processor.js",
   "module": "dist/video_track_processor.js",
   "exports": {
     ".": {
-      "import": "./dist/video_track_processor.js",
-      "types": "./dist/video_track_processor.d.ts"
+      "types": "./dist/video_track_processor.d.ts",
+      "import": "./dist/video_track_processor.js"
     }
   },
   "scripts": {
@@ -20,18 +32,6 @@
     "fmt": "biome format --write src",
     "typecheck": "tsc --noEmit"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/shiguredo/media-processors.git"
-  },
-  "keywords": [],
-  "bugs": {
-    "url": "https://discord.gg/shiguredo"
-  },
-  "homepage": "https://github.com/shiguredo/media-processors#readme",
-  "files": [
-    "dist"
-  ],
   "devDependencies": {
     "@types/offscreencanvas": "2019.7.3"
   }

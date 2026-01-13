@@ -2,15 +2,29 @@
   "name": "@shiguredo/mp4-media-stream",
   "version": "2024.3.0",
   "description": "Library to generate MediaStream from MP4 file",
-  "author": "Shiguredo Inc.",
+  "keywords": [
+    "mp4"
+  ],
+  "homepage": "https://github.com/shiguredo/media-processors#readme",
+  "bugs": {
+    "url": "https://discord.gg/shiguredo"
+  },
   "license": "Apache-2.0",
+  "author": "Shiguredo Inc.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/shiguredo/media-processors.git"
+  },
+  "files": [
+    "dist"
+  ],
   "type": "module",
   "main": "dist/mp4_media_stream.js",
   "module": "dist/mp4_media_stream.js",
   "exports": {
     ".": {
-      "import": "./dist/mp4_media_stream.js",
-      "types": "./dist/mp4_media_stream.d.ts"
+      "types": "./dist/mp4_media_stream.d.ts",
+      "import": "./dist/mp4_media_stream.js"
     }
   },
   "scripts": {
@@ -18,19 +32,5 @@
     "lint": "biome lint ./src",
     "fmt": "biome format --write src",
     "typecheck": "tsc --noEmit"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/shiguredo/media-processors.git"
-  },
-  "keywords": [
-    "mp4"
-  ],
-  "bugs": {
-    "url": "https://discord.gg/shiguredo"
-  },
-  "homepage": "https://github.com/shiguredo/media-processors#readme",
-  "files": [
-    "dist"
-  ]
+  }
 }

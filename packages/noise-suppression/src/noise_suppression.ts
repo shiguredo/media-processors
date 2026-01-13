@@ -1,13 +1,13 @@
-import { type DenoiseState, Rnnoise } from '@shiguredo/rnnoise-wasm'
+import { type DenoiseState, Rnnoise } from "@shiguredo/rnnoise-wasm";
 
 /**
  * 音声トラックにノイズ抑制処理を適用するためのプロセッサ
  */
 class NoiseSuppressionProcessor {
-  private rnnoise?: Rnnoise
-  private trackProcessor?: TrackProcessor
-  private processedTrack?: MediaStreamAudioTrack
-  private originalTrack?: MediaStreamAudioTrack
+  private rnnoise?: Rnnoise;
+  private trackProcessor?: TrackProcessor;
+  private processedTrack?: MediaStreamAudioTrack;
+  private originalTrack?: MediaStreamAudioTrack;
 
   /**
    * 実行環境が必要な機能をサポートしているかどうかを判定します
@@ -18,9 +18,9 @@ class NoiseSuppressionProcessor {
    */
   static isSupported(): boolean {
     return !(
-      typeof MediaStreamTrackProcessor === 'undefined' ||
-      typeof MediaStreamTrackGenerator === 'undefined'
-    )
+      typeof MediaStreamTrackProcessor === "undefined" ||
+      typeof MediaStreamTrackGenerator === "undefined"
+    );
   }
 
   /**
@@ -41,20 +41,20 @@ class NoiseSuppressionProcessor {
    */
   async startProcessing(track: MediaStreamAudioTrack): Promise<MediaStreamAudioTrack> {
     if (this.isProcessing()) {
-      throw Error('Noise suppression processing has already started.')
+      throw Error("Noise suppression processing has already started.");
     }
 
     if (this.rnnoise === undefined) {
       // 最初の `startProcessing` 呼び出し時に RNNoise をロードする
-      this.rnnoise = await Rnnoise.load()
+      this.rnnoise = await Rnnoise.load();
     }
 
-    const denoiseState = this.rnnoise.createDenoiseState()
+    const denoiseState = this.rnnoise.createDenoiseState();
 
-    this.trackProcessor = new TrackProcessor(track, this.rnnoise, denoiseState)
-    this.originalTrack = track
-    this.processedTrack = this.trackProcessor.startProcessing()
-    return this.processedTrack
+    this.trackProcessor = new TrackProcessor(track, this.rnnoise, denoiseState);
+    this.originalTrack = track;
+    this.processedTrack = this.trackProcessor.startProcessing();
+    return this.processedTrack;
   }
 
   /**
@@ -66,10 +66,10 @@ class NoiseSuppressionProcessor {
   stopProcessing() {
     // NOTE: コンパイラの警告を防ぐために isProcessing は使わずに判定している
     if (this.trackProcessor !== undefined) {
-      this.trackProcessor.stopProcessing()
-      this.trackProcessor = undefined
-      this.originalTrack = undefined
-      this.processedTrack = undefined
+      this.trackProcessor.stopProcessing();
+      this.trackProcessor = undefined;
+      this.originalTrack = undefined;
+      this.processedTrack = undefined;
     }
   }
 
@@ -79,7 +79,7 @@ class NoiseSuppressionProcessor {
    * @returns 実行中であれば `true` 、そうでなければ `false`
    */
   isProcessing(): boolean {
-    return this.trackProcessor !== undefined
+    return this.trackProcessor !== undefined;
   }
 
   /**
@@ -93,7 +93,7 @@ class NoiseSuppressionProcessor {
    * @returns 処理適用中の場合は音声トラック、それ以外なら `undefined`
    */
   getOriginalTrack(): MediaStreamAudioTrack | undefined {
-    return this.originalTrack
+    return this.originalTrack;
   }
 
   /**
@@ -107,42 +107,42 @@ class NoiseSuppressionProcessor {
    * @returns 処理適用中の場合は音声トラック、それ以外なら `undefined`
    */
   getProcessedTrack(): MediaStreamAudioTrack | undefined {
-    return this.processedTrack
+    return this.processedTrack;
   }
 }
 
 class TrackProcessor {
-  private track: MediaStreamAudioTrack
-  private abortController: AbortController
-  private denoiseState: DenoiseState
-  private buffer: Float32Array
-  private frameSize: number
-  private bufferFrameCount: number
-  private nextTimestamp: number
-  private generator: MediaStreamAudioTrackGenerator
-  private processor: MediaStreamTrackProcessor<AudioData>
+  private track: MediaStreamAudioTrack;
+  private abortController: AbortController;
+  private denoiseState: DenoiseState;
+  private buffer: Float32Array;
+  private frameSize: number;
+  private bufferFrameCount: number;
+  private nextTimestamp: number;
+  private generator: MediaStreamAudioTrackGenerator;
+  private processor: MediaStreamTrackProcessor<AudioData>;
 
   constructor(track: MediaStreamAudioTrack, rnnoise: Rnnoise, denoiseState: DenoiseState) {
-    this.track = track
-    this.buffer = new Float32Array(rnnoise.frameSize)
-    this.frameSize = rnnoise.frameSize
-    this.bufferFrameCount = 0
-    this.nextTimestamp = 0
-    this.abortController = new AbortController()
-    this.denoiseState = denoiseState
+    this.track = track;
+    this.buffer = new Float32Array(rnnoise.frameSize);
+    this.frameSize = rnnoise.frameSize;
+    this.bufferFrameCount = 0;
+    this.nextTimestamp = 0;
+    this.abortController = new AbortController();
+    this.denoiseState = denoiseState;
 
     // generator / processor インスタンスを生成（まだ処理は開始しない）
-    this.generator = new MediaStreamTrackGenerator({ kind: 'audio' })
-    this.processor = new MediaStreamTrackProcessor({ track: this.track })
+    this.generator = new MediaStreamTrackGenerator({ kind: "audio" });
+    this.processor = new MediaStreamTrackProcessor({ track: this.track });
   }
 
   startProcessing(): MediaStreamAudioTrack {
-    const signal = this.abortController.signal
+    const signal = this.abortController.signal;
     this.processor.readable
       .pipeThrough(
         new TransformStream({
           transform: (frame, controller) => {
-            this.transform(frame, controller)
+            this.transform(frame, controller);
           },
         }),
         { signal },
@@ -150,23 +150,23 @@ class TrackProcessor {
       .pipeTo(this.generator.writable)
       .catch((e) => {
         if (signal.aborted) {
-          console.debug('Shutting down streams after abort.')
+          console.debug("Shutting down streams after abort.");
         } else {
-          console.warn('Error from stream transform:', e)
+          console.warn("Error from stream transform:", e);
         }
         this.processor.readable.cancel(e).catch((e) => {
-          console.warn('Failed to cancel `MediaStreamTrackProcessor`:', e)
-        })
+          console.warn("Failed to cancel `MediaStreamTrackProcessor`:", e);
+        });
         this.generator.writable.abort(e).catch((e) => {
-          console.warn('Failed to abort `MediaStreamTrackGenerator`:', e)
-        })
-      })
-    return this.generator
+          console.warn("Failed to abort `MediaStreamTrackGenerator`:", e);
+        });
+      });
+    return this.generator;
   }
 
   stopProcessing() {
-    this.abortController.abort()
-    this.denoiseState.destroy()
+    this.abortController.abort();
+    this.denoiseState.destroy();
   }
 
   private transform(
@@ -174,59 +174,59 @@ class TrackProcessor {
     controller: TransformStreamDefaultController<AudioData>,
   ): void {
     if (data.numberOfChannels !== 1) {
-      throw Error('Noise suppression for stereo channel has not been supported yet.')
+      throw Error("Noise suppression for stereo channel has not been supported yet.");
     }
-    if (data.format !== 'f32-planar') {
+    if (data.format !== "f32-planar") {
       // https://www.w3.org/TR/webcodecs/#audio-buffer-arrangement を見ると、
       // "The Web Audio API currently uses f32-planar exclusively"と書いてあるので、
       // いったんは"f32-planar"のみに対応（必要に応じて実装を追加していく）。
       //
       // MEMO: `AutoData.copyTo`で`format`が指定できるので、もしかしたら
       //       そのオプションで"f32-planar"を指定しておけば、後続の処理は共通化できるかもしれない。
-      throw Error(`Unsupported audio data format ${data.format}."`)
+      throw Error(`Unsupported audio data format ${data.format}."`);
     }
 
     if (this.bufferFrameCount === 0) {
-      this.nextTimestamp = data.timestamp
+      this.nextTimestamp = data.timestamp;
     }
 
-    let frameOffset = 0
+    let frameOffset = 0;
     while (frameOffset < data.numberOfFrames) {
       const frameCount = Math.min(
         this.frameSize - this.bufferFrameCount,
         data.numberOfFrames - frameOffset,
-      )
+      );
       data.copyTo(this.buffer.subarray(this.bufferFrameCount), {
         planeIndex: 0,
         frameOffset,
         frameCount,
-      })
-      this.bufferFrameCount += frameCount
-      frameOffset += frameCount
+      });
+      this.bufferFrameCount += frameCount;
+      frameOffset += frameCount;
 
       if (this.bufferFrameCount === this.frameSize) {
         // RNNoiseが16-bit PCMを仮定しているので変換
         for (const [i, value] of this.buffer.entries()) {
-          this.buffer[i] = value * 0x7fff
+          this.buffer[i] = value * 0x7fff;
         }
 
         // ノイズ低減処理
-        this.denoiseState.processFrame(this.buffer)
+        this.denoiseState.processFrame(this.buffer);
 
         // f32-planarに戻す
         for (const [i, value] of this.buffer.entries()) {
-          this.buffer[i] = value / 0x7fff
+          this.buffer[i] = value / 0x7fff;
         }
 
-        if (this.generator.readyState === 'ended') {
+        if (this.generator.readyState === "ended") {
           // ジェネレータ（ユーザに渡している処理結果トラック）がクローズ済み。
           // この状態で `controller.enqueue()` を呼び出すとエラーが発生するのでスキップする。
           // また `stopProcessing()` を呼び出して変換処理を停止し、以後は `transform()` 自体が呼ばれないようにする。
           //
           // なお、上の条件判定と下のエンキューの間でジェネレータの状態が変わり、エラーが発生する可能性もないとは
           // 言い切れないが、かなりレアケースだと想定され、そこまでケアするのはコスパが悪いので諦めることとする。
-          this.stopProcessing()
-          break
+          this.stopProcessing();
+          break;
         }
 
         controller.enqueue(
@@ -238,15 +238,15 @@ class TrackProcessor {
             timestamp: this.nextTimestamp,
             data: this.buffer,
           }),
-        )
-        this.buffer = new Float32Array(this.frameSize)
-        this.bufferFrameCount = 0
-        this.nextTimestamp = data.timestamp + (data.duration * frameOffset) / data.numberOfFrames
+        );
+        this.buffer = new Float32Array(this.frameSize);
+        this.bufferFrameCount = 0;
+        this.nextTimestamp = data.timestamp + (data.duration * frameOffset) / data.numberOfFrames;
       }
     }
 
-    data.close()
+    data.close();
   }
 }
 
-export { NoiseSuppressionProcessor }
+export { NoiseSuppressionProcessor };

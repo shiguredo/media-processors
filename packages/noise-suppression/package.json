@@ -2,15 +2,29 @@
   "name": "@shiguredo/noise-suppression",
   "version": "2025.1.0",
   "description": "Noise Suppression Library",
-  "author": "Shiguredo Inc.",
+  "keywords": [
+    "noise-suppression"
+  ],
+  "homepage": "https://github.com/shiguredo/media-processors#readme",
+  "bugs": {
+    "url": "https://discord.gg/shiguredo"
+  },
   "license": "Apache-2.0",
+  "author": "Shiguredo Inc.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/shiguredo/media-processors.git"
+  },
+  "files": [
+    "dist"
+  ],
   "type": "module",
   "main": "dist/noise_suppression.js",
   "module": "dist/noise_suppression.js",
   "exports": {
     ".": {
-      "import": "./dist/noise_suppression.js",
-      "types": "./dist/noise_suppression.d.ts"
+      "types": "./dist/noise_suppression.d.ts",
+      "import": "./dist/noise_suppression.js"
     }
   },
   "scripts": {
@@ -18,20 +32,6 @@
     "lint": "biome lint ./src",
     "fmt": "biome format --write src"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/shiguredo/media-processors.git"
-  },
-  "keywords": [
-    "noise-suppression"
-  ],
-  "bugs": {
-    "url": "https://discord.gg/shiguredo"
-  },
-  "homepage": "https://github.com/shiguredo/media-processors#readme",
-  "files": [
-    "dist"
-  ],
   "devDependencies": {
     "@shiguredo/rnnoise-wasm": "2025.1.5"
   }

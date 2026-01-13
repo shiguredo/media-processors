@@ -8,17 +8,17 @@
 ## 使い方
 
 ```typescript
-import { Mp4MediaStream } from '@shiguredo/mp4-media-stream'
+import { Mp4MediaStream } from "@shiguredo/mp4-media-stream";
 
 // ファイルなどから取得した MP4 データを読み込む
-const mp4MediaStream = await Mp4MediaStream.load(mp4FileBlob)
+const mp4MediaStream = await Mp4MediaStream.load(mp4FileBlob);
 
 // 指定の MP4 を再生するための MediaStream を作成する
-const stream = mp4MediaStream.play(options)
+const stream = mp4MediaStream.play(options);
 
 // Video 要素の入力に作成された MediaStream を設定する
-const video = document.getElementById('video')
-video.srcObject = stream
+const video = document.getElementById("video");
+video.srcObject = stream;
 ```
 
 実際の動作は[デモページ](https://shiguredo.github.io/media-processors/mp4-media-stream/)（
@@ -43,6 +43,7 @@ video.srcObject = stream
 ## 未対応機能
 
 以下の機能には現時点では対応していません:
+
 - 再生開始位置の指定（シーク）
 - 再生の一時停止・再開
 - 数 GB を超える MP4 ファイルの再生

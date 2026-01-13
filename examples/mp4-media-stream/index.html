@@ -1,32 +1,34 @@
 <html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Media Processors: MP4 メディアストリームサンプル</title>
+  </head>
 
-<head>
-  <meta charset="utf-8">
-  <title>Media Processors: MP4 メディアストリームサンプル</title>
-</head>
+  <body>
+    <h1>Media Processors: MP4 メディアストリームサンプル</h1>
 
-<body>
-  <h1>Media Processors: MP4 メディアストリームサンプル</h1>
+    <b
+      >GitHub:
+      <a href="https://github.com/shiguredo/media-processors/tree/develop/packages/mp4-media-stream"
+        >https://github.com/shiguredo/media-processors/tree/develop/packages/mp4-media-stream</a
+      ></b
+    >
 
-  <b>GitHub: <a
-      href="https://github.com/shiguredo/media-processors/tree/develop/packages/mp4-media-stream">https://github.com/shiguredo/media-processors/tree/develop/packages/mp4-media-stream</a></b>
+    <h3>入力 MP4 ファイル</h3>
+    再生する MP4 ファイルを選択した後に「再生開始」ボタンを押してください。
+    <br /><br />
+    <input id="input" type="file" accept="video/mp4" />
+    <br /><br />
+    <input id="play" type="button" value="再生開始" />
+    <input id="stop" type="button" value="再生停止" />
 
-  <h3>入力 MP4 ファイル</h3>
-  再生する MP4 ファイルを選択した後に「再生開始」ボタンを押してください。
-  <br /><br />
-  <input id="input" type="file" accept="video/mp4" />
-  <br /><br />
-  <input id="play" type="button" value="再生開始" />
-  <input id="stop" type="button" value="再生停止" />
+    <br /><br />
+    <input id="repeat" type="checkbox" /> リピート再生を有効にする
+    <br />
 
-  <br /><br />
-  <input id="repeat" type="checkbox"> リピート再生を有効にする
-  <br />
+    <h3>出力映像</h3>
+    <video id="output" autoplay playsinline></video>
 
-  <h3>出力映像</h3>
-  <video id="output" autoplay playsinline></video>
-
-  <script type="module" src="./main.ts"></script>
-</body>
-
+    <script type="module" src="./main.ts"></script>
+  </body>
 </html>

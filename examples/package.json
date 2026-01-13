@@ -9,8 +9,8 @@
     "check": "tsc --noEmit"
   },
   "dependencies": {
+    "@shiguredo/mp4-media-stream": "workspace:*",
     "@shiguredo/noise-suppression": "workspace:*",
-    "@shiguredo/virtual-background": "workspace:*",
-    "@shiguredo/mp4-media-stream": "workspace:*"
+    "@shiguredo/virtual-background": "workspace:*"
   }
 }

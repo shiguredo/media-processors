@@ -216,7 +216,6 @@
 ## noise-suppression-2022.4.0
 
 - [ADD] RNNoise モデルの差し替えに対応
-
   - <https://github.com/shiguredo/media-processors/pull/15>
   - @sile
 

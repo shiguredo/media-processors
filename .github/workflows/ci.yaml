@@ -14,11 +14,11 @@ jobs:
     runs-on: ubuntu-24.04
     strategy:
       matrix:
-        node: ["18", "20", "22", "24"]
+        node: ["20", "22", "24"]
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - run: rustup update stable && rustup target add wasm32-unknown-unknown
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v6
         with:
           node-version: ${{ matrix.node }}
       - uses: pnpm/action-setup@v4

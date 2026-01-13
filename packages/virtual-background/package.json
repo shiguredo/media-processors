@@ -2,15 +2,29 @@
   "name": "@shiguredo/virtual-background",
   "version": "2023.2.0",
   "description": "Virtual Background Library",
-  "author": "Shiguredo Inc.",
+  "keywords": [
+    "virtual-background"
+  ],
+  "homepage": "https://github.com/shiguredo/media-processors#readme",
+  "bugs": {
+    "url": "https://discord.gg/shiguredo"
+  },
   "license": "Apache-2.0",
+  "author": "Shiguredo Inc.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/shiguredo/media-processors.git"
+  },
+  "files": [
+    "dist"
+  ],
   "type": "module",
   "main": "dist/virtual_background.js",
   "module": "dist/virtual_background.js",
   "exports": {
     ".": {
-      "import": "./dist/virtual_background.js",
-      "types": "./dist/virtual_background.d.ts"
+      "types": "./dist/virtual_background.d.ts",
+      "import": "./dist/virtual_background.js"
     }
   },
   "scripts": {
@@ -19,24 +33,10 @@
     "fmt": "biome format --write src",
     "typecheck": "tsc --noEmit"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/shiguredo/media-processors.git"
-  },
-  "keywords": [
-    "virtual-background"
-  ],
-  "bugs": {
-    "url": "https://discord.gg/shiguredo"
-  },
-  "homepage": "https://github.com/shiguredo/media-processors#readme",
-  "files": [
-    "dist"
-  ],
   "dependencies": {
     "@mediapipe/selfie_segmentation": "0.1.1675465747",
-    "video-track-processor": "workspace:*",
-    "stackblur-canvas": "2.7.0"
+    "stackblur-canvas": "2.7.0",
+    "video-track-processor": "workspace:*"
   },
   "devDependencies": {
     "@types/offscreencanvas": "2019.7.3"

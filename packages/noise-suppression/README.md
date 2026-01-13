@@ -22,19 +22,19 @@ const processor = new Shiguredo.NoiseSuppressionProcessor();
 
 // RNNoiseの推奨設定
 const constraints = {
-    sampleRate: {ideal: 48000},
-    sampleSize: {ideal: 480},
-    channelCount: {exact: 1}
-}
+  sampleRate: { ideal: 48000 },
+  sampleSize: { ideal: 480 },
+  channelCount: { exact: 1 },
+};
 
-navigator.mediaDevices.getUserMedia({audio: constraints}).then((stream) => {
-    const track = stream.getAudioTracks()[0];
+navigator.mediaDevices.getUserMedia({ audio: constraints }).then((stream) => {
+  const track = stream.getAudioTracks()[0];
 
-    // ノイズ抑制処理開始
-    processor.startProcessing(track).then((processed_track) => {
-        const audioElement = document.getElementById("outputAudio"); // 音声の出力先を取得
-        audioElement.srcObject = new MediaStream([processed_track]);
-    });
+  // ノイズ抑制処理開始
+  processor.startProcessing(track).then((processed_track) => {
+    const audioElement = document.getElementById("outputAudio"); // 音声の出力先を取得
+    audioElement.srcObject = new MediaStream([processed_track]);
+  });
 });
 ```
 

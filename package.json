@@ -1,26 +1,29 @@
 {
-  "author": "Shiguredo Inc.",
-  "license": "Apache-2.0",
   "private": true,
+  "license": "Apache-2.0",
+  "author": "Shiguredo Inc.",
   "scripts": {
     "dev": "vite --config examples/vite.config.ts",
     "build": "pnpm -r --filter=./packages/* build",
-    "lint": "pnpm -r --filter=./packages/* lint",
-    "fmt": "pnpm -r --filter=./packages/* fmt",
+    "fmt": "oxfmt --write .",
+    "lint": "oxlint --type-aware",
+    "lint:fix": "oxlint --type-aware --fix",
     "typecheck": "pnpm -r --filter=./packages/* typecheck"
   },
   "dependencies": {
     "@types/dom-mediacapture-transform": "0.1.11"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.3.2",
+    "oxfmt": "0.24.0",
+    "oxlint": "1.39.0",
+    "oxlint-tsgolint": "0.11.0",
     "typescript": "5.9.3",
-    "vite": "7.1.12",
+    "vite": "7.3.1",
     "vite-plugin-dts": "4.5.4",
     "vite-plugin-static-copy": "3.1.4"
   },
   "engines": {
-    "node": ">=18",
+    "node": ">=20",
     "pnpm": ">=10"
   }
 }
