@@ -28,9 +28,7 @@
     }
   },
   "scripts": {
-    "build": "vite build",
-    "lint": "biome lint ./src",
-    "fmt": "biome format --write src"
+    "build": "vite build"
   },
   "devDependencies": {
     "@shiguredo/rnnoise-wasm": "2025.1.5"

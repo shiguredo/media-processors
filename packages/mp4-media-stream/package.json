@@ -29,8 +29,6 @@
   },
   "scripts": {
     "build": "cargo build --release --target wasm32-unknown-unknown -p mp4_media_stream && vite build && tsc --emitDeclarationOnly",
-    "lint": "biome lint ./src",
-    "fmt": "biome format --write src",
     "typecheck": "tsc --noEmit"
   }
 }

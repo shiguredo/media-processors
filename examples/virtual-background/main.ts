@@ -39,7 +39,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     void navigator.mediaDevices.enumerateDevices().then((devices) => {
       const videoDevices = devices.filter((device) => device.kind === "videoinput" && device.label);
       const select = document.getElementById("videoDevice");
-      // biome-ignore lint/complexity/noForEach: <explanation>
       videoDevices.forEach((device) => {
         const option = document.createElement("option");
         option.value = device.deviceId;
