@@ -16,7 +16,7 @@
   "devDependencies": {
     "oxfmt": "0.24.0",
     "oxlint": "1.39.0",
-    "oxlint-tsgolint": "0.11.0",
+    "oxlint-tsgolint": "0.11.2",
     "typescript": "5.9.3",
     "vite": "7.3.1",
     "vite-plugin-dts": "4.5.4",
