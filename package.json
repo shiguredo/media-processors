@@ -14,13 +14,13 @@
     "@types/dom-mediacapture-transform": "0.1.11"
   },
   "devDependencies": {
-    "oxfmt": "0.24.0",
-    "oxlint": "1.39.0",
-    "oxlint-tsgolint": "0.11.0",
+    "oxfmt": "0.28.0",
+    "oxlint": "1.43.0",
+    "oxlint-tsgolint": "0.11.4",
     "typescript": "5.9.3",
     "vite": "7.3.1",
     "vite-plugin-dts": "4.5.4",
-    "vite-plugin-static-copy": "3.1.4"
+    "vite-plugin-static-copy": "3.2.0"
   },
   "engines": {
     "node": ">=20",
