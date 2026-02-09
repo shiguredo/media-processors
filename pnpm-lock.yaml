@@ -66,8 +66,8 @@ importers:
         specifier: 0.1.1675465747
         version: 0.1.1675465747
       stackblur-canvas:
-        specifier: 2.7.0
-        version: 2.7.0
+        specifier: 3.0.0
+        version: 3.0.0
       video-track-processor:
         specifier: workspace:*
         version: link:../video-track-processor
@@ -915,9 +915,9 @@ packages:
   sprintf-js@1.0.3:
     resolution: {integrity: sha512-D9cPgkvLlV3t3IzL0D0YLvGA9Ahk4PcvVwUbN0dSGr1aP0Nrt4AEnTUbuGvquEC0mA64Gqt1fzirlRs5ibXx8g==}
 
-  stackblur-canvas@2.7.0:
-    resolution: {integrity: sha512-yf7OENo23AGJhBriGx0QivY5JP6Y1HbrrDI6WLt6C5auYZXlQrheoY8hD4ibekFKz1HOfE48Ww8kMWMnJD/zcQ==}
-    engines: {node: '>=0.1.14'}
+  stackblur-canvas@3.0.0:
+    resolution: {integrity: sha512-BTbpAj0SNgpTwqKS3aacbI8p3/Ix50i8jAKome/YnM29DZVgriOZ+3V5GAf73nukjZY7xTf0TxdTgFKh4vsAKQ==}
+    engines: {node: '>=0.1.16'}
 
   string-argv@0.3.2:
     resolution: {integrity: sha512-aqD2Q0144Z+/RqG52NeHEkZauTAUWJO8c6yTftGJKO3Tja5tUgIfmIl6kExvhtxSDP7fXB6DvzkfMpCd/F3G+Q==}
@@ -1762,7 +1762,7 @@ snapshots:
 
   sprintf-js@1.0.3: {}
 
-  stackblur-canvas@2.7.0: {}
+  stackblur-canvas@3.0.0: {}
 
   string-argv@0.3.2: {}
 
