@@ -78,7 +78,7 @@ jobs:
       - run: pnpm --filter @shiguredo/${{ needs.determine-package.outputs.package_name }} run build
       - run: pnpm --filter @shiguredo/${{ needs.determine-package.outputs.package_name }} run lint
       - run: pnpm --filter @shiguredo/${{ needs.determine-package.outputs.package_name }} run typecheck
-      - uses: actions/upload-artifact@v6
+      - uses: actions/upload-artifact@v7
         with:
           name: ${{ needs.determine-package.outputs.package_name }}-dist
           path: ${{ needs.determine-package.outputs.package_dir }}/dist/
