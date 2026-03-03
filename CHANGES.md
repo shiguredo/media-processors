@@ -11,6 +11,11 @@
 
 ## develop
 
+### virtual-background
+
+- [FIX] stackblur-canvas@3.0.0 の package.json "exports" に "types" エントリがなく型解決できない問題を型宣言ファイルの追加で回避する
+  - @voluntas
+
 ### misc
 
 - [CHANGE] 利用していなかった typedoc を削除する
