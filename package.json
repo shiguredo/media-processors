@@ -14,7 +14,7 @@
     "@types/dom-mediacapture-transform": "0.1.11"
   },
   "devDependencies": {
-    "oxfmt": "0.36.0",
+    "oxfmt": "0.41.0",
     "oxlint": "1.51.0",
     "oxlint-tsgolint": "0.15.0",
     "typescript": "5.9.3",
