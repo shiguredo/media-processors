@@ -54,10 +54,12 @@ class VideoTrackProcessor {
     return this.trackProcessor !== undefined;
   }
 
+  // oxlint-disable-next-line typescript-eslint/no-redundant-type-constituents -- oxlint が @types/dom-mediacapture-transform のグローバル型を解決できないための偽陽性
   getOriginalTrack(): MediaStreamVideoTrack | undefined {
     return this.originalTrack;
   }
 
+  // oxlint-disable-next-line typescript-eslint/no-redundant-type-constituents -- oxlint が @types/dom-mediacapture-transform のグローバル型を解決できないための偽陽性
   getProcessedTrack(): MediaStreamVideoTrack | undefined {
     return this.processedTrack;
   }
@@ -143,11 +145,13 @@ class BreakoutBoxProcessor extends Processor {
 
   async startProcessing(): Promise<MediaStreamVideoTrack> {
     const { signal } = this.abortController;
+    // oxlint-disable-next-line typescript-eslint/no-unsafe-member-access -- oxlint が @types/dom-mediacapture-transform のグローバル型を解決できないための偽陽性
     this.processor.readable
       .pipeThrough(
         new TransformStream({
           transform: async (frame, controller) => {
             this.recordStartFrame();
+            // oxlint-disable-next-line typescript-eslint/no-unsafe-member-access -- oxlint が @types/dom-mediacapture-transform のグローバル型を解決できないための偽陽性
             if (this.generator.readyState === "ended") {
               // ジェネレータ（ユーザに渡している処理結果トラック）がクローズ済み。
               // この状態で `controller.enqueue()` を呼び出すとエラーが発生するのでスキップする。
@@ -161,6 +165,7 @@ class BreakoutBoxProcessor extends Processor {
             const { timestamp, duration } = frame;
             // HTMLVideoElementと等価に扱いつつ、mediapipeに渡す際のパフォーマンスが良いのでImageBitmapを使う。
             const image = await createImageBitmap(frame);
+            // oxlint-disable-next-line typescript-eslint/no-unsafe-member-access -- oxlint が @types/dom-mediacapture-transform のグローバル型を解決できないための偽陽性
             frame.close();
             const processedImageCanvas = await this.callback(image);
             image.close();
@@ -172,16 +177,20 @@ class BreakoutBoxProcessor extends Processor {
         }),
         { signal },
       )
+      // oxlint-disable-next-line typescript-eslint/no-unsafe-member-access -- oxlint が @types/dom-mediacapture-transform のグローバル型を解決できないための偽陽性
       .pipeTo(this.generator.writable)
+      // oxlint-disable-next-line typescript-eslint/no-unsafe-member-access -- oxlint が @types/dom-mediacapture-transform のグローバル型を解決できないための偽陽性
       .catch((error) => {
         if (signal.aborted) {
           console.debug("Shutting down streams after abort.");
         } else {
           console.warn("Error from stream transform:", error);
         }
+        // oxlint-disable-next-line typescript-eslint/no-unsafe-member-access -- oxlint が @types/dom-mediacapture-transform のグローバル型を解決できないための偽陽性
         this.processor.readable.cancel(error).catch((error) => {
           console.warn("Failed to cancel `MediaStreamTrackProcessor`:", error);
         });
+        // oxlint-disable-next-line typescript-eslint/no-unsafe-member-access -- oxlint が @types/dom-mediacapture-transform のグローバル型を解決できないための偽陽性
         this.generator.writable.abort(error).catch((error) => {
           console.warn("Failed to abort `MediaStreamTrackGenerator`:", error);
         });
@@ -214,7 +223,9 @@ class RequestVideoFrameCallbackProcessor extends Processor {
 
     // 処理後の映像フレームを書き込むための canvas を生成する
     // CaptureStream() を使いたいので OffscreenCanvas にはできない
+    // oxlint-disable-next-line typescript-eslint/no-unsafe-member-access -- oxlint が @types/dom-mediacapture-transform のグローバル型を解決できないための偽陽性
     const width = track.getSettings().width ?? 0;
+    // oxlint-disable-next-line typescript-eslint/no-unsafe-member-access -- oxlint が @types/dom-mediacapture-transform のグローバル型を解決できないための偽陽性
     const height = track.getSettings().height ?? 0;
     this.canvas = document.createElement("canvas");
     this.canvas.width = width;

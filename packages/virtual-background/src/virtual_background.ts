@@ -156,7 +156,9 @@ class VirtualBackgroundProcessor {
     track: MediaStreamVideoTrack,
     options: VirtualBackgroundProcessorOptions = {},
   ): Promise<MediaStreamVideoTrack> {
+    // oxlint-disable-next-line typescript-eslint/no-unsafe-member-access -- oxlint が @types/dom-mediacapture-transform のグローバル型を解決できないための偽陽性
     const initialWidth = track.getSettings().width ?? 0;
+    // oxlint-disable-next-line typescript-eslint/no-unsafe-member-access -- oxlint が @types/dom-mediacapture-transform のグローバル型を解決できないための偽陽性
     const initialHeight = track.getSettings().height ?? 0;
     const canvas = createOffscreenCanvas(initialWidth, initialHeight);
     const canvasCtx = canvas.getContext("2d", {
@@ -240,6 +242,7 @@ class VirtualBackgroundProcessor {
    *
    * @returns 処理適用中の場合は映像トラック、それ以外なら `undefined`
    */
+  // oxlint-disable-next-line typescript-eslint/no-redundant-type-constituents -- oxlint が @types/dom-mediacapture-transform のグローバル型を解決できないための偽陽性
   getOriginalTrack(): MediaStreamVideoTrack | undefined {
     return this.trackProcessor.getOriginalTrack();
   }
@@ -254,6 +257,7 @@ class VirtualBackgroundProcessor {
    *
    * @returns 処理適用中の場合は映像トラック、それ以外なら `undefined`
    */
+  // oxlint-disable-next-line typescript-eslint/no-redundant-type-constituents -- oxlint が @types/dom-mediacapture-transform のグローバル型を解決できないための偽陽性
   getProcessedTrack(): MediaStreamVideoTrack | undefined {
     return this.trackProcessor.getProcessedTrack();
   }

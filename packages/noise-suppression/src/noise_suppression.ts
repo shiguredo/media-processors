@@ -91,6 +91,7 @@ class NoiseSuppressionProcessor {
    *
    * @returns 処理適用中の場合は音声トラック、それ以外なら `undefined`
    */
+  // oxlint-disable-next-line typescript-eslint/no-redundant-type-constituents -- oxlint が @types/dom-mediacapture-transform のグローバル型を解決できないための偽陽性
   getOriginalTrack(): MediaStreamAudioTrack | undefined {
     return this.originalTrack;
   }
@@ -105,6 +106,7 @@ class NoiseSuppressionProcessor {
    *
    * @returns 処理適用中の場合は音声トラック、それ以外なら `undefined`
    */
+  // oxlint-disable-next-line typescript-eslint/no-redundant-type-constituents -- oxlint が @types/dom-mediacapture-transform のグローバル型を解決できないための偽陽性
   getProcessedTrack(): MediaStreamAudioTrack | undefined {
     return this.processedTrack;
   }
@@ -137,6 +139,7 @@ class TrackProcessor {
 
   startProcessing(): MediaStreamAudioTrack {
     const { signal } = this.abortController;
+    // oxlint-disable-next-line typescript-eslint/no-unsafe-member-access -- oxlint が @types/dom-mediacapture-transform のグローバル型を解決できないための偽陽性
     this.processor.readable
       .pipeThrough(
         new TransformStream({
@@ -146,16 +149,20 @@ class TrackProcessor {
         }),
         { signal },
       )
+      // oxlint-disable-next-line typescript-eslint/no-unsafe-member-access -- oxlint が @types/dom-mediacapture-transform のグローバル型を解決できないための偽陽性
       .pipeTo(this.generator.writable)
+      // oxlint-disable-next-line typescript-eslint/no-unsafe-member-access -- oxlint が @types/dom-mediacapture-transform のグローバル型を解決できないための偽陽性
       .catch((error) => {
         if (signal.aborted) {
           console.debug("Shutting down streams after abort.");
         } else {
           console.warn("Error from stream transform:", error);
         }
+        // oxlint-disable-next-line typescript-eslint/no-unsafe-member-access -- oxlint が @types/dom-mediacapture-transform のグローバル型を解決できないための偽陽性
         this.processor.readable.cancel(error).catch((error) => {
           console.warn("Failed to cancel `MediaStreamTrackProcessor`:", error);
         });
+        // oxlint-disable-next-line typescript-eslint/no-unsafe-member-access -- oxlint が @types/dom-mediacapture-transform のグローバル型を解決できないための偽陽性
         this.generator.writable.abort(error).catch((error) => {
           console.warn("Failed to abort `MediaStreamTrackGenerator`:", error);
         });
@@ -217,6 +224,7 @@ class TrackProcessor {
           this.buffer[i] = value / 0x7f_ff;
         }
 
+        // oxlint-disable-next-line typescript-eslint/no-unsafe-member-access -- oxlint が @types/dom-mediacapture-transform のグローバル型を解決できないための偽陽性
         if (this.generator.readyState === "ended") {
           // ジェネレータ（ユーザに渡している処理結果トラック）がクローズ済み。
           // この状態で `controller.enqueue()` を呼び出すとエラーが発生するのでスキップする。
