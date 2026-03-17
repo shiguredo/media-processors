@@ -28,7 +28,7 @@
     }
   },
   "scripts": {
-    "build": "vite build",
+    "build": "vp build",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

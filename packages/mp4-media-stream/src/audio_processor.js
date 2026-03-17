@@ -20,7 +20,7 @@ class Mp4MediaStreamAudioWorkletProcessor extends AudioWorkletProcessor {
           // 後者の場合には、ここでゼロで埋めた分だけ後で破棄しないと、
           // 映像とのリップシンクがズレていってしまう。
           //
-          // this.inputBuffer の中にはタイムスタンプの情報も含まれているので、
+          // This.inputBuffer の中にはタイムスタンプの情報も含まれているので、
           // それを見て、より正確なゼロ埋めやサンプル破棄を行うことは可能なので、
           // 実際にこういったケースが問題になることがあれば対応を検討すること。
           outputChannel[sampleIdx] = 0;

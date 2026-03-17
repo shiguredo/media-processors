@@ -5,12 +5,12 @@ document.addEventListener("DOMContentLoaded", async () => {
 
   if (!Mp4MediaStream.isSupported()) {
     alert("Unsupported platform");
-    throw Error("Unsupported platform");
+    throw new Error("Unsupported platform");
   }
 
   async function load() {
-    const input = document.getElementById("input");
-    const files = input.files;
+    const input = document.querySelector("#input");
+    const { files } = input;
     if (files === null || files.length === 0) {
       return;
     }
@@ -22,9 +22,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     try {
       mp4MediaStream = await Mp4MediaStream.load(file);
-    } catch (e) {
-      alert(e.message);
-      throw e;
+    } catch (error) {
+      alert(error.message);
+      throw error;
     }
   }
 
@@ -35,11 +35,11 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     const options = {
-      repeat: document.getElementById("repeat").checked,
+      repeat: document.querySelector("#repeat").checked,
     };
     const stream = await mp4MediaStream.play(options);
 
-    const output = document.getElementById("output");
+    const output = document.querySelector("#output");
     output.srcObject = stream;
   }
 
@@ -51,7 +51,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     await mp4MediaStream.stop();
   }
 
-  document.getElementById("input").addEventListener("change", load);
-  document.getElementById("play").addEventListener("click", play);
-  document.getElementById("stop").addEventListener("click", stop);
+  document.querySelector("#input").addEventListener("change", load);
+  document.querySelector("#play").addEventListener("click", play);
+  document.querySelector("#stop").addEventListener("click", stop);
 });

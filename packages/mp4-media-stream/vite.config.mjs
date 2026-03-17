@@ -1,7 +1,7 @@
-import fs from "node:fs";
+import { defineConfig } from "vite-plus";
 import { resolve } from "node:path";
-import { defineConfig } from "vite";
 import dts from "vite-plugin-dts";
+import fs from "node:fs";
 import pkg from "./package.json";
 
 const banner = `/**
@@ -15,16 +15,15 @@ const banner = `/**
 
 export default defineConfig({
   build: {
-    minify: "esbuild",
-    target: "es2023",
     emptyOutDir: true,
-    manifest: true,
     lib: {
       entry: resolve(__dirname, "src/mp4_media_stream.ts"),
+      fileName: "mp4_media_stream",
       formats: ["es"],
       name: "Shiguredo",
-      fileName: "mp4_media_stream",
     },
+    manifest: true,
+    minify: "esbuild",
     rollupOptions: {
       output: {
         banner: banner,
@@ -33,7 +32,7 @@ export default defineConfig({
         {
           name: "wasm-loader",
           transform(code) {
-            return code.replace(/__WASM__/g, () =>
+            return code.replaceAll("__WASM__", () =>
               fs.readFileSync(
                 "../../target/wasm32-unknown-unknown/release/mp4_media_stream.wasm",
                 "base64",
@@ -44,13 +43,14 @@ export default defineConfig({
         {
           name: "audio-processor-loader",
           transform(code) {
-            return code.replace(/__AUDIO_PROCESSOR__/g, () =>
+            return code.replaceAll("__AUDIO_PROCESSOR__", () =>
               fs.readFileSync("src/audio_processor.js"),
             );
           },
         },
       ],
     },
+    target: "es2023",
   },
   plugins: [
     dts({

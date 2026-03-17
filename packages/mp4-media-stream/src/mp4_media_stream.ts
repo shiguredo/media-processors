@@ -8,15 +8,15 @@ const AUDIO_WORKLET_PROCESSOR_NAME = "mp4-media-stream-audio-worklet-processor";
  */
 interface PlayOptions {
   /**
-   * true が指定されると、MP4 ファイルの終端に達した場合に、先頭に戻って再生が繰り返されます
+   * True が指定されると、MP4 ファイルの終端に達した場合に、先頭に戻って再生が繰り返されます
    *
    * デフォルト値は false
    */
   repeat?: boolean;
 }
 
-const AUDIO_DECODER_ID: number = 0;
-const VIDEO_DECODER_ID: number = 1;
+const AUDIO_DECODER_ID = 0;
+const VIDEO_DECODER_ID = 1;
 
 /**
  * MP4 を入力にとって、それを再生する MediaStream を生成するクラス
@@ -26,7 +26,7 @@ class Mp4MediaStream {
   private memory: WebAssembly.Memory;
   private engine: number;
   private info?: Mp4Info;
-  private players: Map<number, Player> = new Map();
+  private players = new Map<number, Player>();
   private nextPlayerId = 0;
 
   private constructor(wasm: WebAssembly.Instance) {
@@ -64,22 +64,14 @@ class Mp4MediaStream {
     const ref: { stream?: Mp4MediaStream } = { stream: undefined };
     const importObject = {
       env: {
-        now() {
-          return performance.now();
+        closeDecoder(playerId: number, decoderId: number) {
+          if (ref.stream) {
+            void ref.stream.closeDecoder(playerId, decoderId);
+          }
         },
         consoleLog(messageWasmJson: number) {
           if (ref.stream) {
             ref.stream.consoleLog(messageWasmJson);
-          }
-        },
-        sleep(resultTx: number, duration: number) {
-          if (ref.stream) {
-            void ref.stream.sleep(resultTx, duration);
-          }
-        },
-        createVideoDecoder(resultTx: number, playerId: number, configWasmJson: number) {
-          if (ref.stream) {
-            void ref.stream.createVideoDecoder(resultTx, playerId, configWasmJson);
           }
         },
         createAudioDecoder(resultTx: number, playerId: number, configWasmJson: number) {
@@ -87,9 +79,9 @@ class Mp4MediaStream {
             void ref.stream.createAudioDecoder(resultTx, playerId, configWasmJson);
           }
         },
-        closeDecoder(playerId: number, decoderId: number) {
+        createVideoDecoder(resultTx: number, playerId: number, configWasmJson: number) {
           if (ref.stream) {
-            void ref.stream.closeDecoder(playerId, decoderId);
+            void ref.stream.createVideoDecoder(resultTx, playerId, configWasmJson);
           }
         },
         decode(
@@ -103,9 +95,17 @@ class Mp4MediaStream {
             ref.stream.decode(playerId, decoderId, metadataWasmJson, dataOffset, dataLen);
           }
         },
+        now() {
+          return performance.now();
+        },
         onEos(playerId: number) {
           if (ref.stream) {
             void ref.stream.onEos(playerId);
+          }
+        },
+        sleep(resultTx: number, duration: number) {
+          if (ref.stream) {
+            void ref.stream.sleep(resultTx, duration);
           }
         },
       },
@@ -139,7 +139,7 @@ class Mp4MediaStream {
    * ようにしないと、WebRTC の受信側で映像のフレームレートが極端に下がったり、止まったりする現象が確認されています。
    * なお、VideoElement はミュートかつ hidden visibility でも問題ありません。
    */
-  play(options: PlayOptions = {}): Promise<MediaStream> {
+  async play(options: PlayOptions = {}): Promise<MediaStream> {
     if (this.info === undefined) {
       // ここには来ないはず
       throw new Error("bug");
@@ -228,7 +228,7 @@ class Mp4MediaStream {
   private async createVideoDecoder(resultTx: number, playerId: number, configWasmJson: number) {
     const player = this.players.get(playerId);
     if (player === undefined) {
-      // stop() と競合したらここに来る可能性がある
+      // Stop() と競合したらここに来る可能性がある
       // すでに停止済みであり、新規でデコーダーを作成する必要はないので、ここで return する
       return;
     }
@@ -247,6 +247,11 @@ class Mp4MediaStream {
     }
 
     const init = {
+      error: async (error: DOMException) => {
+        // デコードエラーが発生した場合には再生を停止する
+        await this.stopPlayer(playerId);
+        throw error;
+      },
       output: async (frame: VideoFrame) => {
         try {
           if (player.canvas === undefined || player.canvasCtx === undefined) {
@@ -266,11 +271,6 @@ class Mp4MediaStream {
           frame.close();
         }
       },
-      error: async (error: DOMException) => {
-        // デコードエラーが発生した場合には再生を停止する
-        await this.stopPlayer(playerId);
-        throw error;
-      },
     };
 
     player.videoDecoder = new VideoDecoder(init);
@@ -285,7 +285,7 @@ class Mp4MediaStream {
   private async createAudioDecoder(resultTx: number, playerId: number, configWasmJson: number) {
     const player = this.players.get(playerId);
     if (player === undefined) {
-      // stop() と競合したらここに来る可能性がある
+      // Stop() と競合したらここに来る可能性がある
       // すでに停止済みであり、新規でデコーダーを作成する必要はないので、ここで return する
       return;
     }
@@ -295,6 +295,11 @@ class Mp4MediaStream {
 
     const config = this.wasmJsonToValue(configWasmJson) as AudioDecoderConfig;
     const init = {
+      error: async (error: DOMException) => {
+        // デコードエラーが発生した場合には再生を停止する
+        await this.stopPlayer(playerId);
+        throw error;
+      },
       output: async (data: AudioData) => {
         try {
           if (player.audioInputNode === undefined) {
@@ -303,23 +308,18 @@ class Mp4MediaStream {
 
           try {
             const samples = new Float32Array(data.numberOfFrames * data.numberOfChannels);
-            data.copyTo(samples, { planeIndex: 0, format: "f32" });
+            data.copyTo(samples, { format: "f32", planeIndex: 0 });
 
-            const timestamp = data.timestamp;
-            player.audioInputNode.port.postMessage({ timestamp, samples }, [samples.buffer]);
-          } catch (e) {
+            const { timestamp } = data;
+            player.audioInputNode.port.postMessage({ samples, timestamp }, [samples.buffer]);
+          } catch (error) {
             // エラーが発生した場合には再生を停止する
             await this.stopPlayer(playerId);
-            throw e;
+            throw error;
           }
         } finally {
           data.close();
         }
-      },
-      error: async (error: DOMException) => {
-        // デコードエラーが発生した場合には再生を停止する
-        await this.stopPlayer(playerId);
-        throw error;
       },
     };
 
@@ -360,7 +360,7 @@ class Mp4MediaStream {
   ) {
     const player = this.players.get(playerId);
     if (player === undefined) {
-      // stop() 呼び出しと競合した場合にここに来る可能性がある
+      // Stop() 呼び出しと競合した場合にここに来る可能性がある
       // すでに停止済みなので、これ以上デコードを行う必要はない
       return;
     }
@@ -404,7 +404,7 @@ class Mp4MediaStream {
     if (result.Err !== undefined) {
       throw new Error(result.Err.message);
     }
-    return result.Ok as object;
+    return result.Ok!;
   }
 
   private valueToWasmJson(value: object): number {
@@ -421,16 +421,16 @@ class Mp4MediaStream {
   }
 }
 
-type Mp4Info = {
+interface Mp4Info {
   audioConfigs: [AudioDecoderConfig];
   videoConfigs: [VideoDecoderConfig];
-};
+}
 
 class Player {
   private audio: boolean;
   private video: boolean;
   private numberOfChannels = 1;
-  private sampleRate = 48000;
+  private sampleRate = 48_000;
   audioDecoder?: AudioDecoder;
   videoDecoder?: VideoDecoder;
   canvas?: HTMLCanvasElement;
@@ -468,7 +468,7 @@ class Player {
       this.canvas = document.createElement("canvas");
       const canvasCtx = this.canvas.getContext("2d");
       if (canvasCtx === null) {
-        throw Error("Failed to create 2D canvas context");
+        throw new Error("Failed to create 2D canvas context");
       }
       this.canvasCtx = canvasCtx;
       tracks.push(this.canvas.captureStream().getVideoTracks()[0]);
@@ -485,16 +485,16 @@ class Player {
     if (decoder.state !== "closed") {
       try {
         await decoder.flush();
-      } catch (e) {
-        if (e instanceof DOMException && e.name === "AbortError") {
+      } catch (error) {
+        if (error instanceof DOMException && error.name === "AbortError") {
           // デコーダーのクローズ処理と競合した場合にはここに来る（単に無視すればいい）
         } else {
-          throw e;
+          throw error;
         }
       }
     }
 
-    // await 前後で状態が変わっている可能性があるのでもう一度チェックする
+    // Await 前後で状態が変わっている可能性があるのでもう一度チェックする
     if (decoder === this.audioDecoder && decoder.state !== "closed") {
       decoder.close();
       this.audioDecoder = undefined;
@@ -510,16 +510,16 @@ class Player {
     if (decoder.state !== "closed") {
       try {
         await decoder.flush();
-      } catch (e) {
-        if (e instanceof DOMException && e.name === "AbortError") {
+      } catch (error) {
+        if (error instanceof DOMException && error.name === "AbortError") {
           // デコーダーのクローズ処理と競合した場合にはここに来る（単に無視すればいい）
         } else {
-          throw e;
+          throw error;
         }
       }
     }
 
-    // await 前後で状態が変わっている可能性があるのでもう一度チェックする
+    // Await 前後で状態が変わっている可能性があるのでもう一度チェックする
     if (decoder === this.videoDecoder && decoder.state !== "closed") {
       decoder.close();
       this.videoDecoder = undefined;

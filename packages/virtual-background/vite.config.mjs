@@ -1,8 +1,8 @@
-import fs from "node:fs";
-import { resolve } from "node:path";
-import { defineConfig } from "vite";
-import dts from "vite-plugin-dts";
+import { defineConfig } from "vite-plus";
 import { viteStaticCopy } from "vite-plugin-static-copy";
+import dts from "vite-plugin-dts";
+import fs from "node:fs";
+import path from "node:path";
 import pkg from "./package.json";
 
 const banner = `/**
@@ -14,24 +14,37 @@ const banner = `/**
  **/
 `;
 
+// https://github.com/google/mediapipe/issues/2883 が対応されないので、ワークアラウンドを行う
+const mediapipeWorkaround = () => ({
+  load(id) {
+    if (path.basename(id) === "selfie_segmentation.js") {
+      let code = fs.readFileSync(id, "utf8");
+      code += "exports.SelfieSegmentation = SelfieSegmentation;";
+      return { code };
+    }
+    return null;
+  },
+  name: "mediapipe_workaround",
+});
+
 export default defineConfig({
   build: {
-    minify: "esbuild",
-    target: "es2023",
     emptyOutDir: true,
-    manifest: true,
     lib: {
-      entry: resolve(__dirname, "src/virtual_background.ts"),
+      entry: path.resolve(__dirname, "src/virtual_background.ts"),
+      fileName: "virtual_background",
       formats: ["es"],
       name: "Shiguredo",
-      fileName: "virtual_background",
     },
+    manifest: true,
+    minify: "esbuild",
     rollupOptions: {
       output: {
         banner: banner,
       },
-      plugins: [mediapipeWorkaround],
+      plugins: [mediapipeWorkaround()],
     },
+    target: "es2023",
   },
   plugins: [
     dts({
@@ -40,8 +53,9 @@ export default defineConfig({
     viteStaticCopy({
       targets: [
         {
+          dest: ".",
           src: [
-            // node_modulesの場所が変わることがあるので、両方のパターンに対応しておく
+            // Node_modules の場所が変わることがあるので、両方のパターンに対応しておく
             "./node_modules/@mediapipe/selfie_segmentation/*.wasm",
             "./node_modules/@mediapipe/selfie_segmentation/*.tflite",
             "./node_modules/@mediapipe/selfie_segmentation/*.binarypb",
@@ -52,24 +66,8 @@ export default defineConfig({
             "../../node_modules/@mediapipe/selfie_segmentation/*.binarypb",
             "../../node_modules/@mediapipe/selfie_segmentation/*wasm_bin.js",
           ],
-          dest: ".",
         },
       ],
     }),
   ],
 });
-
-// https://github.com/google/mediapipe/issues/2883 が対応されないので、ワークアラウンドを行う
-function mediapipeWorkaround() {
-  return {
-    name: "mediapipe_workaround",
-    load(id) {
-      if (path.basename(id) === "selfie_segmentation.js") {
-        let code = fs.readFileSync(id, "utf-8");
-        code += "exports.SelfieSegmentation = SelfieSegmentation;";
-        return { code };
-      }
-      return null;
-    },
-  };
-}

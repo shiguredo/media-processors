@@ -1,5 +1,5 @@
-// stackblur-canvas@3.0.0 の package.json "exports" に "types" エントリが含まれていないため、
-// moduleResolution: "bundler" では同梱の index.d.ts が解決できない。
+// Stackblur-canvas@3.0.0 の package.json "exports" に "types" エントリが含まれていないため、
+// ModuleResolution: "bundler" では同梱の index.d.ts が解決できない。
 // ライブラリ側で修正されるまでの回避策として、型宣言をここで再定義する。
 declare module "stackblur-canvas" {
   export class BlurStack {

@@ -3,7 +3,7 @@ import { NoiseSuppressionProcessor } from "@shiguredo/noise-suppression";
 document.addEventListener("DOMContentLoaded", async () => {
   if (!NoiseSuppressionProcessor.isSupported()) {
     alert("Unsupported platform");
-    throw Error("Unsupported platform");
+    throw new Error("Unsupported platform");
   }
 
   const processor = new NoiseSuppressionProcessor();
@@ -18,25 +18,25 @@ document.addEventListener("DOMContentLoaded", async () => {
       audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
       analyserOriginal = audioCtx.createAnalyser();
-      visualize(analyserOriginal, document.getElementById("oscilloscopeOriginal"));
+      visualize(analyserOriginal, document.querySelector("#oscilloscopeOriginal"));
 
       analyserProcessed = audioCtx.createAnalyser();
-      visualize(analyserProcessed, document.getElementById("oscilloscopeProcessed"));
+      visualize(analyserProcessed, document.querySelector("#oscilloscopeProcessed"));
     }
   }
 
-  function getUserMedia() {
+  async function getUserMedia() {
     const constraints = {
       audio: {
-        sampleRate: { ideal: 48000 },
-        sampleSize: { ideal: 480 },
         channelCount: { exact: 1 },
+        sampleRate: { ideal: 48_000 },
+        sampleSize: { ideal: 480 },
       },
     };
     return navigator.mediaDevices.getUserMedia(constraints).then((stream) => {
       initAudioAnalysersIfNeed();
 
-      if (sourceOriginal != undefined) {
+      if (sourceOriginal !== undefined) {
         sourceOriginal.disconnect();
       }
       sourceOriginal = audioCtx.createMediaStreamSource(stream);
@@ -49,9 +49,9 @@ document.addEventListener("DOMContentLoaded", async () => {
   function playOriginalAudio() {
     processor.stopProcessing();
 
-    const audioElement = document.getElementById("audio");
+    const audioElement = document.querySelector("#audio");
     void getUserMedia().then((stream) => {
-      if (sourceProcessed != undefined) {
+      if (sourceProcessed !== undefined) {
         sourceProcessed.disconnect();
         sourceProcessed = undefined;
       }
@@ -62,13 +62,13 @@ document.addEventListener("DOMContentLoaded", async () => {
   function playProcessedAudio() {
     processor.stopProcessing();
 
-    const audioElement = document.getElementById("audio");
+    const audioElement = document.querySelector("#audio");
     void getUserMedia().then((stream) => {
       const track = stream.getAudioTracks()[0];
       void processor.startProcessing(track).then((processed_track) => {
         const stream = new MediaStream([processed_track]);
 
-        if (sourceProcessed != undefined) {
+        if (sourceProcessed !== undefined) {
           sourceProcessed.disconnect();
         }
         sourceProcessed = audioCtx.createMediaStreamSource(stream);
@@ -80,7 +80,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   }
 
   function stopAudio() {
-    const audioElement = document.getElementById("audio");
+    const audioElement = document.querySelector("#audio");
     audioElement.pause();
 
     if (sourceOriginal !== undefined) {
@@ -107,8 +107,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     canvasCtx.fillRect(0, 0, canvas.width, canvas.height);
 
     let silence = true;
-    for (let i = 0; i < dataArray.length; i++) {
-      if (dataArray[i] !== 128) {
+    for (const sample of dataArray) {
+      if (sample !== 128) {
         silence = false;
         break;
       }
@@ -120,10 +120,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     canvasCtx.lineWidth = 2;
     canvasCtx.strokeStyle = "rgb(0, 0, 0)";
     canvasCtx.beginPath();
-    const sliceWidth = (canvas.width * 1.0) / bufferLength;
+    const sliceWidth = Number(canvas.width) / bufferLength;
     let x = 0;
     for (let i = 0; i < bufferLength; i++) {
-      const v = dataArray[i] / 128.0;
+      const v = dataArray[i] / 128;
       const y = (v * canvas.height) / 2;
 
       if (i === 0) {
@@ -144,10 +144,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     canvasCtx.fillRect(0, 0, canvas.width, canvas.height);
   }
 
-  document.getElementById("playProcessedAudio").addEventListener("click", playProcessedAudio);
-  document.getElementById("playOriginalAudio").addEventListener("click", playOriginalAudio);
-  document.getElementById("stopAudio").addEventListener("click", stopAudio);
+  document.querySelector("#playProcessedAudio").addEventListener("click", playProcessedAudio);
+  document.querySelector("#playOriginalAudio").addEventListener("click", playOriginalAudio);
+  document.querySelector("#stopAudio").addEventListener("click", stopAudio);
 
-  clearCanvas(document.getElementById("oscilloscopeOriginal"));
-  clearCanvas(document.getElementById("oscilloscopeProcessed"));
+  clearCanvas(document.querySelector("#oscilloscopeOriginal"));
+  clearCanvas(document.querySelector("#oscilloscopeProcessed"));
 });

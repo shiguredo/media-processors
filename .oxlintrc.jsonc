@@ -1,5 +1,4 @@
 {
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
   "plugins": ["typescript", "oxc", "unicorn", "import", "promise", "react", "vitest"],
   "categories": {
     // 明らかに間違っているコード
@@ -79,6 +78,9 @@
     "no-useless-call": "error",
     // 不要な文字列連結を禁止
     "no-useless-concat": "error",
+
+    // import 文のソート（宣言順は無視、メンバー名のみソート）
+    "sort-imports": ["error", { "ignoreDeclarationSort": true }],
 
     // ===== eslint: モダン構文の推奨 =====
     // Math.pow() より ** 演算子を推奨
@@ -481,8 +483,8 @@
     "unicorn/no-zero-fractions": "error",
 
     // ===== unicorn: 数値リテラル =====
-    // 数値リテラルの大文字小文字を統一
-    "unicorn/number-literal-case": "error",
+    // 数値リテラルの大文字小文字（oxfmt が小文字化するため無効化）
+    "unicorn/number-literal-case": "off",
     // 数値区切りのスタイルを統一
     "unicorn/numeric-separators-style": "error",
 
@@ -767,6 +769,166 @@
         "typescript/no-unsafe-member-access": "off",
         "typescript/no-unsafe-return": "off",
         "typescript/no-unsafe-type-assertion": "off",
+      },
+    },
+    {
+      // vite 設定ファイルは Node.js モジュールの使用を許可
+      "files": ["**/vite.config.*"],
+      "rules": {
+        "import/exports-last": "off",
+        "import/no-nodejs-modules": "off",
+        "no-ternary": "off",
+        "typescript/no-unsafe-argument": "off",
+        "typescript/no-unsafe-assignment": "off",
+        "typescript/no-unsafe-call": "off",
+        "typescript/no-unsafe-member-access": "off",
+        "typescript/no-unsafe-return": "off",
+      },
+    },
+    {
+      // 型宣言ファイルは import/export の制約を緩和
+      "files": ["**/*.d.ts"],
+      "rules": {
+        "id-length": "off",
+        "import/group-exports": "off",
+        "import/no-named-export": "off",
+        "import/unambiguous": "off",
+        "max-params": "off",
+      },
+    },
+    {
+      // examples は型安全性とスタイルを緩和
+      "files": ["examples/**/*.ts"],
+      "rules": {
+        "func-style": "off",
+        "id-length": "off",
+        "init-declarations": "off",
+        "max-lines-per-function": "off",
+        "no-alert": "off",
+        "no-magic-numbers": "off",
+        "no-shadow": "off",
+        "no-void": "off",
+        "prefer-destructuring": "off",
+        "require-await": "off",
+        "import/no-named-export": "off",
+        "promise/always-return": "off",
+        "promise/no-nesting": "off",
+        "promise/prefer-await-to-then": "off",
+        "typescript/explicit-function-return-type": "off",
+        "typescript/no-misused-promises": "off",
+        "typescript/no-non-null-assertion": "off",
+        "typescript/no-unsafe-argument": "off",
+        "typescript/no-unsafe-assignment": "off",
+        "typescript/no-unsafe-call": "off",
+        "typescript/no-unsafe-member-access": "off",
+        "typescript/require-await": "off",
+        "typescript/strict-boolean-expressions": "off",
+        "unicorn/consistent-function-scoping": "off",
+        "unicorn/no-array-for-each": "off",
+        "unicorn/numeric-separators-style": "off",
+        "unicorn/prefer-global-this": "off",
+        "unicorn/prefer-query-selector": "off",
+        "vitest/require-hook": "off",
+      },
+    },
+    {
+      // JavaScript ファイルは型安全性を緩和
+      "files": ["**/*.js"],
+      "rules": {
+        "id-length": "off",
+        "no-magic-numbers": "off",
+        "prefer-destructuring": "off",
+        "import/unambiguous": "off",
+        "typescript/no-unsafe-argument": "off",
+        "typescript/no-unsafe-assignment": "off",
+        "typescript/no-unsafe-call": "off",
+        "typescript/no-unsafe-member-access": "off",
+        "unicorn/filename-case": "off",
+        "unicorn/prefer-add-event-listener": "off",
+        "vitest/require-hook": "off",
+      },
+    },
+    {
+      // ライブラリソースファイルはメディア処理特有のパターンを許可
+      "files": ["packages/*/src/**/*.ts"],
+      "rules": {
+        // メディア処理では数値リテラルが頻出（ピクセル値、バッファサイズ等）
+        "no-magic-numbers": "off",
+        // 短い変数名（i, x, y 等）はメディア処理で一般的
+        "id-length": "off",
+        // ファイル名は既存の snake_case を維持（変更すると公開 API の破壊的変更になる）
+        "unicorn/filename-case": "off",
+        // 関数宣言も許可
+        "func-style": "off",
+        // メディア処理関数は長くなりがち
+        "max-lines-per-function": "off",
+        // ファイル行数制限
+        "max-lines": "off",
+        // 複数クラスを同一ファイルに許可
+        "max-classes-per-file": "off",
+        // パラメータ数の制限を緩和
+        "max-params": "off",
+        // インラインコメントを許可
+        "no-inline-comments": "off",
+        // TODO コメントを許可
+        "no-warning-comments": "off",
+        // void 演算子を許可（Promise の明示的な無視）
+        "no-void": "off",
+        // 変数の宣言時初期化を必須としない
+        "init-declarations": "off",
+        // 否定条件を許可
+        "no-negated-condition": "off",
+        // 名前付きエクスポートを許可（ライブラリの公開 API）
+        "import/no-named-export": "off",
+        // namespace インポートを許可
+        "import/no-namespace": "off",
+        // default export の推奨を無効化
+        "import/prefer-default-export": "off",
+        // Promise のネストを許可（ストリーム処理等）
+        "promise/no-nesting": "off",
+        // コールバックパターンを許可（Web API との連携）
+        "promise/prefer-await-to-callbacks": "off",
+        // then パターンを許可
+        "promise/prefer-await-to-then": "off",
+        // globalThis より window を許可（ブラウザ API）
+        "unicorn/prefer-global-this": "off",
+        // console.warn/error はライブラリの非致命的エラー通知に使用
+        "no-console": "off",
+        // 変数シャドウイング（error 等の一般的な名前）
+        "no-shadow": "off",
+        // ループ内の await は順次処理で必要
+        "no-await-in-loop": "off",
+        // async はインターフェース準拠のために使用
+        "require-await": "off",
+        "typescript/require-await": "off",
+        // 型アサーションはメディア API との連携で必要
+        "typescript/no-unsafe-type-assertion": "off",
+        // Function 型の呼び出し（コールバック等）
+        "typescript/no-unsafe-call": "off",
+        // any 型の代入（外部 API との連携）
+        "typescript/no-unsafe-assignment": "off",
+        // any 型の引数
+        "typescript/no-unsafe-argument": "off",
+        // any 型の返り値
+        "typescript/no-unsafe-return": "off",
+        // catch コールバックの unknown 型
+        "typescript/use-unknown-in-catch-callback-variable": "off",
+        // nullable boolean の条件式
+        "typescript/strict-boolean-expressions": "off",
+        // 非 null アサーション
+        "typescript/no-non-null-assertion": "off",
+        // type と value の重複 import
+        "no-duplicate-imports": "off",
+        // this を使わないメソッド（インターフェース準拠）
+        "class-methods-use-this": "off",
+        // 戻り値型の明示（メディア処理の内部関数は省略を許可）
+        "typescript/explicit-function-return-type": "off",
+        // @ts-expect-error の説明
+        "typescript/ban-ts-comment": "off",
+        // await 式のメンバーアクセス
+        "unicorn/no-await-expression-member": "off",
+        // 三項演算子の推奨
+        "unicorn/prefer-ternary": "off",
       },
     },
   ],
