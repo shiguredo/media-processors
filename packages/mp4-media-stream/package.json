@@ -28,7 +28,7 @@
     }
   },
   "scripts": {
-    "build": "cargo build --release --target wasm32-unknown-unknown -p mp4_media_stream && vite build && tsc --emitDeclarationOnly",
+    "build": "cargo build --release --target wasm32-unknown-unknown -p mp4_media_stream && vp build && tsc --emitDeclarationOnly",
     "typecheck": "tsc --noEmit"
   }
 }

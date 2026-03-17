@@ -1,4 +1,5 @@
-import { type DenoiseState, Rnnoise } from "@shiguredo/rnnoise-wasm";
+import { Rnnoise } from "@shiguredo/rnnoise-wasm";
+import type { DenoiseState } from "@shiguredo/rnnoise-wasm";
 
 /**
  * 音声トラックにノイズ抑制処理を適用するためのプロセッサ
@@ -41,13 +42,11 @@ class NoiseSuppressionProcessor {
    */
   async startProcessing(track: MediaStreamAudioTrack): Promise<MediaStreamAudioTrack> {
     if (this.isProcessing()) {
-      throw Error("Noise suppression processing has already started.");
+      throw new Error("Noise suppression processing has already started.");
     }
 
-    if (this.rnnoise === undefined) {
-      // 最初の `startProcessing` 呼び出し時に RNNoise をロードする
-      this.rnnoise = await Rnnoise.load();
-    }
+    // 最初の `startProcessing` 呼び出し時に RNNoise をロードする
+    this.rnnoise ??= await Rnnoise.load();
 
     const denoiseState = this.rnnoise.createDenoiseState();
 
@@ -92,6 +91,7 @@ class NoiseSuppressionProcessor {
    *
    * @returns 処理適用中の場合は音声トラック、それ以外なら `undefined`
    */
+  // oxlint-disable-next-line typescript-eslint/no-redundant-type-constituents -- oxlint が @types/dom-mediacapture-transform のグローバル型を解決できないための偽陽性
   getOriginalTrack(): MediaStreamAudioTrack | undefined {
     return this.originalTrack;
   }
@@ -106,6 +106,7 @@ class NoiseSuppressionProcessor {
    *
    * @returns 処理適用中の場合は音声トラック、それ以外なら `undefined`
    */
+  // oxlint-disable-next-line typescript-eslint/no-redundant-type-constituents -- oxlint が @types/dom-mediacapture-transform のグローバル型を解決できないための偽陽性
   getProcessedTrack(): MediaStreamAudioTrack | undefined {
     return this.processedTrack;
   }
@@ -131,13 +132,14 @@ class TrackProcessor {
     this.abortController = new AbortController();
     this.denoiseState = denoiseState;
 
-    // generator / processor インスタンスを生成（まだ処理は開始しない）
+    // Generator / processor インスタンスを生成（まだ処理は開始しない）
     this.generator = new MediaStreamTrackGenerator({ kind: "audio" });
     this.processor = new MediaStreamTrackProcessor({ track: this.track });
   }
 
   startProcessing(): MediaStreamAudioTrack {
-    const signal = this.abortController.signal;
+    const { signal } = this.abortController;
+    // oxlint-disable-next-line typescript-eslint/no-unsafe-member-access -- oxlint が @types/dom-mediacapture-transform のグローバル型を解決できないための偽陽性
     this.processor.readable
       .pipeThrough(
         new TransformStream({
@@ -147,18 +149,22 @@ class TrackProcessor {
         }),
         { signal },
       )
+      // oxlint-disable-next-line typescript-eslint/no-unsafe-member-access -- oxlint が @types/dom-mediacapture-transform のグローバル型を解決できないための偽陽性
       .pipeTo(this.generator.writable)
-      .catch((e) => {
+      // oxlint-disable-next-line typescript-eslint/no-unsafe-member-access -- oxlint が @types/dom-mediacapture-transform のグローバル型を解決できないための偽陽性
+      .catch((error) => {
         if (signal.aborted) {
           console.debug("Shutting down streams after abort.");
         } else {
-          console.warn("Error from stream transform:", e);
+          console.warn("Error from stream transform:", error);
         }
-        this.processor.readable.cancel(e).catch((e) => {
-          console.warn("Failed to cancel `MediaStreamTrackProcessor`:", e);
+        // oxlint-disable-next-line typescript-eslint/no-unsafe-member-access -- oxlint が @types/dom-mediacapture-transform のグローバル型を解決できないための偽陽性
+        this.processor.readable.cancel(error).catch((error) => {
+          console.warn("Failed to cancel `MediaStreamTrackProcessor`:", error);
         });
-        this.generator.writable.abort(e).catch((e) => {
-          console.warn("Failed to abort `MediaStreamTrackGenerator`:", e);
+        // oxlint-disable-next-line typescript-eslint/no-unsafe-member-access -- oxlint が @types/dom-mediacapture-transform のグローバル型を解決できないための偽陽性
+        this.generator.writable.abort(error).catch((error) => {
+          console.warn("Failed to abort `MediaStreamTrackGenerator`:", error);
         });
       });
     return this.generator;
@@ -174,7 +180,7 @@ class TrackProcessor {
     controller: TransformStreamDefaultController<AudioData>,
   ): void {
     if (data.numberOfChannels !== 1) {
-      throw Error("Noise suppression for stereo channel has not been supported yet.");
+      throw new Error("Noise suppression for stereo channel has not been supported yet.");
     }
     if (data.format !== "f32-planar") {
       // https://www.w3.org/TR/webcodecs/#audio-buffer-arrangement を見ると、
@@ -183,7 +189,7 @@ class TrackProcessor {
       //
       // MEMO: `AutoData.copyTo`で`format`が指定できるので、もしかしたら
       //       そのオプションで"f32-planar"を指定しておけば、後続の処理は共通化できるかもしれない。
-      throw Error(`Unsupported audio data format ${data.format}."`);
+      throw new Error(`Unsupported audio data format ${data.format}."`);
     }
 
     if (this.bufferFrameCount === 0) {
@@ -197,9 +203,9 @@ class TrackProcessor {
         data.numberOfFrames - frameOffset,
       );
       data.copyTo(this.buffer.subarray(this.bufferFrameCount), {
-        planeIndex: 0,
-        frameOffset,
         frameCount,
+        frameOffset,
+        planeIndex: 0,
       });
       this.bufferFrameCount += frameCount;
       frameOffset += frameCount;
@@ -207,17 +213,18 @@ class TrackProcessor {
       if (this.bufferFrameCount === this.frameSize) {
         // RNNoiseが16-bit PCMを仮定しているので変換
         for (const [i, value] of this.buffer.entries()) {
-          this.buffer[i] = value * 0x7fff;
+          this.buffer[i] = value * 0x7f_ff;
         }
 
         // ノイズ低減処理
         this.denoiseState.processFrame(this.buffer);
 
-        // f32-planarに戻す
+        // F32-planarに戻す
         for (const [i, value] of this.buffer.entries()) {
-          this.buffer[i] = value / 0x7fff;
+          this.buffer[i] = value / 0x7f_ff;
         }
 
+        // oxlint-disable-next-line typescript-eslint/no-unsafe-member-access -- oxlint が @types/dom-mediacapture-transform のグローバル型を解決できないための偽陽性
         if (this.generator.readyState === "ended") {
           // ジェネレータ（ユーザに渡している処理結果トラック）がクローズ済み。
           // この状態で `controller.enqueue()` を呼び出すとエラーが発生するのでスキップする。
@@ -231,12 +238,12 @@ class TrackProcessor {
 
         controller.enqueue(
           new AudioData({
-            format: data.format,
-            sampleRate: data.sampleRate,
-            numberOfFrames: this.frameSize,
-            numberOfChannels: data.numberOfChannels,
-            timestamp: this.nextTimestamp,
             data: this.buffer,
+            format: data.format,
+            numberOfChannels: data.numberOfChannels,
+            numberOfFrames: this.frameSize,
+            sampleRate: data.sampleRate,
+            timestamp: this.nextTimestamp,
           }),
         );
         this.buffer = new Float32Array(this.frameSize);

@@ -1,9 +1,9 @@
 {
   "name": "media-processors-examples",
   "scripts": {
-    "dev": "vite",
-    "preview": "vite preview",
-    "build": "vite build",
+    "dev": "vp dev",
+    "preview": "vp preview",
+    "build": "vp build",
     "check": "tsc --noEmit"
   },
   "dependencies": {

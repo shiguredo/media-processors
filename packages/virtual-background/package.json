@@ -28,12 +28,12 @@
     }
   },
   "scripts": {
-    "build": "vite build",
+    "build": "vp build",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@mediapipe/selfie_segmentation": "0.1.1675465747",
-    "stackblur-canvas": "3.0.0",
+    "stackblur-canvas": "3.0.1",
     "video-track-processor": "workspace:*"
   },
   "devDependencies": {

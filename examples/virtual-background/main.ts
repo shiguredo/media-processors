@@ -4,24 +4,24 @@ import img from "./background.jpg";
 document.addEventListener("DOMContentLoaded", async () => {
   if (!VirtualBackgroundProcessor.isSupported()) {
     alert("Unsupported platform");
-    throw Error("Unsupported platform");
+    throw new Error("Unsupported platform");
   }
 
   const assetsPath = ".";
   const processor = new VirtualBackgroundProcessor(assetsPath);
   setInterval(() => {
     const elapsed = processor.getAverageProcessedTimeMs() / 1000;
-    document.getElementById("elapsed").innerText = elapsed.toFixed(4).padStart(4, "0");
+    document.querySelector("#elapsed").textContent = elapsed.toFixed(4).padStart(4, "0");
     const fps = processor.getFps();
-    document.getElementById("fps").innerText = fps.toFixed(2).padStart(5, "0");
+    document.querySelector("#fps").textContent = fps.toFixed(2).padStart(5, "0");
   }, 300);
 
-  function getUserMedia() {
+  async function getUserMedia() {
     const constraints = {
-      width: document.getElementById("videoWidth").value,
-      height: document.getElementById("videoHeight").value,
-      frameRate: { ideal: document.getElementById("videoFps").value },
-      deviceId: document.getElementById("videoDevice").value,
+      deviceId: document.querySelector("#videoDevice").value,
+      frameRate: { ideal: document.querySelector("#videoFps").value },
+      height: document.querySelector("#videoHeight").value,
+      width: document.querySelector("#videoWidth").value,
     };
     return navigator.mediaDevices.getUserMedia({ video: constraints }).then((result) => {
       updateDeviceList();
@@ -38,12 +38,12 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     void navigator.mediaDevices.enumerateDevices().then((devices) => {
       const videoDevices = devices.filter((device) => device.kind === "videoinput" && device.label);
-      const select = document.getElementById("videoDevice");
+      const select = document.querySelector("#videoDevice");
       videoDevices.forEach((device) => {
         const option = document.createElement("option");
         option.value = device.deviceId;
         option.text = device.label;
-        select.appendChild(option);
+        select.append(option);
       });
     });
   }
@@ -51,7 +51,7 @@ document.addEventListener("DOMContentLoaded", async () => {
   function showOriginalVideo() {
     processor.stopProcessing();
 
-    const videoElement = document.getElementById("video");
+    const videoElement = document.querySelector("#video");
     void getUserMedia().then((stream) => {
       videoElement.srcObject = stream;
     });
@@ -60,42 +60,44 @@ document.addEventListener("DOMContentLoaded", async () => {
   function showProcessedVideo() {
     processor.stopProcessing();
 
-    const videoElement = document.getElementById("video");
+    const videoElement = document.querySelector("#video");
     void getUserMedia().then((stream) => {
       const track = stream.getVideoTracks()[0];
 
       let blurRadius: number;
       let backgroundImage: HTMLImageElement;
-      const virtualBackgroundType = document.getElementById(
-        "virtualBackgroundType",
-      ) as HTMLSelectElement;
+      const virtualBackgroundType = document.querySelector("#virtualBackgroundType")!;
       if (virtualBackgroundType === null) {
         return;
       }
       switch (virtualBackgroundType.value) {
-        case "blur-5":
+        case "blur-5": {
           blurRadius = 5;
           break;
-        case "blur-15":
+        }
+        case "blur-15": {
           blurRadius = 15;
           break;
-        case "image":
+        }
+        case "image": {
           backgroundImage = new Image();
           backgroundImage.src = img;
           break;
-        default:
+        }
+        default: {
           return;
+        }
       }
 
-      const options = { blurRadius, backgroundImage };
+      const options = { backgroundImage, blurRadius };
       void processor.startProcessing(track, options).then((processed_track) => {
         videoElement.srcObject = new MediaStream([processed_track]);
       });
     });
   }
 
-  document.getElementById("virtualBackgroundOn")?.addEventListener("click", showProcessedVideo);
-  document.getElementById("virtualBackgroundOff")?.addEventListener("click", showOriginalVideo);
+  document.querySelector("#virtualBackgroundOn")?.addEventListener("click", showProcessedVideo);
+  document.querySelector("#virtualBackgroundOff")?.addEventListener("click", showOriginalVideo);
 
   showOriginalVideo();
 });

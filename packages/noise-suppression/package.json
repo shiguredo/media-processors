@@ -28,7 +28,7 @@
     }
   },
   "scripts": {
-    "build": "vite build"
+    "build": "vp build"
   },
   "devDependencies": {
     "@shiguredo/rnnoise-wasm": "2025.1.5"

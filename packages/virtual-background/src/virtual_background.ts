@@ -1,7 +1,7 @@
-import {
-  SelfieSegmentation,
-  type SelfieSegmentationConfig,
-  type Results as SelfieSegmentationResults,
+import { SelfieSegmentation } from "@mediapipe/selfie_segmentation";
+import type {
+  SelfieSegmentationConfig,
+  Results as SelfieSegmentationResults,
 } from "@mediapipe/selfie_segmentation";
 import { VideoTrackProcessor } from "../../video-track-processor/src/video_track_processor";
 import * as StackBlur from "stackblur-canvas";
@@ -76,8 +76,8 @@ interface ImageRegion {
 function cropBackgroundImageCenter(videoFrame: ImageSize, backgroundImage: ImageSize): ImageRegion {
   let x = 0;
   let y = 0;
-  let width = backgroundImage.width;
-  let height = backgroundImage.height;
+  let { width } = backgroundImage;
+  let { height } = backgroundImage;
 
   const videoFrameRatio = videoFrame.width / videoFrame.height;
   const backgroundImageRatio = backgroundImage.width / backgroundImage.height;
@@ -91,7 +91,7 @@ function cropBackgroundImageCenter(videoFrame: ImageSize, backgroundImage: Image
     width = Math.round(newWidth);
   }
 
-  return { x, y, width, height };
+  return { height, width, x, y };
 }
 
 /**
@@ -101,7 +101,7 @@ function cropBackgroundImageCenter(videoFrame: ImageSize, backgroundImage: Image
  * 背景画像と処理対象映像のアスペクト比が異なる場合には、背景画像が映像に合わせて引き伸ばされます
  */
 function fillBackgroundImage(_videoFrame: ImageSize, backgroundImage: ImageSize): ImageRegion {
-  return { x: 0, y: 0, width: backgroundImage.width, height: backgroundImage.height };
+  return { height: backgroundImage.height, width: backgroundImage.width, x: 0, y: 0 };
 }
 
 /**
@@ -122,9 +122,7 @@ class VirtualBackgroundProcessor {
     // セグメンテーションモデルのロード準備
     const config: SelfieSegmentationConfig = {};
     const trimmedAssetsPath = trimLastSlash(assetsPath);
-    config.locateFile = (file: string) => {
-      return `${trimmedAssetsPath}/${file}`;
-    };
+    config.locateFile = (file: string) => `${trimmedAssetsPath}/${file}`;
     this.segmentation = new SelfieSegmentation(config);
   }
 
@@ -158,15 +156,17 @@ class VirtualBackgroundProcessor {
     track: MediaStreamVideoTrack,
     options: VirtualBackgroundProcessorOptions = {},
   ): Promise<MediaStreamVideoTrack> {
-    const initialWidth = track.getSettings().width || 0;
-    const initialHeight = track.getSettings().height || 0;
+    // oxlint-disable-next-line typescript-eslint/no-unsafe-member-access -- oxlint が @types/dom-mediacapture-transform のグローバル型を解決できないための偽陽性
+    const initialWidth = track.getSettings().width ?? 0;
+    // oxlint-disable-next-line typescript-eslint/no-unsafe-member-access -- oxlint が @types/dom-mediacapture-transform のグローバル型を解決できないための偽陽性
+    const initialHeight = track.getSettings().height ?? 0;
     const canvas = createOffscreenCanvas(initialWidth, initialHeight);
     const canvasCtx = canvas.getContext("2d", {
       desynchronized: true,
       willReadFrequently: false, // ここをtrueにするとCPU-GPUメモリ転送が発生して遅くなる
     }) as OffscreenCanvasRenderingContext2D | null;
     if (canvasCtx === null) {
-      throw Error("Failed to create 2D canvas context");
+      throw new Error("Failed to create 2D canvas context");
     }
 
     // Safari での背景ぼかし用に一時作業用の canvas を作っておく
@@ -179,7 +179,7 @@ class VirtualBackgroundProcessor {
         willReadFrequently: true,
       });
       if (ctx === null) {
-        throw Error("Failed to create 2D canvas context");
+        throw new Error("Failed to create 2D canvas context");
       }
       blurCanvasCtx = ctx as OffscreenCanvasRenderingContext2D;
     }
@@ -204,7 +204,7 @@ class VirtualBackgroundProcessor {
     return this.trackProcessor.startProcessing(
       track,
       async (image: ImageBitmap | HTMLVideoElement) => {
-        // @ts-ignore TS2322: 「`image`の型が合っていない」と怒られるけれど、動作はするので一旦無視
+        // @ts-expect-error TS2322: 「`image`の型が合っていない」と怒られるけれど、動作はするので一旦無視
         await this.segmentation.send({ image });
 
         return canvas;
@@ -242,6 +242,7 @@ class VirtualBackgroundProcessor {
    *
    * @returns 処理適用中の場合は映像トラック、それ以外なら `undefined`
    */
+  // oxlint-disable-next-line typescript-eslint/no-redundant-type-constituents -- oxlint が @types/dom-mediacapture-transform のグローバル型を解決できないための偽陽性
   getOriginalTrack(): MediaStreamVideoTrack | undefined {
     return this.trackProcessor.getOriginalTrack();
   }
@@ -256,6 +257,7 @@ class VirtualBackgroundProcessor {
    *
    * @returns 処理適用中の場合は映像トラック、それ以外なら `undefined`
    */
+  // oxlint-disable-next-line typescript-eslint/no-redundant-type-constituents -- oxlint が @types/dom-mediacapture-transform のグローバル型を解決できないための偽陽性
   getProcessedTrack(): MediaStreamVideoTrack | undefined {
     return this.trackProcessor.getProcessedTrack();
   }
@@ -313,8 +315,8 @@ class VirtualBackgroundProcessor {
     }
 
     if (options.backgroundImage !== undefined) {
-      const decideRegion = options.backgroundImageRegion || cropBackgroundImageCenter;
-      const region = decideRegion({ width, height }, options.backgroundImage);
+      const decideRegion = options.backgroundImageRegion ?? cropBackgroundImageCenter;
+      const region = decideRegion({ height, width }, options.backgroundImage);
       tmpCanvasCtx.drawImage(
         options.backgroundImage,
         region.x,
@@ -331,7 +333,7 @@ class VirtualBackgroundProcessor {
     }
 
     if (blurCanvasCtx !== undefined) {
-      // @ts-ignore
+      // @ts-expect-error
       StackBlur.canvasRGB(tmpCanvasCtx.canvas, 0, 0, width, height, options.blurRadius);
       canvasCtx.drawImage(tmpCanvasCtx.canvas, 0, 0, width, height);
     }
@@ -372,19 +374,19 @@ function createOffscreenCanvas(width: number, height: number): OffscreenCanvas |
 
 function browser(): string {
   const ua = window.navigator.userAgent.toLocaleLowerCase();
-  if (ua.indexOf("edge") !== -1) {
+  if (ua.includes("edge")) {
     return "edge";
   }
-  if (ua.indexOf("chrome") !== -1 && ua.indexOf("edge") === -1) {
+  if (ua.includes("chrome") && !ua.includes("edge")) {
     return "chrome";
   }
-  if (ua.indexOf("safari") !== -1 && ua.indexOf("chrome") === -1) {
+  if (ua.includes("safari") && !ua.includes("chrome")) {
     return "safari";
   }
-  if (ua.indexOf("opera") !== -1) {
+  if (ua.includes("opera")) {
     return "opera";
   }
-  if (ua.indexOf("firefox") !== -1) {
+  if (ua.includes("firefox")) {
     return "firefox";
   }
   return "unknown";

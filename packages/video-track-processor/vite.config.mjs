@@ -1,5 +1,5 @@
+import { defineConfig } from "vite-plus";
 import { resolve } from "node:path";
-import { defineConfig } from "vite";
 import dts from "vite-plugin-dts";
 import pkg from "./package.json";
 
@@ -14,21 +14,21 @@ const banner = `/**
 
 export default defineConfig({
   build: {
-    minify: "esbuild",
-    target: "es2023",
     emptyOutDir: true,
-    manifest: true,
     lib: {
       entry: resolve(__dirname, "src/video_track_processor.ts"),
+      fileName: "video_track_processor",
       formats: ["es"],
       name: "Shiguredo",
-      fileName: "video_track_processor",
     },
+    manifest: true,
+    minify: "esbuild",
     rollupOptions: {
       output: {
         banner: banner,
       },
     },
+    target: "es2023",
   },
   plugins: [
     dts({

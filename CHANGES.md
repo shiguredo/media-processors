@@ -18,6 +18,8 @@
 
 ### misc
 
+- [CHANGE] Vite+ へ移行する
+  - @voluntas
 - [CHANGE] 利用していなかった typedoc を削除する
   - @voluntas
 
