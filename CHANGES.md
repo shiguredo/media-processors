@@ -18,6 +18,20 @@
 
 ### misc
 
+- [UPDATE] vite-plus を 0.1.12 から 0.1.13 へ更新する
+  - @voluntas
+- [UPDATE] TypeScript を 5.9.3 から 6.0.2 へ更新する
+  - @voluntas
+- [UPDATE] Node.js の最低バージョンを 20 から 22 に引き上げる
+  - @voluntas
+- [CHANGE] vite.config.mjs を vite.config.ts にリネームする
+  - @voluntas
+- [CHANGE] rollupOptions を rolldownOptions に変更する
+  - @voluntas
+- [CHANGE] CI/CD の Slack 通知を shiguredo/github-actions に統一する
+  - @voluntas
+- [ADD] prek.toml を追加する
+  - @voluntas
 - [CHANGE] Vite+ へ移行する
   - @voluntas
 - [CHANGE] 利用していなかった typedoc を削除する
