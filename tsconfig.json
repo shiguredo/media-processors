@@ -15,6 +15,7 @@
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "newLine": "LF",
+    "types": ["dom-mediacapture-transform"],
     "lib": ["ES2022", "dom"],
     "outDir": "dist",
     "skipLibCheck": true
