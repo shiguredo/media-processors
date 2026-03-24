@@ -1,12 +1,12 @@
 {
   "compilerOptions": {
-    "target": "ESNext",
-    "module": "ESNext",
+    "target": "ES2022",
+    "module": "ES2022",
     "strict": true,
     "declaration": true,
     "strictNullChecks": true,
     "importHelpers": true,
-    "moduleResolution": "node",
+    "moduleResolution": "bundler",
     "experimentalDecorators": true,
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
@@ -14,7 +14,7 @@
     "stripInternal": true,
     "newLine": "LF",
     "types": [],
-    "lib": ["esnext", "dom", "dom.iterable", "scripthost"]
+    "lib": ["ES2022", "dom"]
   },
   "exclude": ["node_modules"]
 }

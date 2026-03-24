@@ -22,19 +22,17 @@ jobs:
           release_name: ${{ steps.get_version.outputs.VERSION }}
           draft: true
 
-  notification:
-    name: Slack Notification
-    runs-on: ubuntu-24.04
-    needs:
-      - create-release-draft
-    if: always()
+  slack_notify:
+    needs: [create-release-draft]
+    runs-on: ubuntu-slim
+    if: ${{ !cancelled() }}
+    permissions:
+      actions: read
     steps:
-      - uses: actions/checkout@v6
-      - uses: rtCamp/action-slack-notify@v2
-        if: |
-          needs.create-release-draft.result == 'failure'
-        env:
-          SLACK_CHANNEL: media-processors
-          SLACK_COLOR: danger
-          SLACK_TITLE: Failure release
-          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+      - name: Slack Notification
+        uses: shiguredo/github-actions/.github/actions/slack-notify@main
+        with:
+          status: ${{ job.status }}
+          slack_webhook: ${{ secrets.SLACK_WEBHOOK }}
+          slack_channel: media-processors
+          notify_mode: failure_and_fixed

@@ -28,15 +28,6 @@ jobs:
         uses: actions/upload-pages-artifact@v4
         with:
           path: ./examples/dist
-      - name: Slack Notification
-        if: failure()
-        uses: rtCamp/action-slack-notify@v2
-        env:
-          SLACK_CHANNEL: media-processors
-          SLACK_COLOR: danger
-          SLACK_TITLE: Failure test
-          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
-
   deploy:
     needs: build
     permissions:
@@ -50,3 +41,18 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
+  slack_notify:
+    needs: [build, deploy]
+    runs-on: ubuntu-slim
+    if: ${{ !cancelled() }}
+    permissions:
+      actions: read
+    steps:
+      - name: Slack Notification
+        uses: shiguredo/github-actions/.github/actions/slack-notify@main
+        with:
+          status: ${{ job.status }}
+          slack_webhook: ${{ secrets.SLACK_WEBHOOK }}
+          slack_channel: media-processors
+          notify_mode: failure_and_fixed

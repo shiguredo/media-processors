@@ -1,7 +1,10 @@
+import path, { dirname } from "node:path";
+import { fileURLToPath } from "node:url";
 import { defineConfig } from "vite-plus";
-import { resolve } from "node:path";
 import dts from "vite-plugin-dts";
-import pkg from "./package.json";
+import pkg from "./package.json" with { type: "json" };
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const banner = `/**
  * ${pkg.name}
@@ -16,14 +19,14 @@ export default defineConfig({
   build: {
     emptyOutDir: true,
     lib: {
-      entry: resolve(__dirname, "src/video_track_processor.ts"),
+      entry: path.resolve(__dirname, "src/video_track_processor.ts"),
       fileName: "video_track_processor",
       formats: ["es"],
       name: "Shiguredo",
     },
     manifest: true,
     minify: "esbuild",
-    rollupOptions: {
+    rolldownOptions: {
       output: {
         banner: banner,
       },

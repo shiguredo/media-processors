@@ -14,14 +14,14 @@
     "@types/dom-mediacapture-transform": "0.1.11"
   },
   "devDependencies": {
-    "typescript": "5.9.3",
-    "vite": "npm:@voidzero-dev/vite-plus-core@0.1.12",
+    "typescript": "6.0.2",
+    "vite": "npm:@voidzero-dev/vite-plus-core@0.1.13",
     "vite-plugin-dts": "4.5.4",
     "vite-plugin-static-copy": "3.3.0",
-    "vite-plus": "0.1.12"
+    "vite-plus": "0.1.13"
   },
   "engines": {
-    "node": ">=20",
+    "node": ">=22",
     "pnpm": ">=10"
   }
 }
