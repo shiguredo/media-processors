@@ -12,7 +12,7 @@ permissions:
 
 jobs:
   ci:
-    runs-on: ubuntu-slim
+    runs-on: ubuntu-24.04
     strategy:
       matrix:
         node:
