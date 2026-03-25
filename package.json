@@ -18,7 +18,7 @@
     "vite": "npm:@voidzero-dev/vite-plus-core@0.1.13",
     "vite-plugin-dts": "4.5.4",
     "vite-plugin-static-copy": "3.3.0",
-    "vite-plus": "0.1.13"
+    "vite-plus": "0.1.14"
   },
   "engines": {
     "node": ">=22",
