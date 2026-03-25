@@ -17,17 +17,19 @@ const banner = `/**
  **/
 `;
 
-// https://github.com/google/mediapipe/issues/2883 が対応されないので、ワークアラウンドを行う
+// mediapipe の IIFE は SelfieSegmentation を動的に exports へ設定するが、
+// Rolldown の静的解析では named export として認識できないため明示的な代入文を追加する
+// ref: https://github.com/google/mediapipe/issues/2883
 const mediapipeWorkaround = () => ({
+  name: "mediapipe_workaround",
   load(id: string) {
     if (path.basename(id) === "selfie_segmentation.js") {
       let code = fs.readFileSync(id, "utf8");
-      code += "exports.SelfieSegmentation = (typeof globalThis !== 'undefined' ? globalThis : self).SelfieSegmentation;";
+      code += "exports.SelfieSegmentation = exports.SelfieSegmentation;";
       return { code };
     }
     return null;
   },
-  name: "mediapipe_workaround",
 });
 
 export default defineConfig({
@@ -57,17 +59,12 @@ export default defineConfig({
       targets: [
         {
           dest: ".",
+          rename: { stripBase: true },
           src: [
-            // Node_modules の場所が変わることがあるので、両方のパターンに対応しておく
             "./node_modules/@mediapipe/selfie_segmentation/*.wasm",
             "./node_modules/@mediapipe/selfie_segmentation/*.tflite",
             "./node_modules/@mediapipe/selfie_segmentation/*.binarypb",
             "./node_modules/@mediapipe/selfie_segmentation/*wasm_bin.js",
-
-            "../../node_modules/@mediapipe/selfie_segmentation/*.wasm",
-            "../../node_modules/@mediapipe/selfie_segmentation/*.tflite",
-            "../../node_modules/@mediapipe/selfie_segmentation/*.binarypb",
-            "../../node_modules/@mediapipe/selfie_segmentation/*wasm_bin.js",
           ],
         },
       ],

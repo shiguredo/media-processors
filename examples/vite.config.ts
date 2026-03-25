@@ -1,5 +1,5 @@
-import { defineConfig } from "vite-plus";
 import { resolve } from "node:path";
+import { defineConfig } from "vite-plus";
 import { viteStaticCopy } from "vite-plugin-static-copy";
 
 export default defineConfig({
@@ -27,6 +27,10 @@ export default defineConfig({
       targets: [
         {
           dest: "virtual-background",
+          // vite-plugin-static-copy v4 は ../ を含む src のディレクトリ構造を
+          // dest 以下に保持するため、rename で packages/virtual-background/dist の
+          // 3 階層分を打ち消してフラットにする
+          rename: (name: string, ext: string) => `../../../${name}.${ext}`,
           src: [
             "../packages/virtual-background/dist/*.{tflite,binarypb,wasm}",
             "../packages/virtual-background/dist/*wasm_bin.js",
