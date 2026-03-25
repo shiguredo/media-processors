@@ -22,7 +22,7 @@ const mediapipeWorkaround = () => ({
   load(id: string) {
     if (path.basename(id) === "selfie_segmentation.js") {
       let code = fs.readFileSync(id, "utf8");
-      code += "exports.SelfieSegmentation = SelfieSegmentation;";
+      code += "exports.SelfieSegmentation = (typeof globalThis !== 'undefined' ? globalThis : self).SelfieSegmentation;";
       return { code };
     }
     return null;
