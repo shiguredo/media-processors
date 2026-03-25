@@ -6,15 +6,19 @@ on:
       - "**.md"
       - "LICENSE"
       - "NOTICE"
-    # branches-ignore:
-    #   - "feature/pnpm"
+
+permissions:
+  contents: read
 
 jobs:
   ci:
     runs-on: ubuntu-24.04
     strategy:
       matrix:
-        node: ["20", "22", "24"]
+        node:
+          - "25"
+          - "24"
+          - "22"
     steps:
       - uses: actions/checkout@v6
       - run: rustup update stable && rustup target add wasm32-unknown-unknown
@@ -26,14 +30,21 @@ jobs:
           version: 10
       - run: pnpm --version
       - run: pnpm install
-      - run: pnpm run typecheck
       - run: pnpm run build
       - run: pnpm run lint
+      - run: pnpm run typecheck
+
+  slack_notify:
+    needs: [ci]
+    runs-on: ubuntu-slim
+    if: ${{ !cancelled() }}
+    permissions:
+      actions: read
+    steps:
       - name: Slack Notification
-        if: failure()
-        uses: rtCamp/action-slack-notify@v2
-        env:
-          SLACK_CHANNEL: media-processors
-          SLACK_COLOR: danger
-          SLACK_TITLE: Failure test
-          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+        uses: shiguredo/github-actions/.github/actions/slack-notify@main
+        with:
+          status: ${{ job.status }}
+          slack_webhook: ${{ secrets.SLACK_WEBHOOK }}
+          slack_channel: media-processors
+          notify_mode: failure_and_fixed

@@ -145,16 +145,17 @@ jobs:
       - run: npm publish --no-git-checks
         working-directory: ${{ needs.determine-package.outputs.package_dir }}
 
-  slack_notify_failed:
+  slack_notify:
     needs: [npm-publish-canary, npm-publish]
-    runs-on: ubuntu-24.04
-    if: failure()
+    runs-on: ubuntu-slim
+    if: ${{ !cancelled() }}
+    permissions:
+      actions: read
     steps:
       - name: Slack Notification
-        uses: rtCamp/action-slack-notify@v2
-        env:
-          SLACK_CHANNEL: media-processors
-          SLACK_COLOR: danger
-          SLACK_TITLE: Failed to publish ${{ github.ref_name }}
-          SLACK_ICON_EMOJI: ":japanese_ogre:"
-          SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+        uses: shiguredo/github-actions/.github/actions/slack-notify@main
+        with:
+          status: ${{ job.status }}
+          slack_webhook: ${{ secrets.SLACK_WEBHOOK }}
+          slack_channel: media-processors
+          notify_mode: failure_and_fixed

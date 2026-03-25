@@ -1,0 +1,22 @@
+# Configuration file for `prek`, a git hook framework written in Rust.
+# See https://prek.j178.dev for more information.
+#:schema https://www.schemastore.org/prek.json
+
+default_stages = ["pre-commit"]
+
+[[repos]]
+repo = "builtin"
+hooks = [
+  { id = "trailing-whitespace" },
+  { id = "end-of-file-fixer" },
+  { id = "check-yaml" },
+  { id = "check-toml" },
+]
+
+[[repos]]
+repo = "local"
+hooks = [
+  { id = "fmt", name = "pnpm fmt", entry = "pnpm run fmt", language = "system", pass_filenames = false, priority = 0 },
+  { id = "lint", name = "pnpm lint", entry = "pnpm run lint", language = "system", pass_filenames = false, priority = 10 },
+  { id = "typecheck", name = "pnpm typecheck", entry = "pnpm run typecheck", language = "system", pass_filenames = false, priority = 10 },
+]

@@ -1,9 +1,12 @@
-import { defineConfig } from "vite-plus";
-import { viteStaticCopy } from "vite-plugin-static-copy";
-import dts from "vite-plugin-dts";
 import fs from "node:fs";
-import path from "node:path";
-import pkg from "./package.json";
+import path, { dirname } from "node:path";
+import { fileURLToPath } from "node:url";
+import { defineConfig } from "vite-plus";
+import dts from "vite-plugin-dts";
+import { viteStaticCopy } from "vite-plugin-static-copy";
+import pkg from "./package.json" with { type: "json" };
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const banner = `/**
  * ${pkg.name}
@@ -16,7 +19,7 @@ const banner = `/**
 
 // https://github.com/google/mediapipe/issues/2883 が対応されないので、ワークアラウンドを行う
 const mediapipeWorkaround = () => ({
-  load(id) {
+  load(id: string) {
     if (path.basename(id) === "selfie_segmentation.js") {
       let code = fs.readFileSync(id, "utf8");
       code += "exports.SelfieSegmentation = SelfieSegmentation;";
@@ -38,7 +41,7 @@ export default defineConfig({
     },
     manifest: true,
     minify: "esbuild",
-    rollupOptions: {
+    rolldownOptions: {
       output: {
         banner: banner,
       },

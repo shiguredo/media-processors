@@ -1,5 +1,5 @@
 {
-  "plugins": ["typescript", "oxc", "unicorn", "import", "promise", "react", "vitest"],
+  "plugins": ["typescript", "oxc", "unicorn", "import", "promise", "vitest"],
   "categories": {
     // 明らかに間違っているコード
     "correctness": "error",
@@ -778,6 +778,7 @@
         "import/exports-last": "off",
         "import/no-nodejs-modules": "off",
         "no-ternary": "off",
+        "typescript/explicit-function-return-type": "off",
         "typescript/no-unsafe-argument": "off",
         "typescript/no-unsafe-assignment": "off",
         "typescript/no-unsafe-call": "off",
