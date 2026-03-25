@@ -15,13 +15,14 @@
   },
   "devDependencies": {
     "typescript": "6.0.2",
-    "vite": "npm:@voidzero-dev/vite-plus-core@0.1.13",
+    "vite": "npm:@voidzero-dev/vite-plus-core@0.1.14",
     "vite-plugin-dts": "4.5.4",
-    "vite-plugin-static-copy": "3.3.0",
-    "vite-plus": "0.1.13"
+    "vite-plugin-static-copy": "4.0.0",
+    "vite-plus": "0.1.14"
   },
   "engines": {
     "node": ">=22",
     "pnpm": ">=10"
-  }
+  },
+  "packageManager": "pnpm@10.33.0"
 }
