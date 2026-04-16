@@ -70,7 +70,7 @@ jobs:
       - uses: actions/setup-node@v6
         with:
           node-version: 22
-      - uses: pnpm/action-setup@v5
+      - uses: pnpm/action-setup@v6
       - run: pnpm --version
       - run: pnpm install
       - run: pnpm --filter @shiguredo/${{ needs.determine-package.outputs.package_name }} run build
@@ -96,7 +96,7 @@ jobs:
           node-version: 22
           registry-url: https://registry.npmjs.org
 
-      - uses: pnpm/action-setup@v5
+      - uses: pnpm/action-setup@v6
 
       - name: Download Artifact
         uses: actions/download-artifact@v8
@@ -125,7 +125,7 @@ jobs:
           node-version: 22
           registry-url: https://registry.npmjs.org
 
-      - uses: pnpm/action-setup@v5
+      - uses: pnpm/action-setup@v6
 
       - name: Download Artifact
         uses: actions/download-artifact@v8
