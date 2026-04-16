@@ -23,7 +23,7 @@ jobs:
         run: vp run build
         working-directory: examples
       - name: Upload files
-        uses: actions/upload-pages-artifact@v4
+        uses: actions/upload-pages-artifact@v5
         with:
           path: ./examples/dist
   deploy:
