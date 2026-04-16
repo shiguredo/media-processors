@@ -24,4 +24,12 @@ hooks = [
     pass_filenames = false,
     priority = 10
   },
+  {
+    id = "typecheck",
+    name = "vp run typecheck",
+    entry = "vp run typecheck",
+    language = "system",
+    pass_filenames = false,
+    priority = 20
+  },
 ]
