@@ -23,7 +23,7 @@ jobs:
         run: vp run build
         working-directory: examples
       - name: Upload files
-        uses: actions/upload-pages-artifact@v4
+        uses: actions/upload-pages-artifact@v5
         with:
           path: ./examples/dist
   deploy:
@@ -38,7 +38,7 @@ jobs:
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
 
   slack_notify:
     needs: [build, deploy]
