@@ -15,12 +15,12 @@ jobs:
       - uses: actions/setup-node@v6
         with:
           node-version: "24"
-      - uses: pnpm/action-setup@v5
-      - run: pnpm install
+      - uses: voidzero-dev/setup-vp@v1
+      - run: vp install
       - name: Build
-        run: pnpm build
+        run: vp run build
       - name: Build examples
-        run: pnpm build
+        run: vp run build
         working-directory: examples
       - name: Upload files
         uses: actions/upload-pages-artifact@v4

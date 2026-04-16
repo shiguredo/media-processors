@@ -4,11 +4,11 @@
   "author": "Shiguredo Inc.",
   "scripts": {
     "dev": "vp dev --config examples/vite.config.ts",
-    "build": "pnpm -r --filter=./packages/* build",
+    "build": "vp run --filter './packages/*' build",
     "fmt": "vp fmt",
     "lint": "vp lint --type-aware",
     "lint:fix": "vp lint --type-aware --fix",
-    "typecheck": "pnpm -r --filter=./packages/* typecheck"
+    "typecheck": "vp run --filter './packages/*' typecheck"
   },
   "dependencies": {
     "@types/dom-mediacapture-transform": "0.1.11"

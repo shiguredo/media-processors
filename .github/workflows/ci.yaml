@@ -25,12 +25,12 @@ jobs:
       - uses: actions/setup-node@v6
         with:
           node-version: ${{ matrix.node }}
-      - uses: pnpm/action-setup@v5
-      - run: pnpm --version
-      - run: pnpm install
-      - run: pnpm run build
-      - run: pnpm run lint
-      - run: pnpm run typecheck
+      - uses: voidzero-dev/setup-vp@v1
+      - run: vp --version
+      - run: vp install
+      - run: vp run build
+      - run: vp run lint
+      - run: vp run typecheck
 
   slack_notify:
     needs: [ci]

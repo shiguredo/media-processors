@@ -70,12 +70,12 @@ jobs:
       - uses: actions/setup-node@v6
         with:
           node-version: 22
-      - uses: pnpm/action-setup@v5
-      - run: pnpm --version
-      - run: pnpm install
-      - run: pnpm --filter @shiguredo/${{ needs.determine-package.outputs.package_name }} run build
-      - run: pnpm --filter @shiguredo/${{ needs.determine-package.outputs.package_name }} run lint
-      - run: pnpm --filter @shiguredo/${{ needs.determine-package.outputs.package_name }} run typecheck
+      - uses: voidzero-dev/setup-vp@v1
+      - run: vp --version
+      - run: vp install
+      - run: vp run --filter @shiguredo/${{ needs.determine-package.outputs.package_name }} build
+      - run: vp run --filter @shiguredo/${{ needs.determine-package.outputs.package_name }} lint
+      - run: vp run --filter @shiguredo/${{ needs.determine-package.outputs.package_name }} typecheck
       - uses: actions/upload-artifact@v7
         with:
           name: ${{ needs.determine-package.outputs.package_name }}-dist
@@ -95,8 +95,6 @@ jobs:
         with:
           node-version: 22
           registry-url: https://registry.npmjs.org
-
-      - uses: pnpm/action-setup@v5
 
       - name: Download Artifact
         uses: actions/download-artifact@v8
@@ -124,8 +122,6 @@ jobs:
         with:
           node-version: 22
           registry-url: https://registry.npmjs.org
-
-      - uses: pnpm/action-setup@v5
 
       - name: Download Artifact
         uses: actions/download-artifact@v8
