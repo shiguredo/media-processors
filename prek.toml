@@ -16,7 +16,28 @@ hooks = [
 [[repos]]
 repo = "local"
 hooks = [
-  { id = "fmt", name = "pnpm fmt", entry = "pnpm run fmt", language = "system", pass_filenames = false, priority = 0 },
-  { id = "lint", name = "pnpm lint", entry = "pnpm run lint", language = "system", pass_filenames = false, priority = 10 },
-  { id = "typecheck", name = "pnpm typecheck", entry = "pnpm run typecheck", language = "system", pass_filenames = false, priority = 10 },
+  {
+    id = "fmt",
+    name = "pnpm fmt",
+    entry = "pnpm run fmt",
+    language = "system",
+    pass_filenames = false,
+    priority = 0
+  },
+  {
+    id = "lint",
+    name = "pnpm lint",
+    entry = "pnpm run lint",
+    language = "system",
+    pass_filenames = false,
+    priority = 10
+  },
+  {
+    id = "typecheck",
+    name = "pnpm typecheck",
+    entry = "pnpm run typecheck",
+    language = "system",
+    pass_filenames = false,
+    priority = 10
+  },
 ]
