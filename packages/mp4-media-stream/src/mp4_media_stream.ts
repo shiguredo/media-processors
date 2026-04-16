@@ -22,11 +22,11 @@ const VIDEO_DECODER_ID = 1;
  * MP4 を入力にとって、それを再生する MediaStream を生成するクラス
  */
 class Mp4MediaStream {
-  private wasm: WebAssembly.Instance;
-  private memory: WebAssembly.Memory;
-  private engine: number;
+  private readonly wasm: WebAssembly.Instance;
+  private readonly memory: WebAssembly.Memory;
+  private readonly engine: number;
   private info?: Mp4Info;
-  private players = new Map<number, Player>();
+  private readonly players = new Map<number, Player>();
   private nextPlayerId = 0;
 
   private constructor(wasm: WebAssembly.Instance) {
@@ -427,10 +427,10 @@ interface Mp4Info {
 }
 
 class Player {
-  private audio: boolean;
-  private video: boolean;
-  private numberOfChannels = 1;
-  private sampleRate = 48_000;
+  private readonly audio: boolean;
+  private readonly video: boolean;
+  private readonly numberOfChannels: number = 1;
+  private readonly sampleRate: number = 48_000;
   audioDecoder?: AudioDecoder;
   videoDecoder?: VideoDecoder;
   canvas?: HTMLCanvasElement;

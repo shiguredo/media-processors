@@ -87,7 +87,7 @@ abstract class Processor {
   abstract stopProcessing(): void;
 
   // 統計機能
-  private numFramesToRecord = 100;
+  private readonly numFramesToRecord = 100;
   private startTimes: number[] = Array.from({ length: this.numFramesToRecord }, () => 0);
   private processTimes: number[] = Array.from({ length: this.numFramesToRecord }, () => 0);
   private count = 0;
@@ -121,9 +121,9 @@ abstract class Processor {
 }
 
 class BreakoutBoxProcessor extends Processor {
-  private abortController: AbortController;
-  private generator: MediaStreamVideoTrackGenerator;
-  private processor: MediaStreamTrackProcessor<VideoFrame>;
+  private readonly abortController: AbortController;
+  private readonly generator: MediaStreamVideoTrackGenerator;
+  private readonly processor: MediaStreamTrackProcessor<VideoFrame>;
 
   constructor(track: MediaStreamVideoTrack, callback: ProcessImageCallback) {
     super(track, callback);
@@ -204,12 +204,12 @@ class BreakoutBoxProcessor extends Processor {
 }
 
 class RequestVideoFrameCallbackProcessor extends Processor {
-  private video: HTMLVideoElement;
+  private readonly video: HTMLVideoElement;
   private requestVideoFrameCallbackHandle?: number;
 
   // 処理結果画像を書き込むキャンバス
-  private canvas: HTMLCanvasElement;
-  private canvasCtx: CanvasRenderingContext2D;
+  private readonly canvas: HTMLCanvasElement;
+  private readonly canvasCtx: CanvasRenderingContext2D;
 
   constructor(track: MediaStreamVideoTrack, callback: ProcessImageCallback) {
     super(track, callback);

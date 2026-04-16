@@ -1,7 +1,7 @@
 import { VirtualBackgroundProcessor } from "@shiguredo/virtual-background";
 import img from "./background.jpg";
 
-document.addEventListener("DOMContentLoaded", async () => {
+document.addEventListener("DOMContentLoaded", () => {
   if (!VirtualBackgroundProcessor.isSupported()) {
     alert("Unsupported platform");
     throw new Error("Unsupported platform");

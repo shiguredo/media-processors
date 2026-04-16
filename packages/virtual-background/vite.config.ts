@@ -1,12 +1,11 @@
 import fs from "node:fs";
-import path, { dirname } from "node:path";
-import { fileURLToPath } from "node:url";
+import path from "node:path";
 import { defineConfig } from "vite-plus";
 import dts from "vite-plugin-dts";
 import { viteStaticCopy } from "vite-plugin-static-copy";
 import pkg from "./package.json" with { type: "json" };
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
+const __dirname = import.meta.dirname;
 
 const banner = `/**
  * ${pkg.name}
@@ -17,11 +16,10 @@ const banner = `/**
  **/
 `;
 
-// mediapipe の IIFE は SelfieSegmentation を動的に exports へ設定するが、
+// Mediapipe の IIFE は SelfieSegmentation を動的に exports へ設定するが、
 // Rolldown の静的解析では named export として認識できないため明示的な代入文を追加する
-// ref: https://github.com/google/mediapipe/issues/2883
+// Ref: https://github.com/google/mediapipe/issues/2883
 const mediapipeWorkaround = () => ({
-  name: "mediapipe_workaround",
   load(id: string) {
     if (path.basename(id) === "selfie_segmentation.js") {
       let code = fs.readFileSync(id, "utf8");
@@ -30,6 +28,7 @@ const mediapipeWorkaround = () => ({
     }
     return null;
   },
+  name: "mediapipe_workaround",
 });
 
 export default defineConfig({
@@ -45,7 +44,7 @@ export default defineConfig({
     minify: "esbuild",
     rolldownOptions: {
       output: {
-        banner: banner,
+        banner,
       },
       plugins: [mediapipeWorkaround()],
     },

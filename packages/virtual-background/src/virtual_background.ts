@@ -108,8 +108,8 @@ function fillBackgroundImage(_videoFrame: ImageSize, backgroundImage: ImageSize)
  * 映像トラックに仮想背景処理を適用するためのプロセッサ
  */
 class VirtualBackgroundProcessor {
-  private trackProcessor: VideoTrackProcessor;
-  private segmentation: SelfieSegmentation;
+  private readonly trackProcessor: VideoTrackProcessor;
+  private readonly segmentation: SelfieSegmentation;
 
   /**
    * {@link VirtualBackgroundProcessor} インスタンスを生成します
@@ -354,7 +354,7 @@ function resizeCanvasIfNeed(
 }
 
 function trimLastSlash(s: string): string {
-  if (s.slice(-1) === "/") {
+  if (s.endsWith("/")) {
     return s.slice(0, -1);
   }
   return s;

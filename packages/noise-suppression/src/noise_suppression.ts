@@ -113,15 +113,15 @@ class NoiseSuppressionProcessor {
 }
 
 class TrackProcessor {
-  private track: MediaStreamAudioTrack;
-  private abortController: AbortController;
-  private denoiseState: DenoiseState;
+  private readonly track: MediaStreamAudioTrack;
+  private readonly abortController: AbortController;
+  private readonly denoiseState: DenoiseState;
   private buffer: Float32Array;
-  private frameSize: number;
+  private readonly frameSize: number;
   private bufferFrameCount: number;
   private nextTimestamp: number;
-  private generator: MediaStreamAudioTrackGenerator;
-  private processor: MediaStreamTrackProcessor<AudioData>;
+  private readonly generator: MediaStreamAudioTrackGenerator;
+  private readonly processor: MediaStreamTrackProcessor<AudioData>;
 
   constructor(track: MediaStreamAudioTrack, rnnoise: Rnnoise, denoiseState: DenoiseState) {
     this.track = track;

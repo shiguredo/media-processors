@@ -1,10 +1,9 @@
-import path, { dirname } from "node:path";
-import { fileURLToPath } from "node:url";
+import path from "node:path";
 import { defineConfig } from "vite-plus";
 import dts from "vite-plugin-dts";
 import pkg from "./package.json" with { type: "json" };
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
+const __dirname = import.meta.dirname;
 
 const banner = `/**
  * ${pkg.name}
@@ -28,7 +27,7 @@ export default defineConfig({
     minify: "esbuild",
     rolldownOptions: {
       output: {
-        banner: banner,
+        banner,
       },
     },
     target: "es2023",

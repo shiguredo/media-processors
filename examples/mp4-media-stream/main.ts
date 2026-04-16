@@ -1,6 +1,6 @@
 import { Mp4MediaStream } from "@shiguredo/mp4-media-stream";
 
-document.addEventListener("DOMContentLoaded", async () => {
+document.addEventListener("DOMContentLoaded", () => {
   let mp4MediaStream;
 
   if (!Mp4MediaStream.isSupported()) {
@@ -51,7 +51,13 @@ document.addEventListener("DOMContentLoaded", async () => {
     await mp4MediaStream.stop();
   }
 
-  document.querySelector("#input").addEventListener("change", load);
-  document.querySelector("#play").addEventListener("click", play);
-  document.querySelector("#stop").addEventListener("click", stop);
+  document.querySelector("#input").addEventListener("change", () => {
+    void load();
+  });
+  document.querySelector("#play").addEventListener("click", () => {
+    void play();
+  });
+  document.querySelector("#stop").addEventListener("click", () => {
+    void stop();
+  });
 });

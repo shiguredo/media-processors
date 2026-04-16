@@ -1,6 +1,6 @@
 import { NoiseSuppressionProcessor } from "@shiguredo/noise-suppression";
 
-document.addEventListener("DOMContentLoaded", async () => {
+document.addEventListener("DOMContentLoaded", () => {
   if (!NoiseSuppressionProcessor.isSupported()) {
     alert("Unsupported platform");
     throw new Error("Unsupported platform");
