@@ -5,22 +5,18 @@ on:
     tags:
       - "*"
 
+permissions:
+  contents: write
+
 jobs:
   create-release-draft:
     name: Create GitHub Release Draft
     runs-on: ubuntu-24.04
     steps:
-      - name: Get the version
-        id: get_version
-        run: echo ::set-output name=VERSION::${GITHUB_REF/refs\/tags\//}
-      - id: create-release
-        uses: actions/create-release@v1
+      - name: Create release draft
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ steps.get_version.outputs.VERSION }}
-          release_name: ${{ steps.get_version.outputs.VERSION }}
-          draft: true
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release create "${{ github.ref_name }}" --draft --title "${{ github.ref_name }}" --repo "${{ github.repository }}"
 
   slack_notify:
     needs: [create-release-draft]
