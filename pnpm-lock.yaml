@@ -22,8 +22,8 @@ importers:
         specifier: 4.5.4
         version: 4.5.4(@types/node@22.15.17)(@voidzero-dev/vite-plus-core@0.1.18(@types/node@22.15.17)(esbuild@0.27.3)(typescript@6.0.2)(yaml@2.8.0))(rollup@4.59.0)(typescript@6.0.2)
       vite-plugin-static-copy:
-        specifier: 4.0.1
-        version: 4.0.1(@voidzero-dev/vite-plus-core@0.1.18(@types/node@22.15.17)(esbuild@0.27.3)(typescript@6.0.2)(yaml@2.8.0))
+        specifier: 4.1.1
+        version: 4.1.1(@voidzero-dev/vite-plus-core@0.1.18(@types/node@22.15.17)(esbuild@0.27.3)(typescript@6.0.2)(yaml@2.8.0))
       vite-plus:
         specifier: 0.1.18
         version: 0.1.18(@types/node@22.15.17)(@voidzero-dev/vite-plus-core@0.1.18(@types/node@22.15.17)(esbuild@0.27.3)(typescript@6.0.2)(yaml@2.8.0))(esbuild@0.27.3)(typescript@6.0.2)(yaml@2.8.0)
@@ -1382,8 +1382,8 @@ packages:
     resolution: {integrity: sha512-VKS/ZaQhhkKFMANmAOhhXVoIfBXblQxGX1myCQ2faQrfmobMftXeJPcZGp0gS07ocvGJWDLZGyOZDadDBqYIJg==}
     engines: {node: '>=18'}
 
-  tinyglobby@0.2.16:
-    resolution: {integrity: sha512-pn99VhoACYR8nFHhxqix+uvsbXineAasWm5ojXoN8xEwK5Kd3/TrhNn1wByuD52UxWRLy8pu+kRMniEi6Eq9Zg==}
+  tinyglobby@0.2.17:
+    resolution: {integrity: sha512-wXR/dYpcqKmfWpEdZjiKJOwCNFndD0DMnrW/cYjVGttEkBfVgcLFHoNrlj47mjOVic9yyNu65alsgF4NQyTa2g==}
     engines: {node: '>=12.0.0'}
 
   tinypool@2.1.0:
@@ -1427,8 +1427,8 @@ packages:
       vite:
         optional: true
 
-  vite-plugin-static-copy@4.0.1:
-    resolution: {integrity: sha512-r3kQUrrimduikhyRm58ayemoxsgB8lZdn/JULLL4wpXHAZlYejtyZx7E/id7dwRtIOSYWu/tWvFjdEOTzso2MA==}
+  vite-plugin-static-copy@4.1.1:
+    resolution: {integrity: sha512-GrlA8YklrAfSyxJ4M3fdQLOo9oNkp56IM9FYgX/WtEgeIFkPwhu4wzpufBCIuNKCa6Fn77FkRdYxkHqV0FwjAw==}
     engines: {node: ^22.0.0 || >=24.0.0}
     peerDependencies:
       vite: ^6.0.0 || ^7.0.0 || ^8.0.0
@@ -1926,7 +1926,7 @@ snapshots:
       std-env: 4.1.0
       tinybench: 2.9.0
       tinyexec: 1.1.1
-      tinyglobby: 0.2.16
+      tinyglobby: 0.2.17
       vite: '@voidzero-dev/vite-plus-core@0.1.18(@types/node@22.15.17)(esbuild@0.27.3)(typescript@6.0.2)(yaml@2.8.0)'
       ws: 8.20.0
     optionalDependencies:
@@ -2453,7 +2453,7 @@ snapshots:
 
   tinyexec@1.1.1: {}
 
-  tinyglobby@0.2.16:
+  tinyglobby@0.2.17:
     dependencies:
       fdir: 6.5.0(picomatch@4.0.4)
       picomatch: 4.0.4
@@ -2496,12 +2496,12 @@ snapshots:
       - rollup
       - supports-color
 
-  vite-plugin-static-copy@4.0.1(@voidzero-dev/vite-plus-core@0.1.18(@types/node@22.15.17)(esbuild@0.27.3)(typescript@6.0.2)(yaml@2.8.0)):
+  vite-plugin-static-copy@4.1.1(@voidzero-dev/vite-plus-core@0.1.18(@types/node@22.15.17)(esbuild@0.27.3)(typescript@6.0.2)(yaml@2.8.0)):
     dependencies:
       chokidar: 3.6.0
       p-map: 7.0.4
       picocolors: 1.1.1
-      tinyglobby: 0.2.16
+      tinyglobby: 0.2.17
       vite: '@voidzero-dev/vite-plus-core@0.1.18(@types/node@22.15.17)(esbuild@0.27.3)(typescript@6.0.2)(yaml@2.8.0)'
 
   vite-plus@0.1.18(@types/node@22.15.17)(@voidzero-dev/vite-plus-core@0.1.18(@types/node@22.15.17)(esbuild@0.27.3)(typescript@6.0.2)(yaml@2.8.0))(esbuild@0.27.3)(typescript@6.0.2)(yaml@2.8.0):
