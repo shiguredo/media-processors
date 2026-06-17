@@ -250,7 +250,7 @@ class Mp4MediaStream {
       error: async (error: DOMException) => {
         // デコードエラーが発生した場合には再生を停止する
         await this.stopPlayer(playerId);
-        throw error;
+        console.error("VideoDecoder error:", error);
       },
       output: async (frame: VideoFrame) => {
         try {
@@ -265,7 +265,7 @@ class Mp4MediaStream {
           } catch (error) {
             // エラーが発生した場合には再生を停止する
             await this.stopPlayer(playerId);
-            throw error;
+            console.error("VideoDecoder output error:", error);
           }
         } finally {
           frame.close();
@@ -298,7 +298,7 @@ class Mp4MediaStream {
       error: async (error: DOMException) => {
         // デコードエラーが発生した場合には再生を停止する
         await this.stopPlayer(playerId);
-        throw error;
+        console.error("AudioDecoder error:", error);
       },
       output: async (data: AudioData) => {
         try {
@@ -315,7 +315,7 @@ class Mp4MediaStream {
           } catch (error) {
             // エラーが発生した場合には再生を停止する
             await this.stopPlayer(playerId);
-            throw error;
+            console.error("AudioDecoder output error:", error);
           }
         } finally {
           data.close();

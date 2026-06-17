@@ -26,15 +26,15 @@ jobs:
           TAG="${{ github.ref_name }}"
           IS_CANARY="false"
 
-          # canaryタグかチェック
-          if [[ "$TAG" == *-canary ]]; then
+          # canary タグかチェック
+          if [[ "$TAG" =~ -canary\.[0-9]+$ ]]; then
             IS_CANARY="true"
-            # -canaryサフィックスを削除
-            TAG="${TAG%-canary}"
+            # -canary.N サフィックスを削除
+            TAG="${TAG%-canary.*}"
           fi
 
-          # パッケージ名を抽出（最後の-vXXXX部分を除去）
-          PACKAGE_NAME=$(echo "$TAG" | sed 's/-v[^-]*$//')
+          # パッケージ名を抽出（末尾のバージョン番号部分を除去）
+          PACKAGE_NAME=$(echo "$TAG" | sed 's/-[0-9].*$//')
 
           # パッケージディレクトリを決定
           case "$PACKAGE_NAME" in
@@ -75,10 +75,7 @@ jobs:
         run: |
           TAG="${{ github.ref_name }}"
           VERSION=$(node -p 'require("./package.json").version')
-          EXPECTED="${{ needs.determine-package.outputs.package_name }}-v${VERSION}"
-          if [ "${{ needs.determine-package.outputs.is_canary }}" = "true" ]; then
-            EXPECTED="${EXPECTED}-canary"
-          fi
+          EXPECTED="${{ needs.determine-package.outputs.package_name }}-${VERSION}"
           if [ "$TAG" != "$EXPECTED" ]; then
             echo "Tag $TAG does not match expected tag $EXPECTED (package.json version: $VERSION)"
             exit 1

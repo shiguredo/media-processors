@@ -21,12 +21,11 @@ pub struct VideoDecoderConfig {
 }
 
 impl VideoDecoderConfig {
-    pub fn from_avc1_box(b: &Avc1Box) -> Self {
-        let mut description = Vec::new();
-        b.avcc_box.encode(&mut description).expect("unreachable");
+    pub fn from_avc1_box(b: &Avc1Box) -> orfail::Result<Self> {
+        let mut description = b.avcc_box.encode_to_vec().or_fail()?;
         description.drain(..8); // ボックスヘッダ部分を取り除く
 
-        Self {
+        Ok(Self {
             codec: format!(
                 "avc1.{:02x}{:02x}{:02x}",
                 b.avcc_box.avc_profile_indication,
@@ -36,12 +35,11 @@ impl VideoDecoderConfig {
             description,
             coded_width: b.visual.width,
             coded_height: b.visual.height,
-        }
+        })
     }
 
-    pub fn from_hev1_box(b: &Hev1Box) -> Self {
-        let mut description = Vec::new();
-        b.hvcc_box.encode(&mut description).expect("unreachable");
+    pub fn from_hev1_box(b: &Hev1Box) -> orfail::Result<Self> {
+        let mut description = b.hvcc_box.encode_to_vec().or_fail()?;
         description.drain(..8); // ボックスヘッダ部分を取り除く
 
         let mut constraints = b
@@ -80,14 +78,14 @@ impl VideoDecoderConfig {
             .collect::<Vec<_>>()
             .join(".");
 
-        Self {
+        Ok(Self {
             codec: format!(
                 "hev1.{profile_space}.{profile_compatibility_flags:X}.{level}.{constraints}"
             ),
             description,
             coded_width: b.visual.width,
             coded_height: b.visual.height,
-        }
+        })
     }
 
     pub fn from_vp08_box(b: &Vp08Box) -> Self {
@@ -274,7 +272,7 @@ impl Mp4 {
             .or_fail_with(|()| "Unsupported: multiple video tracks".to_owned())?;
 
         Ok(Self {
-            info: Self::get_mp4_info(&tracks),
+            info: Self::get_mp4_info(&tracks)?,
             tracks,
         })
     }
@@ -296,7 +294,7 @@ impl Mp4 {
         }
     }
 
-    fn get_mp4_info(tracks: &[Track]) -> Mp4Info {
+    fn get_mp4_info(tracks: &[Track]) -> orfail::Result<Mp4Info> {
         let mut audio_configs = Vec::new();
         let mut video_configs = Vec::new();
         let mut known_sample_entries = HashSet::new();
@@ -309,10 +307,10 @@ impl Mp4 {
 
                 match chunk.sample_entry() {
                     SampleEntry::Avc1(b) => {
-                        video_configs.push(VideoDecoderConfig::from_avc1_box(b));
+                        video_configs.push(VideoDecoderConfig::from_avc1_box(b)?);
                     }
                     SampleEntry::Hev1(b) => {
-                        video_configs.push(VideoDecoderConfig::from_hev1_box(b));
+                        video_configs.push(VideoDecoderConfig::from_hev1_box(b)?);
                     }
                     SampleEntry::Vp08(b) => {
                         video_configs.push(VideoDecoderConfig::from_vp08_box(b));
@@ -337,9 +335,9 @@ impl Mp4 {
             }
         }
 
-        Mp4Info {
+        Ok(Mp4Info {
             audio_configs,
             video_configs,
-        }
+        })
     }
 }

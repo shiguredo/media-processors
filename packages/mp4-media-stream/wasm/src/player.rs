@@ -95,7 +95,7 @@ impl Player {
             self.timestamp_offset += self.file_duration();
             self.start_time = WasmApi::now();
             for track in &mut self.tracks {
-                track.current_sample_index = NonZeroU32::MIN;
+                track.current_sample_index = 0;
             }
         }
 
@@ -122,7 +122,7 @@ impl Player {
                 continue;
             }
 
-            track.current_sample_index = track.current_sample_index.saturating_add(1);
+            track.current_sample_index += 1;
             return;
         }
     }
@@ -149,7 +149,7 @@ struct TrackPlayer {
     sample_table: Rc<SampleTableAccessor<StblBox>>,
     decoder: Option<DecoderId>,
     timescale: NonZeroU32,
-    current_sample_index: NonZeroU32,
+    current_sample_index: u32,
 }
 
 impl TrackPlayer {
@@ -159,7 +159,7 @@ impl TrackPlayer {
             sample_table: track.sample_table.clone(),
             decoder: None,
             timescale: track.timescale,
-            current_sample_index: NonZeroU32::MIN,
+            current_sample_index: 0,
         })
     }
 
@@ -177,11 +177,11 @@ impl TrackPlayer {
 
         let decoder = match self.current_sample().chunk().sample_entry() {
             SampleEntry::Avc1(b) => {
-                let config = VideoDecoderConfig::from_avc1_box(b);
+                let config = VideoDecoderConfig::from_avc1_box(b).expect("unreachable");
                 WasmApi::create_video_decoder(self.player_id, config).await
             }
             SampleEntry::Hev1(b) => {
-                let config = VideoDecoderConfig::from_hev1_box(b);
+                let config = VideoDecoderConfig::from_hev1_box(b).expect("unreachable");
                 WasmApi::create_video_decoder(self.player_id, config).await
             }
             SampleEntry::Vp08(b) => {
@@ -214,24 +214,21 @@ impl TrackPlayer {
 
     fn is_sample_entry_changed(&self) -> bool {
         // `Mp4::load()` の中で空サンプルがないことは確認済みなので、以降の処理が失敗することはない
-        let prev_sample_index = NonZeroU32::new(self.current_sample_index.get() - 1)
+        let prev_sample_index = NonZeroU32::new(self.current_sample_index)
             .or_else(|| self.sample_table.samples().last().map(|s| s.index()))
             .expect("unreachable");
         let prev_sample = self
             .sample_table
             .get_sample(prev_sample_index)
             .expect("unreachable");
-        let current_sample = self
-            .sample_table
-            .get_sample(self.current_sample_index)
-            .expect("unreachable");
+        let current_sample = self.current_sample();
         prev_sample.chunk().sample_entry() != current_sample.chunk().sample_entry()
     }
 
     // ライフタイムを明示してコンパイラ警告を抑える
     fn current_sample(&self) -> SampleAccessor<'_, StblBox> {
         self.sample_table
-            .get_sample(self.current_sample_index)
+            .get_sample(NonZeroU32::new(self.current_sample_index + 1).expect("unreachable"))
             .expect("unreachable")
     }
 
@@ -246,7 +243,7 @@ impl TrackPlayer {
     }
 
     fn eos(&self) -> bool {
-        self.current_sample_index.get() + 1 == self.sample_table.sample_count()
+        self.current_sample_index >= self.sample_table.sample_count()
     }
 }
 

@@ -68,6 +68,9 @@ importers:
       '@types/offscreencanvas':
         specifier: 2019.7.3
         version: 2019.7.3
+      video-track-processor:
+        specifier: workspace:*
+        version: link:../video-track-processor
 
 packages:
 
