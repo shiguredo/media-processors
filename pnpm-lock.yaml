@@ -7,11 +7,10 @@ settings:
 importers:
 
   .:
-    dependencies:
+    devDependencies:
       '@types/dom-mediacapture-transform':
         specifier: 0.1.11
         version: 0.1.11
-    devDependencies:
       jsdom:
         specifier: 29.1.1
         version: 29.1.1
