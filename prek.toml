@@ -2,21 +2,53 @@
 # See https://prek.j178.dev for more information.
 #:schema https://www.schemastore.org/prek.json
 
+# デフォルトで pre-commit フックとして動作する
 default_stages = ["pre-commit"]
 
+# builtin フック: ファイル形式の基本的な整備を行う
 [[repos]]
 repo = "builtin"
 hooks = [
+  # 行末の不要な空白を削除する
   { id = "trailing-whitespace", priority = 0 },
+  # ファイル末尾に改行を1つ入れる
   { id = "end-of-file-fixer", priority = 0 },
+  # YAML ファイルの構文を検証する
   { id = "check-yaml", priority = 0 },
+  # TOML ファイルの構文を検証する
   { id = "check-toml", priority = 0 },
 ]
 
+# local フック: プロジェクト固有の検証を行う
 [[repos]]
 repo = "local"
-hooks = [
-  { id = "check", name = "vp check", entry = "vp check", language = "system", pass_filenames = false, priority = 10 },
-  { id = "typecheck", name = "vp run typecheck", entry = "vp run typecheck", language = "system", pass_filenames = false, priority = 20 },
-  { id = "test", name = "vp run --filter './packages/*' test", entry = "vp run --filter './packages/*' test", language = "system", pass_filenames = false, priority = 30 },
-]
+
+# フォーマット / lint / OXC 型検査を実行する
+# pass_filenames = false にして、workspace 全体を対象に vp 自身に走査させる
+[[repos.hooks]]
+id = "check"
+name = "vp check"
+entry = "vp check"
+language = "system"
+pass_filenames = false
+priority = 10
+
+# 各パッケージの tsc --noEmit で型検査を実行する
+[[repos.hooks]]
+id = "typecheck"
+name = "vp run typecheck"
+entry = "vp run typecheck"
+language = "system"
+pass_filenames = false
+priority = 20
+
+# 各パッケージのテストを実行する
+# テストは時間がかかるため pre-push ステージで実行する
+[[repos.hooks]]
+id = "test"
+name = "vp run test"
+entry = "vp run test"
+language = "system"
+pass_filenames = false
+stages = ["pre-push"]
+priority = 30
