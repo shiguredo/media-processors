@@ -1,5 +1,3 @@
-/// <reference types="vite-plus/test/globals" />
-
 import { VideoTrackProcessor } from "../src/video_track_processor.js";
 
 // VideoTrackProcessor の公開 API が正しく読み込めることの最小限の確認
