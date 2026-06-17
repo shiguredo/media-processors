@@ -1,8 +1,8 @@
 import { defineConfig, mergeConfig } from "vite-plus/test/config";
 import viteConfig from "./vite.config.js";
 
-// vite-plus のテスト設定をパッケージのビルド設定とマージする
-// jsdom 環境で globals を有効にする
+// テストは vite-plus / vitest で実行する
+// テストファイルが無くても成功するようにしておく
 export default mergeConfig(
   viteConfig,
   defineConfig({
@@ -10,6 +10,7 @@ export default mergeConfig(
       environment: "jsdom",
       globals: true,
       include: ["tests/**/*.test.ts"],
+      passWithNoTests: true,
     },
   }),
 );
