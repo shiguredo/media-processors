@@ -89,8 +89,7 @@
 
     // === 組み込みで利用する型定義 ===
     // Insertable Streams 等の MediaStream Track Processor API の型を含める。
-    // テストファイルの型検査のため vitest の型も含める。
-    "types": ["dom-mediacapture-transform", "vitest"],
+    "types": ["dom-mediacapture-transform"],
     // ECMAScript 2022 と DOM API の型を利用する。
     "lib": ["ES2022", "dom"],
 

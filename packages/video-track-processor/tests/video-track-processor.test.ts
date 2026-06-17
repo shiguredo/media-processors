@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+/// <reference types="vite-plus/test/globals" />
 
 import { VideoTrackProcessor } from "../src/video_track_processor.js";
 
