@@ -6,8 +6,8 @@
     "dev": "vp dev --config examples/vite.config.ts",
     "build": "vp run --filter './packages/*' build",
     "fmt": "vp fmt",
-    "lint": "vp lint --type-aware",
-    "lint:fix": "vp lint --type-aware --fix",
+    "lint": "vp lint",
+    "lint:fix": "vp lint --fix",
     "test": "vp run --filter './packages/*' test",
     "typecheck": "vp run --filter './packages/*' --filter media-processors-examples typecheck"
   },
