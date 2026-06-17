@@ -4,9 +4,9 @@
     "target": "ES2022",
     "module": "ES2022",
 
-    // strict ファミリーを一括有効化
+    // strict ファミリー一括有効化
     "strict": true,
-    // strict の中でも特に重要なので明示しておく
+    // null/undefined を厳密に扱う
     "strictNullChecks": true,
     // オプショナルプロパティと undefined を区別する
     "exactOptionalPropertyTypes": true,
@@ -19,10 +19,10 @@
 
     // 型定義ファイルを出力する
     "declaration": true,
-    // @internal タグが付いた宣言を .d.ts から除外する
+    // @internal タグ付き宣言を .d.ts から除外する
     "stripInternal": true,
 
-    // __extends / __awaiter 等のヘルパーを tslib から import する
+    // ヘルパーを tslib から import する
     "importHelpers": true,
 
     // モジュール解決方式
@@ -57,7 +57,7 @@
     // 出力先
     "outDir": "dist",
 
-    // 複数の DOM 関連型定義が競合するため .d.ts の型チェックはスキップする
+    // DOM 関連型定義の競合を回避する
     "skipLibCheck": true,
 
     // 実験的デコレーターを有効化

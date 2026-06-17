@@ -742,8 +742,9 @@ export default defineConfig({
       // vitest/prefer-describe-function-title, vitest/prefer-called-with
 
       // ===== vitest: プロジェクトに不適なルール (sora-devtools と同様) =====
-      // globals 経由の vitest API を利用する
+      // globals 経由の vitest API を利用するため import 禁止ルールを無効化
       "vitest/no-importing-vitest-globals": "off",
+      // globals 経由の vitest API を利用するため prefer-import ルールを無効化
       "vitest/prefer-importing-vitest-globals": "off",
       // top-level describe の強制は不要
       "vitest/require-top-level-describe": "off",
@@ -763,26 +764,24 @@ export default defineConfig({
     },
     overrides: [
       {
-        // テストファイルは型安全性を緩和
-        // vite-plus は実行時に vitest API を提供するが、型定義ファイルは公開していないため
-        // テストコードで型情報が得られないルールを無効化する
+        // テストコードは vite-plus が提供する vitest API を使うが型定義がないため緩和する
         files: ["**/*.test.ts", "**/*.prop.ts"],
         rules: {
-          // テスト対象の内部状態や外部ライブラリの返り値を任意の型として扱いたい場合があるため
+          // テストでは any を使用する場合がある
           "typescript/no-explicit-any": "off",
-          // セットアップ済みの DOM 要素やフィクスチャに対し、実行時に必ず存在することを保証する非 null アサーションを許容する
+          // セットアップ済みの DOM 要素等に非 null アサーションを使う場合がある
           "typescript/no-non-null-assertion": "off",
-          // テストヘルパーに対して実行時の型を保証できない値を渡す場合があるため
+          // テストでは型情報が不十分な引数渡しを許容する
           "typescript/no-unsafe-argument": "off",
-          // テスト内で一時的に unknown/any な値を変数に代入して検証する場合があるため
+          // テストでは型情報が不十分な代入を許容する
           "typescript/no-unsafe-assignment": "off",
-          // テスト対象のメソッドが any な値を返す場合や、ヘルパー関数を動的に呼び出す場合があるため
+          // テストでは型情報が不十分な関数呼び出しを許容する
           "typescript/no-unsafe-call": "off",
-          // テスト対象のプロパティに動的にアクセスして検証する場合があるため
+          // テストでは型情報が不十分なメンバーアクセスを許容する
           "typescript/no-unsafe-member-access": "off",
-          // テストヘルパーが実行時の型を保証できない値を返す場合があるため
+          // テストでは型情報が不十分な値の返却を許容する
           "typescript/no-unsafe-return": "off",
-          // テスト用フィクスチャや外部ライブラリの値を目的の型にキャストして検証する場合があるため
+          // テストでは安全でない型アサーションを使う場合がある
           "typescript/no-unsafe-type-assertion": "off",
           // require-hook はテストの setup/teardown 規律なのでテストファイルでのみ有効にする
           "vitest/require-hook": "error",
@@ -794,7 +793,7 @@ export default defineConfig({
         rules: {
           // テストのデバッグ出力に console.log を使用
           "no-console": "off",
-          // Node.js モジュール (node:crypto 等) を使用
+          // Node.js モジュールを使用
           "import/no-nodejs-modules": "off",
           // ファイル名はスネークケースを使用
           "unicorn/filename-case": "off",
@@ -804,21 +803,21 @@ export default defineConfig({
           "typescript/explicit-function-return-type": "off",
           // テスト内の非 null アサーションは許容
           "typescript/no-non-null-assertion": "off",
-          // e2e テストでは any 型の使用を許容
+          // e2e テストでは any を使用する場合がある
           "typescript/no-explicit-any": "off",
-          // e2e テストでは型安全でない引数渡しを許容する
+          // e2e テストでは型情報が不十分な引数渡しを許容する
           "typescript/no-unsafe-argument": "off",
-          // e2e テストでは any への代入を許容する
+          // e2e テストでは型情報が不十分な代入を許容する
           "typescript/no-unsafe-assignment": "off",
-          // e2e テストでは any な関数呼び出しを許容する
+          // e2e テストでは型情報が不十分な関数呼び出しを許容する
           "typescript/no-unsafe-call": "off",
-          // e2e テストでは any なメンバーアクセスを許容する
+          // e2e テストでは型情報が不十分なメンバーアクセスを許容する
           "typescript/no-unsafe-member-access": "off",
-          // e2e テストでは any な値の返却を許容する
+          // e2e テストでは型情報が不十分な値の返却を許容する
           "typescript/no-unsafe-return": "off",
           // e2e テストの async コールバックは await なしでも許容
           "typescript/require-await": "off",
-          // e2e の main.ts 等はトップレベル初期化が必要なため無効化
+          // e2e の main.ts 等はトップレベル初期化が必要
           "vitest/require-hook": "off",
         },
       },
@@ -845,17 +844,17 @@ export default defineConfig({
         rules: {
           // 歴史的な命名 (snake_case) のファイルが存在する
           "unicorn/filename-case": "off",
-          // JSDoc なしの JavaScript では any が許容される
+          // JSDoc なしの JavaScript では any の使用を避けられない
           "typescript/no-explicit-any": "off",
-          // JSDoc なしの JavaScript では型安全な引数渡しを強制できない
+          // JSDoc なしの JavaScript では型情報が不十分な引数渡しを許容する
           "typescript/no-unsafe-argument": "off",
-          // JSDoc なしの JavaScript では any への代入を避けられない
+          // JSDoc なしの JavaScript では型情報が不十分な代入を許容する
           "typescript/no-unsafe-assignment": "off",
-          // JSDoc なしの JavaScript では any な関数呼び出しを避けられない
+          // JSDoc なしの JavaScript では型情報が不十分な関数呼び出しを許容する
           "typescript/no-unsafe-call": "off",
-          // JSDoc なしの JavaScript では any なメンバーアクセスを避けられない
+          // JSDoc なしの JavaScript では型情報が不十分なメンバーアクセスを許容する
           "typescript/no-unsafe-member-access": "off",
-          // JSDoc なしの JavaScript では any な値の返却を避けられない
+          // JSDoc なしの JavaScript では型情報が不十分な値の返却を許容する
           "typescript/no-unsafe-return": "off",
         },
       },
