@@ -8,29 +8,31 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const processor = new NoiseSuppressionProcessor();
 
-  let audioCtx;
-  let analyserOriginal;
-  let analyserProcessed;
-  let sourceOriginal;
-  let sourceProcessed;
+  let audioCtx: AudioContext | undefined;
+  let analyserOriginal: AnalyserNode | undefined;
+  let analyserProcessed: AnalyserNode | undefined;
+  let sourceOriginal: MediaStreamAudioSourceNode | undefined;
+  let sourceProcessed: MediaStreamAudioSourceNode | undefined;
+
   function initAudioAnalysersIfNeed() {
     if (audioCtx === undefined) {
-      audioCtx = new (
+      const AudioContextClass: typeof AudioContext =
         window.AudioContext ||
-        (window as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext
-      )();
+        (window as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext ||
+        AudioContext;
+      audioCtx = new AudioContextClass();
 
       analyserOriginal = audioCtx.createAnalyser();
-      visualize(
-        analyserOriginal,
-        document.querySelector<HTMLCanvasElement>("#oscilloscopeOriginal"),
-      );
+      const originalCanvas = document.querySelector<HTMLCanvasElement>("#oscilloscopeOriginal");
+      if (originalCanvas !== null) {
+        visualize(analyserOriginal, originalCanvas);
+      }
 
       analyserProcessed = audioCtx.createAnalyser();
-      visualize(
-        analyserProcessed,
-        document.querySelector<HTMLCanvasElement>("#oscilloscopeProcessed"),
-      );
+      const processedCanvas = document.querySelector<HTMLCanvasElement>("#oscilloscopeProcessed");
+      if (processedCanvas !== null) {
+        visualize(analyserProcessed, processedCanvas);
+      }
     }
   }
 
@@ -44,6 +46,9 @@ document.addEventListener("DOMContentLoaded", () => {
     };
     return navigator.mediaDevices.getUserMedia(constraints).then((stream) => {
       initAudioAnalysersIfNeed();
+      if (audioCtx === undefined || analyserOriginal === undefined) {
+        return stream;
+      }
 
       if (sourceOriginal !== undefined) {
         sourceOriginal.disconnect();
@@ -59,6 +64,9 @@ document.addEventListener("DOMContentLoaded", () => {
     processor.stopProcessing();
 
     const audioElement = document.querySelector<HTMLAudioElement>("#audio");
+    if (audioElement === null) {
+      return;
+    }
     void getUserMedia().then((stream) => {
       if (sourceProcessed !== undefined) {
         sourceProcessed.disconnect();
@@ -72,9 +80,18 @@ document.addEventListener("DOMContentLoaded", () => {
     processor.stopProcessing();
 
     const audioElement = document.querySelector<HTMLAudioElement>("#audio");
+    if (audioElement === null) {
+      return;
+    }
     void getUserMedia().then((stream) => {
       const track = stream.getAudioTracks()[0];
+      if (track === undefined) {
+        return;
+      }
       void processor.startProcessing(track).then((processed_track) => {
+        if (audioCtx === undefined || analyserProcessed === undefined) {
+          return;
+        }
         const stream = new MediaStream([processed_track]);
 
         if (sourceProcessed !== undefined) {
@@ -90,6 +107,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
   function stopAudio() {
     const audioElement = document.querySelector<HTMLAudioElement>("#audio");
+    if (audioElement === null) {
+      return;
+    }
     audioElement.pause();
 
     if (sourceOriginal !== undefined) {
@@ -102,7 +122,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  function visualize(analyser, canvas) {
+  function visualize(analyser: AnalyserNode, canvas: HTMLCanvasElement) {
     requestAnimationFrame(() => {
       visualize(analyser, canvas);
     });
@@ -112,6 +132,9 @@ document.addEventListener("DOMContentLoaded", () => {
     analyser.getByteTimeDomainData(dataArray);
 
     const canvasCtx = canvas.getContext("2d");
+    if (canvasCtx === null) {
+      return;
+    }
     canvasCtx.fillStyle = "rgb(200, 200, 200)";
     canvasCtx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -129,7 +152,7 @@ document.addEventListener("DOMContentLoaded", () => {
     canvasCtx.lineWidth = 2;
     canvasCtx.strokeStyle = "rgb(0, 0, 0)";
     canvasCtx.beginPath();
-    const sliceWidth = Number(canvas.width) / bufferLength;
+    const sliceWidth = canvas.width / bufferLength;
     let x = 0;
     for (let i = 0; i < bufferLength; i++) {
       const v = dataArray[i] / 128;
@@ -147,16 +170,34 @@ document.addEventListener("DOMContentLoaded", () => {
     canvasCtx.stroke();
   }
 
-  function clearCanvas(canvas) {
+  function clearCanvas(canvas: HTMLCanvasElement) {
     const canvasCtx = canvas.getContext("2d");
+    if (canvasCtx === null) {
+      return;
+    }
     canvasCtx.fillStyle = "rgb(200, 200, 200)";
     canvasCtx.fillRect(0, 0, canvas.width, canvas.height);
   }
 
-  document.querySelector("#playProcessedAudio").addEventListener("click", playProcessedAudio);
-  document.querySelector("#playOriginalAudio").addEventListener("click", playOriginalAudio);
-  document.querySelector("#stopAudio").addEventListener("click", stopAudio);
+  const playProcessedAudioButton = document.querySelector("#playProcessedAudio");
+  if (playProcessedAudioButton !== null) {
+    playProcessedAudioButton.addEventListener("click", playProcessedAudio);
+  }
+  const playOriginalAudioButton = document.querySelector("#playOriginalAudio");
+  if (playOriginalAudioButton !== null) {
+    playOriginalAudioButton.addEventListener("click", playOriginalAudio);
+  }
+  const stopAudioButton = document.querySelector("#stopAudio");
+  if (stopAudioButton !== null) {
+    stopAudioButton.addEventListener("click", stopAudio);
+  }
 
-  clearCanvas(document.querySelector("#oscilloscopeOriginal"));
-  clearCanvas(document.querySelector("#oscilloscopeProcessed"));
+  const originalCanvas = document.querySelector<HTMLCanvasElement>("#oscilloscopeOriginal");
+  if (originalCanvas !== null) {
+    clearCanvas(originalCanvas);
+  }
+  const processedCanvas = document.querySelector<HTMLCanvasElement>("#oscilloscopeProcessed");
+  if (processedCanvas !== null) {
+    clearCanvas(processedCanvas);
+  }
 });

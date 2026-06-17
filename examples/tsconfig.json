@@ -2,13 +2,11 @@
   "compilerOptions": {
     "target": "ES2022",
     "module": "ES2022",
+    // examples は動作確認用アプリなので、ライブラリとしての型定義出力は不要
+    "declaration": false,
     "strict": true,
-    "declaration": true,
-    "strictNullChecks": false,
-    "noImplicitAny": false,
     "importHelpers": true,
     "moduleResolution": "bundler",
-    "experimentalDecorators": true,
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "resolveJsonModule": true,

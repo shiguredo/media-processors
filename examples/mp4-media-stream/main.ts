@@ -1,7 +1,7 @@
 import { Mp4MediaStream } from "@shiguredo/mp4-media-stream";
 
 document.addEventListener("DOMContentLoaded", () => {
-  let mp4MediaStream;
+  let mp4MediaStream: Mp4MediaStream | undefined;
 
   if (!Mp4MediaStream.isSupported()) {
     alert("Unsupported platform");
@@ -10,6 +10,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
   async function load() {
     const input = document.querySelector<HTMLInputElement>("#input");
+    if (input === null) {
+      return;
+    }
     const { files } = input;
     if (files === null || files.length === 0) {
       return;
@@ -34,12 +37,16 @@ document.addEventListener("DOMContentLoaded", () => {
       return;
     }
 
+    const repeatInput = document.querySelector<HTMLInputElement>("#repeat");
     const options = {
-      repeat: document.querySelector<HTMLInputElement>("#repeat").checked,
+      repeat: repeatInput === null ? false : repeatInput.checked,
     };
     const stream = await mp4MediaStream.play(options);
 
     const output = document.querySelector<HTMLVideoElement>("#output");
+    if (output === null) {
+      return;
+    }
     output.srcObject = stream;
   }
 
@@ -51,13 +58,22 @@ document.addEventListener("DOMContentLoaded", () => {
     await mp4MediaStream.stop();
   }
 
-  document.querySelector("#input").addEventListener("change", () => {
-    void load();
-  });
-  document.querySelector("#play").addEventListener("click", () => {
-    void play();
-  });
-  document.querySelector("#stop").addEventListener("click", () => {
-    void stop();
-  });
+  const inputButton = document.querySelector("#input");
+  if (inputButton !== null) {
+    inputButton.addEventListener("change", () => {
+      void load();
+    });
+  }
+  const playButton = document.querySelector("#play");
+  if (playButton !== null) {
+    playButton.addEventListener("click", () => {
+      void play();
+    });
+  }
+  const stopButton = document.querySelector("#stop");
+  if (stopButton !== null) {
+    stopButton.addEventListener("click", () => {
+      void stop();
+    });
+  }
 });
