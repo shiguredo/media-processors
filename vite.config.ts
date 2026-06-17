@@ -6,8 +6,8 @@ export default defineConfig({
     options: {
       // TypeScript の型情報を用いた lint ルールを有効化する
       typeAware: true,
-      // workspace 内に複数の tsconfig があるため、フルタイプチェックは各パッケージの tsc に任せる
-      typeCheck: false,
+      // OXC の型検査 (typeCheck) と各パッケージの tsc 型検査を両方有効化し、多角的に型を検証する
+      typeCheck: true,
     },
     plugins: ["typescript", "oxc", "unicorn", "import", "promise", "vitest"],
     categories: {

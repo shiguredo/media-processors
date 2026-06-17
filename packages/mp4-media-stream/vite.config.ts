@@ -43,7 +43,7 @@ export default defineConfig({
           name: "audio-processor-loader",
           transform(code) {
             return code.replaceAll("__AUDIO_PROCESSOR__", () =>
-              fs.readFileSync("src/audio_processor.js"),
+              fs.readFileSync("src/audio_processor.js", "utf8"),
             );
           },
         },
