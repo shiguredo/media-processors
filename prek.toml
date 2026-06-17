@@ -16,20 +16,7 @@ hooks = [
 [[repos]]
 repo = "local"
 hooks = [
-  {
-    id = "check",
-    name = "vp check",
-    entry = "vp check",
-    language = "system",
-    pass_filenames = false,
-    priority = 10
-  },
-  {
-    id = "typecheck",
-    name = "vp run typecheck",
-    entry = "vp run typecheck",
-    language = "system",
-    pass_filenames = false,
-    priority = 20
-  },
+  { id = "check", name = "vp check", entry = "vp check", language = "system", pass_filenames = false, priority = 10 },
+  { id = "typecheck", name = "vp run typecheck", entry = "vp run typecheck", language = "system", pass_filenames = false, priority = 20 },
+  { id = "test", name = "vp run --filter './packages/*' test", entry = "vp run --filter './packages/*' test", language = "system", pass_filenames = false, priority = 30 },
 ]

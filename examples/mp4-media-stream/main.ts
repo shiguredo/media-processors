@@ -9,7 +9,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   async function load() {
-    const input = document.querySelector("#input");
+    const input = document.querySelector<HTMLInputElement>("#input");
     const { files } = input;
     if (files === null || files.length === 0) {
       return;
@@ -23,7 +23,7 @@ document.addEventListener("DOMContentLoaded", () => {
     try {
       mp4MediaStream = await Mp4MediaStream.load(file);
     } catch (error) {
-      alert(error.message);
+      alert((error as Error).message);
       throw error;
     }
   }
@@ -35,11 +35,11 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     const options = {
-      repeat: document.querySelector("#repeat").checked,
+      repeat: document.querySelector<HTMLInputElement>("#repeat").checked,
     };
     const stream = await mp4MediaStream.play(options);
 
-    const output = document.querySelector("#output");
+    const output = document.querySelector<HTMLVideoElement>("#output");
     output.srcObject = stream;
   }
 

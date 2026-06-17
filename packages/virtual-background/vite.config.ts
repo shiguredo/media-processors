@@ -40,7 +40,6 @@ export default defineConfig({
       formats: ["es"],
       name: "Shiguredo",
     },
-    manifest: true,
     minify: "esbuild",
     rolldownOptions: {
       output: {
@@ -48,7 +47,8 @@ export default defineConfig({
       },
       plugins: [mediapipeWorkaround()],
     },
-    target: "es2023",
+    // ルート tsconfig.json の target と一致させる
+    target: "es2022",
   },
   plugins: [
     dts({

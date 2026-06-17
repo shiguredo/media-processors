@@ -61,10 +61,33 @@ jobs:
           echo "Directory: $PACKAGE_DIR"
           echo "Is Canary: $IS_CANARY"
 
+  verify-version:
+    name: Verify Version
+    runs-on: ubuntu-24.04
+    needs: [determine-package]
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
+        with:
+          node-version: 22
+      - name: Verify tag matches package.json version
+        working-directory: ${{ needs.determine-package.outputs.package_dir }}
+        run: |
+          TAG="${{ github.ref_name }}"
+          VERSION=$(node -p 'require("./package.json").version')
+          EXPECTED="${{ needs.determine-package.outputs.package_name }}-v${VERSION}"
+          if [ "${{ needs.determine-package.outputs.is_canary }}" = "true" ]; then
+            EXPECTED="${EXPECTED}-canary"
+          fi
+          if [ "$TAG" != "$EXPECTED" ]; then
+            echo "Tag $TAG does not match expected tag $EXPECTED (package.json version: $VERSION)"
+            exit 1
+          fi
+
   build:
     name: Build
     runs-on: ubuntu-24.04
-    needs: [determine-package]
+    needs: [determine-package, verify-version]
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
       - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6.4.0
@@ -76,6 +99,7 @@ jobs:
       - run: vp run --filter @shiguredo/${{ needs.determine-package.outputs.package_name }} build
       - run: vp run --filter @shiguredo/${{ needs.determine-package.outputs.package_name }} lint
       - run: vp run --filter @shiguredo/${{ needs.determine-package.outputs.package_name }} typecheck
+      - run: vp run --filter @shiguredo/${{ needs.determine-package.outputs.package_name }} test
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: ${{ needs.determine-package.outputs.package_name }}-dist
@@ -105,7 +129,7 @@ jobs:
       # pnpm publish は CI では正常に動作しない
       # https://github.com/pnpm/pnpm/issues/4937
       - run: npm install -g npm@latest
-      - run: npm publish --no-git-checks --tag canary
+      - run: npm publish --no-git-checks --provenance --tag canary
         working-directory: ${{ needs.determine-package.outputs.package_dir }}
 
   npm-publish:
@@ -132,7 +156,7 @@ jobs:
       # pnpm publish は CI では正常に動作しない
       # https://github.com/pnpm/pnpm/issues/4937
       - run: npm install -g npm@latest
-      - run: npm publish --no-git-checks
+      - run: npm publish --no-git-checks --provenance
         working-directory: ${{ needs.determine-package.outputs.package_dir }}
 
   slack_notify:

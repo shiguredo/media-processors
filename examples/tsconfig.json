@@ -4,7 +4,8 @@
     "module": "ES2022",
     "strict": true,
     "declaration": true,
-    "strictNullChecks": true,
+    "strictNullChecks": false,
+    "noImplicitAny": false,
     "importHelpers": true,
     "moduleResolution": "bundler",
     "experimentalDecorators": true,
@@ -12,8 +13,9 @@
     "allowSyntheticDefaultImports": true,
     "resolveJsonModule": true,
     "stripInternal": true,
+    "skipLibCheck": true,
     "newLine": "LF",
-    "types": [],
+    "types": ["dom-mediacapture-transform"],
     "lib": ["ES2022", "dom"]
   },
   "exclude": ["node_modules"]

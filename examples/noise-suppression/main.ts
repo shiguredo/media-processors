@@ -15,13 +15,22 @@ document.addEventListener("DOMContentLoaded", () => {
   let sourceProcessed;
   function initAudioAnalysersIfNeed() {
     if (audioCtx === undefined) {
-      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      audioCtx = new (
+        window.AudioContext ||
+        (window as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext
+      )();
 
       analyserOriginal = audioCtx.createAnalyser();
-      visualize(analyserOriginal, document.querySelector("#oscilloscopeOriginal"));
+      visualize(
+        analyserOriginal,
+        document.querySelector<HTMLCanvasElement>("#oscilloscopeOriginal"),
+      );
 
       analyserProcessed = audioCtx.createAnalyser();
-      visualize(analyserProcessed, document.querySelector("#oscilloscopeProcessed"));
+      visualize(
+        analyserProcessed,
+        document.querySelector<HTMLCanvasElement>("#oscilloscopeProcessed"),
+      );
     }
   }
 
@@ -49,7 +58,7 @@ document.addEventListener("DOMContentLoaded", () => {
   function playOriginalAudio() {
     processor.stopProcessing();
 
-    const audioElement = document.querySelector("#audio");
+    const audioElement = document.querySelector<HTMLAudioElement>("#audio");
     void getUserMedia().then((stream) => {
       if (sourceProcessed !== undefined) {
         sourceProcessed.disconnect();
@@ -62,7 +71,7 @@ document.addEventListener("DOMContentLoaded", () => {
   function playProcessedAudio() {
     processor.stopProcessing();
 
-    const audioElement = document.querySelector("#audio");
+    const audioElement = document.querySelector<HTMLAudioElement>("#audio");
     void getUserMedia().then((stream) => {
       const track = stream.getAudioTracks()[0];
       void processor.startProcessing(track).then((processed_track) => {
@@ -80,7 +89,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function stopAudio() {
-    const audioElement = document.querySelector("#audio");
+    const audioElement = document.querySelector<HTMLAudioElement>("#audio");
     audioElement.pause();
 
     if (sourceOriginal !== undefined) {

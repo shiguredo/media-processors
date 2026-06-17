@@ -1,0 +1,4 @@
+# wasm32-unknown-unknown では実行時に JS 側から提供する import を許可するため、
+# リンク時に未定義シンボルを許可する
+[target.wasm32-unknown-unknown]
+rustflags = ["-C", "link-arg=--allow-undefined"]

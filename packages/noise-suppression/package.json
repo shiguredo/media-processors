@@ -28,7 +28,9 @@
     }
   },
   "scripts": {
-    "build": "vp build"
+    "build": "vp build",
+    "test": "vp test run",
+    "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
     "@shiguredo/rnnoise-wasm": "2025.1.5"

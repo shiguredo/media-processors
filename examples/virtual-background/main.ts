@@ -18,10 +18,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
   async function getUserMedia() {
     const constraints = {
-      deviceId: document.querySelector("#videoDevice").value,
-      frameRate: { ideal: document.querySelector("#videoFps").value },
-      height: document.querySelector("#videoHeight").value,
-      width: document.querySelector("#videoWidth").value,
+      deviceId: document.querySelector<HTMLSelectElement>("#videoDevice").value,
+      frameRate: { ideal: Number(document.querySelector<HTMLInputElement>("#videoFps").value) },
+      height: Number(document.querySelector<HTMLInputElement>("#videoHeight").value),
+      width: Number(document.querySelector<HTMLInputElement>("#videoWidth").value),
     };
     return navigator.mediaDevices.getUserMedia({ video: constraints }).then((result) => {
       updateDeviceList();
@@ -38,7 +38,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     void navigator.mediaDevices.enumerateDevices().then((devices) => {
       const videoDevices = devices.filter((device) => device.kind === "videoinput" && device.label);
-      const select = document.querySelector("#videoDevice");
+      const select = document.querySelector<HTMLSelectElement>("#videoDevice");
       videoDevices.forEach((device) => {
         const option = document.createElement("option");
         option.value = device.deviceId;
@@ -51,7 +51,7 @@ document.addEventListener("DOMContentLoaded", () => {
   function showOriginalVideo() {
     processor.stopProcessing();
 
-    const videoElement = document.querySelector("#video");
+    const videoElement = document.querySelector<HTMLVideoElement>("#video");
     void getUserMedia().then((stream) => {
       videoElement.srcObject = stream;
     });
@@ -60,13 +60,14 @@ document.addEventListener("DOMContentLoaded", () => {
   function showProcessedVideo() {
     processor.stopProcessing();
 
-    const videoElement = document.querySelector("#video");
+    const videoElement = document.querySelector<HTMLVideoElement>("#video");
     void getUserMedia().then((stream) => {
       const track = stream.getVideoTracks()[0];
 
       let blurRadius: number;
       let backgroundImage: HTMLImageElement;
-      const virtualBackgroundType = document.querySelector("#virtualBackgroundType")!;
+      const virtualBackgroundType =
+        document.querySelector<HTMLSelectElement>("#virtualBackgroundType")!;
       if (virtualBackgroundType === null) {
         return;
       }

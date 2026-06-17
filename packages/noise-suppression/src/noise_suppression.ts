@@ -116,7 +116,8 @@ class TrackProcessor {
   private readonly track: MediaStreamAudioTrack;
   private readonly abortController: AbortController;
   private readonly denoiseState: DenoiseState;
-  private buffer: Float32Array;
+  // AudioData の data には ArrayBuffer 固定の Float32Array が必要なので型を絞る
+  private buffer: Float32Array<ArrayBuffer>;
   private readonly frameSize: number;
   private bufferFrameCount: number;
   private nextTimestamp: number;
@@ -125,7 +126,7 @@ class TrackProcessor {
 
   constructor(track: MediaStreamAudioTrack, rnnoise: Rnnoise, denoiseState: DenoiseState) {
     this.track = track;
-    this.buffer = new Float32Array(rnnoise.frameSize);
+    this.buffer = new Float32Array(rnnoise.frameSize) as Float32Array<ArrayBuffer>;
     this.frameSize = rnnoise.frameSize;
     this.bufferFrameCount = 0;
     this.nextTimestamp = 0;
@@ -246,7 +247,7 @@ class TrackProcessor {
             timestamp: this.nextTimestamp,
           }),
         );
-        this.buffer = new Float32Array(this.frameSize);
+        this.buffer = new Float32Array(this.frameSize) as Float32Array<ArrayBuffer>;
         this.bufferFrameCount = 0;
         this.nextTimestamp = data.timestamp + (data.duration * frameOffset) / data.numberOfFrames;
       }

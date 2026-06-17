@@ -228,7 +228,8 @@ impl TrackPlayer {
         prev_sample.chunk().sample_entry() != current_sample.chunk().sample_entry()
     }
 
-    fn current_sample(&self) -> SampleAccessor<StblBox> {
+    // ライフタイムを明示してコンパイラ警告を抑える
+    fn current_sample(&self) -> SampleAccessor<'_, StblBox> {
         self.sample_table
             .get_sample(self.current_sample_index)
             .expect("unreachable")
