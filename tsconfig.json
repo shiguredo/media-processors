@@ -8,6 +8,14 @@
     "strict": true,
     // strict の中でも特に重要なので明示しておく
     "strictNullChecks": true,
+    // オプショナルプロパティと undefined を区別する
+    "exactOptionalPropertyTypes": true,
+    // インデックスアクセスの結果に undefined を含める
+    "noUncheckedIndexedAccess": true,
+    // インデックスシグネチャ越しのアクセスにはブラケット記法を強制する
+    "noPropertyAccessFromIndexSignature": true,
+    // override キーワードの付け忘れを検出する
+    "noImplicitOverride": true,
 
     // 型定義ファイルを出力する
     "declaration": true,
@@ -22,10 +30,22 @@
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "resolveJsonModule": true,
+    // type-only import / export を厳密に区別する
+    "verbatimModuleSyntax": true,
+    // 各ファイルを単独でトランスパイル可能にする
+    "isolatedModules": true,
+    // ファイル名の大文字小文字の不一致を検出する
+    "forceConsistentCasingInFileNames": true,
+    // クラスフィールドの挙動を ES2022 に合わせる
+    "useDefineForClassFields": true,
 
     // 未使用検出
     "noUnusedLocals": true,
     "noUnusedParameters": true,
+    // すべてのコードパスが値を返すことを強制する
+    "noImplicitReturns": true,
+    // switch 文のフォールスルーを禁止する
+    "noFallthroughCasesInSwitch": true,
 
     // 改行コードを LF に統一
     "newLine": "LF",
@@ -41,6 +61,9 @@
     "skipLibCheck": true,
 
     // 実験的デコレーターを有効化
-    "experimentalDecorators": true
+    "experimentalDecorators": true,
+
+    // 型エラーメッセージを省略させない
+    "noErrorTruncation": true
   }
 }

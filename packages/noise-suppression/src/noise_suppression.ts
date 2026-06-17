@@ -5,10 +5,10 @@ import type { DenoiseState } from "@shiguredo/rnnoise-wasm";
  * 音声トラックにノイズ抑制処理を適用するためのプロセッサ
  */
 class NoiseSuppressionProcessor {
-  private rnnoise?: Rnnoise;
-  private trackProcessor?: TrackProcessor;
-  private processedTrack?: MediaStreamAudioTrack;
-  private originalTrack?: MediaStreamAudioTrack;
+  private rnnoise?: Rnnoise | undefined;
+  private trackProcessor?: TrackProcessor | undefined;
+  private processedTrack?: MediaStreamAudioTrack | undefined;
+  private originalTrack?: MediaStreamAudioTrack | undefined;
 
   /**
    * 実行環境が必要な機能をサポートしているかどうかを判定します

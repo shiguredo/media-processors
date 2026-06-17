@@ -25,14 +25,14 @@ class Mp4MediaStream {
   private readonly wasm: WebAssembly.Instance;
   private readonly memory: WebAssembly.Memory;
   private readonly engine: number;
-  private info?: Mp4Info;
+  private info?: Mp4Info | undefined;
   private readonly players = new Map<number, Player>();
   private nextPlayerId = 0;
 
   private constructor(wasm: WebAssembly.Instance) {
     this.wasm = wasm;
-    this.memory = wasm.exports.memory as WebAssembly.Memory;
-    this.engine = (this.wasm.exports.newEngine as CallableFunction)();
+    this.memory = wasm.exports["memory"] as WebAssembly.Memory;
+    this.engine = (this.wasm.exports["newEngine"] as CallableFunction)();
   }
 
   /**
@@ -61,7 +61,7 @@ class Mp4MediaStream {
   static async load(mp4: Blob): Promise<Mp4MediaStream> {
     // インポート関数の中で this を参照したいけど、この時点ではまだ作成されていないので
     // 間接的に参照するようにする
-    const ref: { stream?: Mp4MediaStream } = { stream: undefined };
+    const ref: { stream?: Mp4MediaStream | undefined } = { stream: undefined };
     const importObject = {
       env: {
         closeDecoder(playerId: number, decoderId: number) {
@@ -150,7 +150,7 @@ class Mp4MediaStream {
 
     const player = new Player(this.info.audioConfigs, this.info.videoConfigs);
     this.players.set(playerId, player);
-    (this.wasm.exports.play as CallableFunction)(
+    (this.wasm.exports["play"] as CallableFunction)(
       this.engine,
       playerId,
       this.valueToWasmJson(options),
@@ -176,7 +176,7 @@ class Mp4MediaStream {
     if (player === undefined) {
       return;
     }
-    (this.wasm.exports.stop as CallableFunction)(this.engine, playerId);
+    (this.wasm.exports["stop"] as CallableFunction)(this.engine, playerId);
     await player.stop();
 
     this.players.delete(playerId);
@@ -184,7 +184,7 @@ class Mp4MediaStream {
 
   private async loadMp4(mp4Bytes: Uint8Array): Promise<{ audio: boolean; video: boolean }> {
     const mp4WasmBytes = this.toWasmBytes(mp4Bytes);
-    const resultWasmJson = (this.wasm.exports.loadMp4 as CallableFunction)(
+    const resultWasmJson = (this.wasm.exports["loadMp4"] as CallableFunction)(
       this.engine,
       mp4WasmBytes,
     );
@@ -202,7 +202,7 @@ class Mp4MediaStream {
       config.description = new Uint8Array(config.description as object as number[]);
       if (config.description.byteLength === 0) {
         // コーデックによっては description が存在しないので空なら削除する
-        config.description = undefined;
+        delete config.description;
       }
 
       if (!(await VideoDecoder.isConfigSupported(config)).supported) {
@@ -221,7 +221,7 @@ class Mp4MediaStream {
 
   private async sleep(resultTx: number, duration: number) {
     setTimeout(() => {
-      (this.wasm.exports.awake as CallableFunction)(this.engine, resultTx);
+      (this.wasm.exports["awake"] as CallableFunction)(this.engine, resultTx);
     }, duration);
   }
 
@@ -243,7 +243,7 @@ class Mp4MediaStream {
     config.description = new Uint8Array(config.description as object as number[]);
     if (config.description.byteLength === 0) {
       // コーデックによっては description が存在しないので空なら削除する
-      config.description = undefined;
+      delete config.description;
     }
 
     const init = {
@@ -275,7 +275,7 @@ class Mp4MediaStream {
 
     player.videoDecoder = new VideoDecoder(init);
     player.videoDecoder.configure(config);
-    (this.wasm.exports.notifyDecoderId as CallableFunction)(
+    (this.wasm.exports["notifyDecoderId"] as CallableFunction)(
       this.engine,
       resultTx,
       VIDEO_DECODER_ID,
@@ -325,7 +325,7 @@ class Mp4MediaStream {
 
     player.audioDecoder = new AudioDecoder(init);
     player.audioDecoder.configure(config);
-    (this.wasm.exports.notifyDecoderId as CallableFunction)(
+    (this.wasm.exports["notifyDecoderId"] as CallableFunction)(
       this.engine,
       resultTx,
       AUDIO_DECODER_ID,
@@ -388,13 +388,13 @@ class Mp4MediaStream {
   }
 
   private wasmJsonToValue(wasmJson: number): object {
-    const offset = (this.wasm.exports.vecOffset as CallableFunction)(wasmJson);
-    const len = (this.wasm.exports.vecLen as CallableFunction)(wasmJson);
+    const offset = (this.wasm.exports["vecOffset"] as CallableFunction)(wasmJson);
+    const len = (this.wasm.exports["vecLen"] as CallableFunction)(wasmJson);
     const buffer = new Uint8Array(this.memory.buffer, offset, len);
     const value = JSON.parse(new TextDecoder("utf-8").decode(buffer));
 
     // Wasm 側で所有権は放棄されているので、解放するのは呼び出し側の責務
-    (this.wasm.exports.freeVec as CallableFunction)(wasmJson);
+    (this.wasm.exports["freeVec"] as CallableFunction)(wasmJson);
 
     return value;
   }
@@ -414,8 +414,8 @@ class Mp4MediaStream {
 
   private toWasmBytes(bytes: Uint8Array): number {
     // ここで割り当てられたメモリ領域を解放するのは Wasm 側の責務
-    const wasmBytes = (this.wasm.exports.allocateVec as CallableFunction)(bytes.length);
-    const wasmBytesOffset = (this.wasm.exports.vecOffset as CallableFunction)(wasmBytes);
+    const wasmBytes = (this.wasm.exports["allocateVec"] as CallableFunction)(bytes.length);
+    const wasmBytesOffset = (this.wasm.exports["vecOffset"] as CallableFunction)(wasmBytes);
     new Uint8Array(this.memory.buffer, wasmBytesOffset, bytes.length).set(bytes);
     return wasmBytes;
   }
@@ -431,12 +431,12 @@ class Player {
   private readonly video: boolean;
   private readonly numberOfChannels: number = 1;
   private readonly sampleRate: number = 48_000;
-  audioDecoder?: AudioDecoder;
-  videoDecoder?: VideoDecoder;
-  canvas?: HTMLCanvasElement;
-  canvasCtx?: CanvasRenderingContext2D;
-  audioContext?: AudioContext;
-  audioInputNode?: AudioWorkletNode;
+  audioDecoder?: AudioDecoder | undefined;
+  videoDecoder?: VideoDecoder | undefined;
+  canvas?: HTMLCanvasElement | undefined;
+  canvasCtx?: CanvasRenderingContext2D | undefined;
+  audioContext?: AudioContext | undefined;
+  audioInputNode?: AudioWorkletNode | undefined;
 
   constructor(audioConfigs: AudioDecoderConfig[], videoConfigs: VideoDecoderConfig[]) {
     this.audio = audioConfigs.length > 0;
@@ -444,8 +444,8 @@ class Player {
 
     if (audioConfigs.length > 0) {
       // [NOTE] 今は複数音声入力トラックには未対応なので、最初の一つに決め打ちでいい
-      this.numberOfChannels = audioConfigs[0].numberOfChannels;
-      this.sampleRate = audioConfigs[0].sampleRate;
+      this.numberOfChannels = audioConfigs[0]!.numberOfChannels;
+      this.sampleRate = audioConfigs[0]!.sampleRate;
     }
   }
 
@@ -462,7 +462,7 @@ class Player {
 
       const destination = this.audioContext.createMediaStreamDestination();
       this.audioInputNode.connect(destination);
-      tracks.push(destination.stream.getAudioTracks()[0]);
+      tracks.push(destination.stream.getAudioTracks()[0]!);
     }
     if (this.video) {
       this.canvas = document.createElement("canvas");
@@ -471,7 +471,7 @@ class Player {
         throw new Error("Failed to create 2D canvas context");
       }
       this.canvasCtx = canvasCtx;
-      tracks.push(this.canvas.captureStream().getVideoTracks()[0]);
+      tracks.push(this.canvas.captureStream().getVideoTracks()[0]!);
     }
     return new MediaStream(tracks);
   }
