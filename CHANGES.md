@@ -25,21 +25,35 @@
 
 ### misc
 
+- [CHANGE] `.oxlintrc.jsonc` / `.oxfmtrc.jsonc` を削除し、lint / fmt 設定をルート `vite.config.ts` に統合する
+  - @voluntas
+- [CHANGE] ルート `tsconfig.json` を厳格化し、各パッケージの型エラーを修正する
+  - @voluntas
+- [CHANGE] examples/vite.config.ts の `rollupOptions` を `rolldownOptions` に変更する
+  - @voluntas
+- [CHANGE] 各パッケージの `rollupOptions` を `rolldownOptions` に変更する
+  - @voluntas
+- [CHANGE] CI/CD の Slack 通知を shiguredo/github-actions に統一する
+  - @voluntas
+- [CHANGE] Vite+ へ移行する
+  - @voluntas
+- [CHANGE] 利用していなかった typedoc を削除する
+  - @voluntas
+- [ADD] vitest によるテスト基盤を導入する
+  - @voluntas
+- [ADD] prek.toml を追加する
+  - @voluntas
 - [UPDATE] pnpm と Node.js のバージョン要件を固定する
   - @voluntas
 - [UPDATE] 各パッケージのビルドターゲットを ES2022 に統一し、不要な manifest 出力を削除する
-  - @voluntas
-- [ADD] vitest によるテスト基盤を導入する
   - @voluntas
 - [UPDATE] npm-publish ワークフローにタグと package.json version の整合確認を追加する
   - @voluntas
 - [UPDATE] npm-publish ワークフローで --provenance 付き publish を行う
   - @voluntas
-- [CHANGE] examples/vite.config.ts の rollupOptions を rolldownOptions に変更する
+- [UPDATE] prek.toml のフックを pre-commit / pre-push に分離する
   - @voluntas
-- [FIX] examples の型エラーを修正し、ルート typecheck で examples も対象にする
-  - @voluntas
-- [UPDATE] prek.toml でテスト実行を品質ゲートに追加する
+- [UPDATE] examples/package.json の typecheck スクリプト名を `check` から `typecheck` に変更する
   - @voluntas
 - [UPDATE] vite-plus を 0.1.12 から 0.1.24 へ更新する
   - @voluntas
@@ -47,17 +61,7 @@
   - @voluntas
 - [UPDATE] Node.js の最低バージョンを 20 から 22 に引き上げる
   - @voluntas
-- [CHANGE] vite.config.mjs を vite.config.ts にリネームする
-  - @voluntas
-- [CHANGE] rollupOptions を rolldownOptions に変更する
-  - @voluntas
-- [CHANGE] CI/CD の Slack 通知を shiguredo/github-actions に統一する
-  - @voluntas
-- [ADD] prek.toml を追加する
-  - @voluntas
-- [CHANGE] Vite+ へ移行する
-  - @voluntas
-- [CHANGE] 利用していなかった typedoc を削除する
+- [FIX] examples の null チェック等を整備し、ルート typecheck で examples も対象にする
   - @voluntas
 
 ## noise-suppression-2025.1.0
