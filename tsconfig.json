@@ -1,23 +1,46 @@
 {
   "compilerOptions": {
+    // 出力ターゲット
     "target": "ES2022",
     "module": "ES2022",
+
+    // strict ファミリーを一括有効化
     "strict": true,
-    "declaration": true,
+    // strict の中でも特に重要なので明示しておく
     "strictNullChecks": true,
+
+    // 型定義ファイルを出力する
+    "declaration": true,
+    // @internal タグが付いた宣言を .d.ts から除外する
+    "stripInternal": true,
+
+    // __extends / __awaiter 等のヘルパーを tslib から import する
     "importHelpers": true,
+
+    // モジュール解決方式
     "moduleResolution": "bundler",
-    "experimentalDecorators": true,
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "resolveJsonModule": true,
-    "stripInternal": true,
+
+    // 未使用検出
     "noUnusedLocals": true,
     "noUnusedParameters": true,
+
+    // 改行コードを LF に統一
     "newLine": "LF",
+
+    // 組み込みで利用する型定義
     "types": ["dom-mediacapture-transform"],
     "lib": ["ES2022", "dom"],
+
+    // 出力先
     "outDir": "dist",
-    "skipLibCheck": true
+
+    // 複数の DOM 関連型定義が競合するため .d.ts の型チェックはスキップする
+    "skipLibCheck": true,
+
+    // 実験的デコレーターを有効化
+    "experimentalDecorators": true
   }
 }
