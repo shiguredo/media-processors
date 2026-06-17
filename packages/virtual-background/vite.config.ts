@@ -5,8 +5,6 @@ import dts from "vite-plugin-dts";
 import { viteStaticCopy } from "vite-plugin-static-copy";
 import pkg from "./package.json" with { type: "json" };
 
-const __dirname = import.meta.dirname;
-
 const banner = `/**
  * ${pkg.name}
  * ${pkg.description}
@@ -35,7 +33,7 @@ export default defineConfig({
   build: {
     emptyOutDir: true,
     lib: {
-      entry: path.resolve(__dirname, "src/virtual_background.ts"),
+      entry: path.resolve(import.meta.dirname, "src/virtual_background.ts"),
       fileName: "virtual_background",
       formats: ["es"],
       name: "Shiguredo",
