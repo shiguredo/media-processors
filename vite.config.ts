@@ -58,11 +58,11 @@ export default defineConfig({
       "prefer-destructuring": "off",
       // 関連するクラス (エラークラス等) を 1 ファイルにまとめるパターンのため無効化
       "max-classes-per-file": "off",
-      // SDK のメインファイルは必然的に大きいため無効化
+      // 一部の実装ファイルは責務が多く大きくなるため無効化
       "max-lines": "off",
-      // WebRTC のシグナリング処理やイベントハンドリングは本質的に長いため無効化
+      // メディア処理の初期化やイベントハンドリングは本質的に長いため無効化
       "max-lines-per-function": "off",
-      // シグナリングメッセージ生成等で引数が多い関数があるため無効化
+      // 外部 API 呼び出し等で引数が多い関数があるため無効化
       "max-params": "off",
       // 外部 API のコンストラクタ名が小文字の場合があるため無効化
       "new-cap": "off",
@@ -84,7 +84,7 @@ export default defineConfig({
       "import/prefer-default-export": "off",
       // vite.config.ts 等の設定ファイルで anonymous default export を使用するため無効化
       "import/no-anonymous-default-export": "off",
-      // 型定義ファイル (vite-env.d.ts) が誤検知されるため無効化
+      // 型定義ファイル (test-env.d.ts 等) が誤検知されるため無効化
       "import/unambiguous": "off",
       // イベントハンドラやコールバックメソッドは this を使わないことがあるため無効化
       "class-methods-use-this": "off",
@@ -103,8 +103,8 @@ export default defineConfig({
       // コンストラクタパラメータプロパティは TypeScript の標準機能のため無効化
       "typescript/parameter-properties": "off",
 
-      // __SORA_JS_SDK_VERSION__ はビルド時に define で注入するグローバル定数
-      "no-underscore-dangle": ["error", { allow: ["__SORA_JS_SDK_VERSION__"] }],
+      // 未使用パラメータやプレースホルダーにアンダースコア接頭辞を使用するため無効化
+      "no-underscore-dangle": "off",
 
       // ===== eslint: 危険なコードの禁止 =====
       // console.log の使用を禁止
@@ -377,7 +377,7 @@ export default defineConfig({
       "typescript/explicit-function-return-type": "error",
       // 紛らわしい非 null アサーションを禁止
       "typescript/no-confusing-non-null-assertion": "error",
-      // シグナリングメッセージの動的プロパティ管理に必要なため無効化
+      // MP4 デコーダ設定等でプロパティを動的に削除する必要があるため無効化
       "typescript/no-dynamic-delete": "off",
       // 空のオブジェクト型を禁止
       "typescript/no-empty-object-type": "error",
@@ -734,14 +734,14 @@ export default defineConfig({
       // テストファイル名の一貫性
       "vitest/consistent-test-filename": "error",
       // require-hook はトップレベルの副作用に反応するため、ベースでは無効化して
-      // テストファイル override でのみ有効にする (sora-devtools と同様)
+      // テストファイル override でのみ有効にする
       "vitest/require-hook": "off",
       // ===== vitest: oxlintrc から除外したルール (vite-plus 非対応) =====
       // 以下は .oxlintrc.jsonc にあったが vite-plus が認識しないため統合時に削除した:
       // vitest/prefer-to-have-been-called, vitest/prefer-to-have-been-called-times,
       // vitest/prefer-describe-function-title, vitest/prefer-called-with
 
-      // ===== vitest: プロジェクトに不適なルール (sora-devtools と同様) =====
+      // ===== vitest: プロジェクトに不適なルール =====
       // globals 経由の vitest API を利用するため import 禁止ルールを無効化
       "vitest/no-importing-vitest-globals": "off",
       // globals 経由の vitest API を利用するため prefer-import ルールを無効化
@@ -756,7 +756,7 @@ export default defineConfig({
       "vitest/prefer-to-be-falsy": "off",
       "vitest/prefer-to-be-truthy": "off",
 
-      // ===== typescript: 採用しない pedantic 系ルール (sora-devtools と同様) =====
+      // ===== typescript: 採用しない pedantic 系ルール =====
       // WebRTC API の MediaTrackConstraints など外部 API の型と相性が悪く全面採用が困難なため無効化する
       "typescript/prefer-readonly-parameter-types": "off",
       // イベントハンドラに async 関数を渡すパターンが一般的なため無効化する
@@ -788,42 +788,8 @@ export default defineConfig({
         },
       },
       {
-        // e2e テストはブラウザ操作のためルールを緩和
-        files: ["e2e-tests/**"],
-        rules: {
-          // テストのデバッグ出力に console.log を使用
-          "no-console": "off",
-          // Node.js モジュールを使用
-          "import/no-nodejs-modules": "off",
-          // ファイル名はスネークケースを使用
-          "unicorn/filename-case": "off",
-          // イベントハンドラに async コールバックを使用
-          "typescript/no-misused-promises": "off",
-          // コールバック関数の戻り値型は推論に任せる
-          "typescript/explicit-function-return-type": "off",
-          // テスト内の非 null アサーションは許容
-          "typescript/no-non-null-assertion": "off",
-          // e2e テストでは any を使用する場合がある
-          "typescript/no-explicit-any": "off",
-          // e2e テストでは型情報が不十分な引数渡しを許容する
-          "typescript/no-unsafe-argument": "off",
-          // e2e テストでは型情報が不十分な代入を許容する
-          "typescript/no-unsafe-assignment": "off",
-          // e2e テストでは型情報が不十分な関数呼び出しを許容する
-          "typescript/no-unsafe-call": "off",
-          // e2e テストでは型情報が不十分なメンバーアクセスを許容する
-          "typescript/no-unsafe-member-access": "off",
-          // e2e テストでは型情報が不十分な値の返却を許容する
-          "typescript/no-unsafe-return": "off",
-          // e2e テストの async コールバックは await なしでも許容
-          "typescript/require-await": "off",
-          // e2e の main.ts 等はトップレベル初期化が必要
-          "vitest/require-hook": "off",
-        },
-      },
-      {
         // 設定ファイルは Node.js 環境で動作
-        files: ["*.config.ts", "playwright.config.ts"],
+        files: ["*.config.ts"],
         rules: {
           // Node.js モジュール (node:path 等) を使用
           "import/no-nodejs-modules": "off",
