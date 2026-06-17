@@ -764,6 +764,8 @@ export default defineConfig({
     overrides: [
       {
         // テストファイルは型安全性を緩和
+        // vite-plus は実行時に vitest API を提供するが、型定義ファイルは公開していないため
+        // テストコードで型情報が得られないルールを無効化する
         files: ["**/*.test.ts", "**/*.prop.ts"],
         rules: {
           // テスト対象の内部状態や外部ライブラリの返り値を任意の型として扱いたい場合があるため
@@ -863,136 +865,44 @@ export default defineConfig({
         rules: {
           // 動作確認用の UI で alert を使用する
           "no-alert": "off",
-          // 動作確認用の UI で console を使用する
-          "no-console": "off",
-          // UI 上のリテラル値 (解像度やミリ秒等) は許容する
-          "no-magic-numbers": "off",
-          // コールバック内で変数名を再利用するパターンを許容する
-          "no-shadow": "off",
-          // Promise の明示的無視に void 演算子を使用する
-          "no-void": "off",
-          // コールバック引数など短い変数名を許容する
-          "id-length": "off",
-          // 関数宣言と関数式を用途に応じて使い分ける
-          "func-style": "off",
-          // 条件分岐で代入するパターンを許容する
-          "init-declarations": "off",
-          // 一部取得の際に分割代入を強制しない
-          "prefer-destructuring": "off",
-          // イベントハンドラで async 関数を使用する
-          "require-await": "off",
-          // トップレベルで複数の named export を使用する
-          "import/no-named-export": "off",
-          // エラーハンドリングを簡潔に書くために許容する
-          "promise/always-return": "off",
-          // イベントハンドラ内で Promise をネストさせる場合がある
-          "promise/no-nesting": "off",
-          // 既存の .then() チェーンを維持する
-          "promise/prefer-await-to-then": "off",
           // DOM イベントハンドラの戻り値型は推論に任せる
           "typescript/explicit-function-return-type": "off",
-          // 緩い型付けで any を使用する場合がある
-          "typescript/no-explicit-any": "off",
-          // イベントハンドラに async コールバックを使用する
-          "typescript/no-misused-promises": "off",
+          // イベントハンドラ内で Promise をネストさせる場合がある
+          "promise/no-nesting": "off",
           // DOM 要素取得後の非 null アサーションを許容する
           "typescript/no-non-null-assertion": "off",
+          // 小さい配列では forEach を許容する
+          "unicorn/no-array-for-each": "off",
           // strictNullChecks を有効にしていないため無効化
           "typescript/no-unnecessary-boolean-literal-compare": "off",
           // strictNullChecks を有効にしていないため無効化
           "typescript/no-unnecessary-type-assertion": "off",
           // strictNullChecks を有効にしていないため無効化
-          "typescript/no-unsafe-argument": "off",
-          // strictNullChecks を有効にしていないため無効化
-          "typescript/no-unsafe-assignment": "off",
-          // strictNullChecks を有効にしていないため無効化
-          "typescript/no-unsafe-call": "off",
-          // strictNullChecks を有効にしていないため無効化
-          "typescript/no-unsafe-member-access": "off",
-          // strictNullChecks を有効にしていないため無効化
-          "typescript/no-unsafe-return": "off",
-          // 既存コードで安全でない型アサーションを使用する
-          "typescript/no-unsafe-type-assertion": "off",
-          // strictNullChecks を有効にしていないため無効化
           "typescript/no-useless-default-assignment": "off",
           // strictNullChecks を有効にしていないため無効化
           "typescript/prefer-nullish-coalescing": "off",
-          // イベントハンドラで await を使用しない場合がある
-          "typescript/require-await": "off",
-          // strictNullChecks を有効にしていないため無効化
-          "typescript/strict-boolean-expressions": "off",
-          // ヘルパー関数を内部スコープに配置する場合がある
-          "unicorn/consistent-function-scoping": "off",
-          // 小さい配列では forEach を許容する
-          "unicorn/no-array-for-each": "off",
-          // UI 上のリテラル値は可読性優先で区切りなしを許容する
-          "unicorn/numeric-separators-style": "off",
-          // ブラウザ環境では window を使用して明示する場合がある
-          "unicorn/prefer-global-this": "off",
-          // 既存コードで getElementById を使用する
-          "unicorn/prefer-query-selector": "off",
-          // examples はテストファイルではない
-          "vitest/require-hook": "off",
+          // ルート tsconfig の strict 設定により workspace パッケージの型が any/error と解釈されるため無効化
+          "typescript/no-unsafe-argument": "off",
+          // ルート tsconfig の strict 設定により workspace パッケージの型が any/error と解釈されるため無効化
+          "typescript/no-unsafe-assignment": "off",
+          // ルート tsconfig の strict 設定により workspace パッケージの型が any/error と解釈されるため無効化
+          "typescript/no-unsafe-call": "off",
+          // ルート tsconfig の strict 設定により workspace パッケージの型が any/error と解釈されるため無効化
+          "typescript/no-unsafe-member-access": "off",
         },
       },
       {
         // 既存のパッケージ src はベースルールより緩やかな実装になっているため緩和する
         files: ["packages/*/src/**/*.ts"],
         rules: {
-          // 順次処理が必要なケースでループ内 await を使用する
-          "no-await-in-loop": "off",
           // ライブラリ内でログ出力に console を使用する
           "no-console": "off",
-          // type import と value import を分離するパターンを許容する
-          "no-duplicate-imports": "off",
           // !== undefined による判定は可読性のため許容する
           "no-negated-condition": "off",
-          // コールバック内で変数名を再利用するパターンを許容する
-          "no-shadow": "off",
-          // Promise の明示的無視に void 演算子を使用する
-          "no-void": "off",
-          // イベントハンドラやコールバックメソッドは this を使わない場合がある
-          "class-methods-use-this": "off",
-          // 既存コードの複雑度は別タスクで見直す
-          complexity: "off",
-          // 関連するクラスを 1 ファイルにまとめる場合がある
-          "max-classes-per-file": "off",
-          // SDK のメインファイルは必然的に大きくなる
-          "max-lines": "off",
-          // メディア処理は本質的に長い関数になりうる
-          "max-lines-per-function": "off",
-          // 外部 API 呼び出しで引数が多い関数がある
-          "max-params": "off",
-          // 条件分岐で代入するパターンを許容する
-          "init-declarations": "off",
-          // コールバック引数など短い変数名を許容する
-          "id-length": "off",
-          // 定数値 (解像度、タイムスタンプ等) は許容する
-          "no-magic-numbers": "off",
-          // TODO/XXX コメントは開発中の課題管理に必要
-          "no-warning-comments": "off",
-          // 関数宣言と関数式を用途に応じて使い分ける
-          "func-style": "off",
-          // named export を宣言と同時に行うスタイル
-          "import/group-exports": "off",
-          // namespace import を使用するパターンがある
-          "import/namespace": "off",
-          // 設定用オブジェクトで anonymous default export を使用する
-          "import/no-anonymous-default-export": "off",
-          // named export を使用するスタイル
-          "import/no-named-export": "off",
           // `import * as` を使用するパターンがある
           "import/no-namespace": "off",
-          // named export を使用するスタイル
-          "import/prefer-default-export": "off",
-          // 型定義ファイル等で副作用 import を許容する
-          "import/unambiguous": "off",
           // エラーハンドリングを簡潔に書くために Promise をネストさせる場合がある
           "promise/no-nesting": "off",
-          // 既存の .then() コールバックを維持する
-          "promise/prefer-await-to-callbacks": "off",
-          // 既存の .then() チェーンを維持する
-          "promise/prefer-await-to-then": "off",
           // 既存コードで ts-expect-error 等を使用する
           "typescript/ban-ts-comment": "off",
           // メソッドの戻り値型は推論に任せる
@@ -1005,38 +915,22 @@ export default defineConfig({
           "typescript/no-unsafe-assignment": "off",
           // Wasm 経由の呼び出し等で any な関数呼び出しを避けられない
           "typescript/no-unsafe-call": "off",
-          // Wasm 経由の呼び出し等で any なメンバーアクセスを避けられない
-          "typescript/no-unsafe-member-access": "off",
           // Wasm 経由の呼び出し等で any な値の返却を避けられない
           "typescript/no-unsafe-return": "off",
-          // 既存コードで安全でない型アサーションを使用する
-          "typescript/no-unsafe-type-assertion": "off",
-          // 外部 API の型に合わせて空のコンストラクタを許容する
-          "typescript/no-useless-constructor": "off",
           // 非同期関数内で await を使用しない場合がある
           "typescript/require-await": "off",
-          // nullable チェックの既存パターンを維持する
-          "typescript/strict-boolean-expressions": "off",
           // catch コールバックで unknown 型を使用しない場合がある
           "typescript/use-unknown-in-catch-callback-variable": "off",
-          // ヘルパー関数を内部スコープに配置する場合がある
-          "unicorn/consistent-function-scoping": "off",
           // 既存ファイルは snake_case のため許容する
           "unicorn/filename-case": "off",
-          // 小さい配列では forEach を許容する
-          "unicorn/no-array-for-each": "off",
-          // `(await x).y` 形式を簡潔に書く場合がある
-          "unicorn/no-await-expression-member": "off",
           // !== undefined による判定は可読性のため許容する
           "unicorn/no-negated-condition": "off",
+          // `(await x).y` 形式を簡潔に書く場合がある
+          "unicorn/no-await-expression-member": "off",
           // 既存コードで小文字の 16 進リテラルを使用する
           "unicorn/number-literal-case": "off",
-          // ブラウザ環境では window を使用して明示する場合がある
-          "unicorn/prefer-global-this": "off",
           // 複雑な条件では if/else の方が可読性が高い場合がある
           "unicorn/prefer-ternary": "off",
-          // 既存コードでトップレベル await を使用しない
-          "unicorn/prefer-top-level-await": "off",
         },
       },
     ],
