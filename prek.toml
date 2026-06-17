@@ -11,7 +11,7 @@ repo = "builtin"
 hooks = [
   # 行末の不要な空白を削除する
   { id = "trailing-whitespace", priority = 0 },
-  # ファイル末尾に改行を1つ入れる
+  # ファイル末尾に改行を 1 つ入れる
   { id = "end-of-file-fixer", priority = 0 },
   # YAML ファイルの構文を検証する
   { id = "check-yaml", priority = 0 },

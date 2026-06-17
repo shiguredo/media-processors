@@ -104,15 +104,15 @@ abstract class Processor {
   recordStartFrame() {
     const now = performance.now();
     const idx = this.count % this.numFramesToRecord;
-    this.currentFps = this.numFramesToRecord / ((now - this.startTimes[idx]!) / 1000);
+    this.currentFps = this.numFramesToRecord / ((now - (this.startTimes[idx] ?? 0)) / 1000);
     this.startTimes[idx] = now;
   }
 
   recordStopFrame() {
     const now = performance.now();
     const idx = this.count % this.numFramesToRecord;
-    const prevTime = this.processTimes[idx]!;
-    const startTime = this.startTimes[idx]!;
+    const prevTime = this.processTimes[idx] ?? 0;
+    const startTime = this.startTimes[idx] ?? 0;
     const processTime = now - startTime;
     this.currentSumProcessedTimeMs = this.currentSumProcessedTimeMs - prevTime + processTime;
     this.processTimes[this.count % this.numFramesToRecord] = processTime;
@@ -252,7 +252,11 @@ class RequestVideoFrameCallbackProcessor extends Processor {
     await this.video.play();
 
     const stream = this.canvas.captureStream();
-    return stream.getVideoTracks()[0]!;
+    const track = stream.getVideoTracks()[0];
+    if (track === undefined) {
+      throw new Error("Failed to get video track from canvas capture stream");
+    }
+    return track;
   }
 
   stopProcessing() {

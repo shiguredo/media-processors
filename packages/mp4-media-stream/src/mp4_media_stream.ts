@@ -444,8 +444,12 @@ class Player {
 
     if (audioConfigs.length > 0) {
       // [NOTE] 今は複数音声入力トラックには未対応なので、最初の一つに決め打ちでいい
-      this.numberOfChannels = audioConfigs[0]!.numberOfChannels;
-      this.sampleRate = audioConfigs[0]!.sampleRate;
+      const audioConfig = audioConfigs[0];
+      if (audioConfig === undefined) {
+        throw new Error("Failed to get audio config");
+      }
+      this.numberOfChannels = audioConfig.numberOfChannels;
+      this.sampleRate = audioConfig.sampleRate;
     }
   }
 
@@ -462,7 +466,11 @@ class Player {
 
       const destination = this.audioContext.createMediaStreamDestination();
       this.audioInputNode.connect(destination);
-      tracks.push(destination.stream.getAudioTracks()[0]!);
+      const audioTrack = destination.stream.getAudioTracks()[0];
+      if (audioTrack === undefined) {
+        throw new Error("Failed to get audio track from media stream destination");
+      }
+      tracks.push(audioTrack);
     }
     if (this.video) {
       this.canvas = document.createElement("canvas");
@@ -471,7 +479,11 @@ class Player {
         throw new Error("Failed to create 2D canvas context");
       }
       this.canvasCtx = canvasCtx;
-      tracks.push(this.canvas.captureStream().getVideoTracks()[0]!);
+      const videoTrack = this.canvas.captureStream().getVideoTracks()[0];
+      if (videoTrack === undefined) {
+        throw new Error("Failed to get video track from canvas capture stream");
+      }
+      tracks.push(videoTrack);
     }
     return new MediaStream(tracks);
   }

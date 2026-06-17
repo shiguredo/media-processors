@@ -95,7 +95,7 @@ document.addEventListener("DOMContentLoaded", () => {
       }
 
       let blurRadius = 0;
-      let backgroundImage = new Image();
+      let backgroundImage: HTMLImageElement | undefined;
       switch (virtualBackgroundType.value) {
         case "blur-5": {
           blurRadius = 5;

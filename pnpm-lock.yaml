@@ -64,9 +64,6 @@ importers:
       stackblur-canvas:
         specifier: 3.0.1
         version: 3.0.1
-      video-track-processor:
-        specifier: workspace:*
-        version: link:../video-track-processor
     devDependencies:
       '@types/offscreencanvas':
         specifier: 2019.7.3

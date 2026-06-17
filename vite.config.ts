@@ -736,11 +736,6 @@ export default defineConfig({
       // require-hook はトップレベルの副作用に反応するため、ベースでは無効化して
       // テストファイル override でのみ有効にする
       "vitest/require-hook": "off",
-      // ===== vitest: oxlintrc から除外したルール (vite-plus 非対応) =====
-      // 以下は .oxlintrc.jsonc にあったが vite-plus が認識しないため統合時に削除した:
-      // vitest/prefer-to-have-been-called, vitest/prefer-to-have-been-called-times,
-      // vitest/prefer-describe-function-title, vitest/prefer-called-with
-
       // ===== vitest: プロジェクトに不適なルール =====
       // globals 経由の vitest API を利用するため import 禁止ルールを無効化
       "vitest/no-importing-vitest-globals": "off",
@@ -838,13 +833,11 @@ export default defineConfig({
           "typescript/no-non-null-assertion": "off",
           // 小さい配列では forEach を許容する
           "unicorn/no-array-for-each": "off",
-          // strictNullChecks を有効にしていないため無効化
+          // examples では簡潔さを優先するため無効化
           "typescript/no-unnecessary-boolean-literal-compare": "off",
-          // strictNullChecks を有効にしていないため無効化
+          // examples では簡潔さを優先するため無効化
           "typescript/no-unnecessary-type-assertion": "off",
-          // strictNullChecks を有効にしていないため無効化
-          "typescript/no-useless-default-assignment": "off",
-          // strictNullChecks を有効にしていないため無効化
+          // examples では `||` を意図的に使うため無効化
           "typescript/prefer-nullish-coalescing": "off",
           // ルート tsconfig の strict 設定により workspace パッケージの型が any/error と解釈されるため無効化
           "typescript/no-unsafe-argument": "off",

@@ -31,6 +31,7 @@ jobs:
       - run: vp run build
       - run: vp run lint
       - run: vp run typecheck
+      - run: vp run test
 
   slack_notify:
     needs: [ci]

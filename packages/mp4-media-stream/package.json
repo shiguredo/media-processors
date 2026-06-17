@@ -28,7 +28,7 @@
     }
   },
   "scripts": {
-    "build": "cargo build --release --target wasm32-unknown-unknown -p mp4_media_stream && vp build && tsc --emitDeclarationOnly",
+    "build": "cargo build --release --target wasm32-unknown-unknown -p mp4_media_stream && vp build",
     "test": "vp test run",
     "typecheck": "tsc --noEmit"
   }

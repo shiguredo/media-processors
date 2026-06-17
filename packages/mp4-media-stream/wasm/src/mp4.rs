@@ -5,10 +5,10 @@ use serde::Serialize;
 use shiguredo_mp4::{
     aux::SampleTableAccessor,
     boxes::{
-        Av01Box, Avc1Box, FtypBox, HdlrBox, Hev1Box, IgnoredBox, MoovBox, Mp4aBox, OpusBox,
-        SampleEntry, StblBox, TrakBox, Vp08Box, Vp09Box,
+        Av01Box, Avc1Box, FtypBox, HdlrBox, Hev1Box, MoovBox, Mp4aBox, OpusBox, SampleEntry,
+        StblBox, TrakBox, Vp08Box, Vp09Box,
     },
-    BaseBox, Decode, Either, Encode,
+    BaseBox, BoxHeader, Decode, Encode,
 };
 
 #[derive(Debug, Serialize)]
@@ -54,33 +54,35 @@ impl VideoDecoderConfig {
             constraints.pop();
         }
 
+        // ISO / IEC 14496-15 E.3
+        let profile_space = match b.hvcc_box.general_profile_space.get() {
+            1 => format!("A{}", b.hvcc_box.general_profile_idc.get()),
+            2 => format!("B{}", b.hvcc_box.general_profile_idc.get()),
+            3 => format!("C{}", b.hvcc_box.general_profile_idc.get()),
+            v => format!("{v}"),
+        };
+        let profile_compatibility_flags = b
+            .hvcc_box
+            .general_profile_compatibility_flags
+            .reverse_bits();
+        let level = format!(
+            "{}{}",
+            if b.hvcc_box.general_tier_flag.get() == 0 {
+                'L'
+            } else {
+                'H'
+            },
+            b.hvcc_box.general_level_idc
+        );
+        let constraints = constraints
+            .into_iter()
+            .map(|b| format!("{:02X}", b))
+            .collect::<Vec<_>>()
+            .join(".");
+
         Self {
-            // ISO / IEC 14496-15 E.3
             codec: format!(
-                "hev1.{}.{:X}.{}.{}",
-                match b.hvcc_box.general_profile_space.get() {
-                    1 => format!("A{}", b.hvcc_box.general_profile_idc.get()),
-                    2 => format!("B{}", b.hvcc_box.general_profile_idc.get()),
-                    3 => format!("C{}", b.hvcc_box.general_profile_idc.get()),
-                    v => format!("{v}"),
-                },
-                b.hvcc_box
-                    .general_profile_compatibility_flags
-                    .reverse_bits(),
-                format!(
-                    "{}{}",
-                    if b.hvcc_box.general_tier_flag.get() == 0 {
-                        'L'
-                    } else {
-                        'H'
-                    },
-                    b.hvcc_box.general_level_idc
-                ),
-                constraints
-                    .into_iter()
-                    .map(|b| format!("{:02X}", b))
-                    .collect::<Vec<_>>()
-                    .join(".")
+                "hev1.{profile_space}.{profile_compatibility_flags:X}.{level}.{constraints}"
             ),
             description,
             coded_width: b.visual.width,
@@ -169,8 +171,8 @@ impl AudioDecoderConfig {
                 .es
                 .dec_config_descr
                 .dec_specific_info
-                .payload
-                .get(0)
+                .as_ref()
+                .and_then(|info| info.payload.first())
             {
                 let audio_object_type = b >> 3;
                 codec.push_str(&format!(".{audio_object_type}"));
@@ -278,16 +280,19 @@ impl Mp4 {
     }
 
     fn load_moov_box(mut reader: &[u8]) -> orfail::Result<MoovBox> {
-        FtypBox::decode(&mut reader).or_fail()?;
+        let (_, consumed) = FtypBox::decode(reader).or_fail()?;
+        reader = &reader[consumed..];
         loop {
             if reader.is_empty() {
                 return Err(Failure::new("No 'moov' box found"));
             }
-            if let Either::A(moov_box) =
-                IgnoredBox::decode_or_ignore(&mut reader, |ty| ty == MoovBox::TYPE).or_fail()?
-            {
+            let (header, payload) = BoxHeader::decode_header_and_payload(reader).or_fail()?;
+            let box_size = header.external_size() + payload.len();
+            if header.box_type == MoovBox::TYPE {
+                let (moov_box, _) = MoovBox::decode(&reader[..box_size]).or_fail()?;
                 return Ok(moov_box);
             }
+            reader = &reader[box_size..];
         }
     }
 

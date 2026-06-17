@@ -18,6 +18,8 @@
 
 ### mp4-media-stream
 
+- [UPDATE] shiguredo_mp4 を 2024.4.0 から 2026.3.0 に上げる
+  - @voluntas
 - [FIX] Wasm ビルド時に未定義シンボルでリンクが失敗する問題を修正する
   - @voluntas
 - [FIX] Rust コンパイラのライフタイム警告を修正する
@@ -33,11 +35,14 @@
   - @voluntas
 - [CHANGE] 各パッケージの `rollupOptions` を `rolldownOptions` に変更する
   - @voluntas
+- [UPDATE] CI の Node.js バージョンを 25 から 26 に更新する
+  - @voluntas
+  - @voluntas
 - [CHANGE] CI/CD の Slack 通知を shiguredo/github-actions に統一する
   - @voluntas
 - [CHANGE] Vite+ へ移行する
   - @voluntas
-- [CHANGE] 利用していなかった typedoc を削除する
+- [CHANGE] GitHub の ISSUE_TEMPLATE を削除する
   - @voluntas
 - [ADD] vitest によるテスト基盤を導入する
   - @voluntas
@@ -55,11 +60,11 @@
   - @voluntas
 - [UPDATE] examples/package.json の typecheck スクリプト名を `check` から `typecheck` に変更する
   - @voluntas
-- [UPDATE] vite-plus を 0.1.12 から 0.1.24 へ更新する
+- [UPDATE] vite-plus を 0.1.18 から 0.1.24 へ更新する
   - @voluntas
 - [UPDATE] TypeScript を 5.9.3 から 6.0.3 へ更新する
   - @voluntas
-- [UPDATE] Node.js の最低バージョンを 20 から 22 に引き上げる
+- [CHANGE] Node.js の最低バージョンを 20 から 22 に引き上げる
   - @voluntas
 - [FIX] examples の null チェック等を整備し、ルート typecheck で examples も対象にする
   - @voluntas

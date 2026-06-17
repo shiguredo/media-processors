@@ -34,8 +34,7 @@
   },
   "dependencies": {
     "@mediapipe/selfie_segmentation": "0.1.1675465747",
-    "stackblur-canvas": "3.0.1",
-    "video-track-processor": "workspace:*"
+    "stackblur-canvas": "3.0.1"
   },
   "devDependencies": {
     "@types/offscreencanvas": "2019.7.3"

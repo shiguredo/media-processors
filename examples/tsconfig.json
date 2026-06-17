@@ -7,6 +7,12 @@
     "strict": true,
     "importHelpers": true,
     "moduleResolution": "bundler",
+    // dist 未ビルド状態でも typecheck / lint が通るように、workspace パッケージは src を参照する
+    "paths": {
+      "@shiguredo/mp4-media-stream": ["../packages/mp4-media-stream/src/mp4_media_stream.ts"],
+      "@shiguredo/noise-suppression": ["../packages/noise-suppression/src/noise_suppression.ts"],
+      "@shiguredo/virtual-background": ["../packages/virtual-background/src/virtual_background.ts"]
+    },
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "resolveJsonModule": true,
