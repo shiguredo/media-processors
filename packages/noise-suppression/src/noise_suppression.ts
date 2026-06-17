@@ -126,7 +126,7 @@ class TrackProcessor {
 
   constructor(track: MediaStreamAudioTrack, rnnoise: Rnnoise, denoiseState: DenoiseState) {
     this.track = track;
-    this.buffer = new Float32Array(rnnoise.frameSize) as Float32Array<ArrayBuffer>;
+    this.buffer = new Float32Array(rnnoise.frameSize);
     this.frameSize = rnnoise.frameSize;
     this.bufferFrameCount = 0;
     this.nextTimestamp = 0;
@@ -247,7 +247,7 @@ class TrackProcessor {
             timestamp: this.nextTimestamp,
           }),
         );
-        this.buffer = new Float32Array(this.frameSize) as Float32Array<ArrayBuffer>;
+        this.buffer = new Float32Array(this.frameSize);
         this.bufferFrameCount = 0;
         this.nextTimestamp = data.timestamp + (data.duration * frameOffset) / data.numberOfFrames;
       }
