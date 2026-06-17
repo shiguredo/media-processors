@@ -766,21 +766,21 @@ export default defineConfig({
         // テストファイルは型安全性を緩和
         files: ["**/*.test.ts", "**/*.prop.ts"],
         rules: {
-          // テストで any を使用する場合がある
+          // テスト対象の内部状態や外部ライブラリの返り値を任意の型として扱いたい場合があるため
           "typescript/no-explicit-any": "off",
-          // モックやスタブを使わないテストでも DOM 要素の非 null アサーションを許容する
+          // セットアップ済みの DOM 要素やフィクスチャに対し、実行時に必ず存在することを保証する非 null アサーションを許容する
           "typescript/no-non-null-assertion": "off",
-          // テストでは型安全でない引数渡しを許容する
+          // テストヘルパーに対して実行時の型を保証できない値を渡す場合があるため
           "typescript/no-unsafe-argument": "off",
-          // テストでは any への代入を許容する
+          // テスト内で一時的に unknown/any な値を変数に代入して検証する場合があるため
           "typescript/no-unsafe-assignment": "off",
-          // テストでは any な関数呼び出しを許容する
+          // テスト対象のメソッドが any な値を返す場合や、ヘルパー関数を動的に呼び出す場合があるため
           "typescript/no-unsafe-call": "off",
-          // テストでは any なメンバーアクセスを許容する
+          // テスト対象のプロパティに動的にアクセスして検証する場合があるため
           "typescript/no-unsafe-member-access": "off",
-          // テストでは any な値の返却を許容する
+          // テストヘルパーが実行時の型を保証できない値を返す場合があるため
           "typescript/no-unsafe-return": "off",
-          // テストで安全でない型アサーションを使用する場合がある
+          // テスト用フィクスチャや外部ライブラリの値を目的の型にキャストして検証する場合があるため
           "typescript/no-unsafe-type-assertion": "off",
           // require-hook はテストの setup/teardown 規律なのでテストファイルでのみ有効にする
           "vitest/require-hook": "error",
