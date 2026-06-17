@@ -1,7 +1,6 @@
 import { defineConfig } from "vite-plus";
 
 // lint / fmt の設定を vite-plus の設定ファイルに統一する
-// sora-js-sdk を参考に構成している
 export default defineConfig({
   lint: {
     options: {
@@ -880,7 +879,7 @@ export default defineConfig({
         },
       },
       {
-        // 既存のパッケージ src は sora-js-sdk より緩やかな実装になっているため緩和する
+        // 既存のパッケージ src はベースルールより緩やかな実装になっているため緩和する
         files: ["packages/*/src/**/*.ts"],
         rules: {
           "no-await-in-loop": "off",

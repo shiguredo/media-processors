@@ -5,7 +5,7 @@ import { viteStaticCopy } from "vite-plugin-static-copy";
 export default defineConfig({
   base: process.env.NODE_ENV === "production" ? "/media-processors/" : "/",
   build: {
-    // sora-js-sdk と同様に Rolldown のオプションで各ページのエントリを指定する
+    // Rolldown のオプションで各ページのエントリを指定する
     rolldownOptions: {
       input: {
         index: resolve(__dirname, "index.html"),

@@ -25,7 +25,7 @@
 
 ### misc
 
-- [UPDATE] pnpm と Node.js のバージョン要件を sora-js-sdk 並みに固定する
+- [UPDATE] pnpm と Node.js のバージョン要件を固定する
   - @voluntas
 - [UPDATE] 各パッケージのビルドターゲットを ES2022 に統一し、不要な manifest 出力を削除する
   - @voluntas
