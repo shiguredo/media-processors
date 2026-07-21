@@ -24,6 +24,8 @@
   - @voluntas
 - [FIX] Rust コンパイラのライフタイム警告を修正する
   - @voluntas
+- [CHANGE] デコーダーエラー時に throw せず console.error でログ出力するよう変更する
+  - @voluntas
 
 ### misc
 
@@ -36,7 +38,6 @@
 - [CHANGE] 各パッケージの `rollupOptions` を `rolldownOptions` に変更する
   - @voluntas
 - [UPDATE] CI の Node.js バージョンを 25 から 26 に更新する
-  - @voluntas
   - @voluntas
 - [CHANGE] CI/CD の Slack 通知を shiguredo/github-actions に統一する
   - @voluntas
@@ -67,6 +68,8 @@
 - [CHANGE] Node.js の最低バージョンを 20 から 22 に引き上げる
   - @voluntas
 - [FIX] examples の null チェック等を整備し、ルート typecheck で examples も対象にする
+  - @voluntas
+- [CHANGE] 利用していなかった typedoc を削除する
   - @voluntas
 
 ## noise-suppression-2025.1.0
