@@ -16,23 +16,58 @@
 - [FIX] stackblur-canvas@3.0.0 の package.json "exports" に "types" エントリがなく型解決できない問題を型宣言ファイルの追加で回避する
   - @voluntas
 
+### mp4-media-stream
+
+- [UPDATE] shiguredo_mp4 を 2024.4.0 から 2026.3.0 に上げる
+  - @voluntas
+- [FIX] Wasm ビルド時に未定義シンボルでリンクが失敗する問題を修正する
+  - @voluntas
+- [FIX] Rust コンパイラのライフタイム警告を修正する
+  - @voluntas
+- [CHANGE] デコーダーエラー時に throw せず console.error でログ出力するよう変更する
+  - @voluntas
+
 ### misc
 
-- [UPDATE] vite-plus を 0.1.12 から 0.1.13 へ更新する
+- [CHANGE] `.oxlintrc.jsonc` / `.oxfmtrc.jsonc` を削除し、lint / fmt 設定をルート `vite.config.ts` に統合する
   - @voluntas
-- [UPDATE] TypeScript を 5.9.3 から 6.0.2 へ更新する
+- [CHANGE] ルート `tsconfig.json` を厳格化し、各パッケージの型エラーを修正する
   - @voluntas
-- [UPDATE] Node.js の最低バージョンを 20 から 22 に引き上げる
+- [CHANGE] examples/vite.config.ts の `rollupOptions` を `rolldownOptions` に変更する
   - @voluntas
-- [CHANGE] vite.config.mjs を vite.config.ts にリネームする
+- [CHANGE] 各パッケージの `rollupOptions` を `rolldownOptions` に変更する
   - @voluntas
-- [CHANGE] rollupOptions を rolldownOptions に変更する
+- [UPDATE] CI の Node.js バージョンを 25 から 26 に更新する
   - @voluntas
 - [CHANGE] CI/CD の Slack 通知を shiguredo/github-actions に統一する
   - @voluntas
+- [CHANGE] Vite+ へ移行する
+  - @voluntas
+- [CHANGE] GitHub の ISSUE_TEMPLATE を削除する
+  - @voluntas
+- [ADD] vitest によるテスト基盤を導入する
+  - @voluntas
 - [ADD] prek.toml を追加する
   - @voluntas
-- [CHANGE] Vite+ へ移行する
+- [UPDATE] pnpm と Node.js のバージョン要件を固定する
+  - @voluntas
+- [UPDATE] 各パッケージのビルドターゲットを ES2022 に統一し、不要な manifest 出力を削除する
+  - @voluntas
+- [UPDATE] npm-publish ワークフローにタグと package.json version の整合確認を追加する
+  - @voluntas
+- [UPDATE] npm-publish ワークフローで --provenance 付き publish を行う
+  - @voluntas
+- [UPDATE] prek.toml のフックを pre-commit / pre-push に分離する
+  - @voluntas
+- [UPDATE] examples/package.json の typecheck スクリプト名を `check` から `typecheck` に変更する
+  - @voluntas
+- [UPDATE] vite-plus を 0.1.18 から 0.1.24 へ更新する
+  - @voluntas
+- [UPDATE] TypeScript を 5.9.3 から 6.0.3 へ更新する
+  - @voluntas
+- [CHANGE] Node.js の最低バージョンを 20 から 22 に引き上げる
+  - @voluntas
+- [FIX] examples の null チェック等を整備し、ルート typecheck で examples も対象にする
   - @voluntas
 - [CHANGE] 利用していなかった typedoc を削除する
   - @voluntas

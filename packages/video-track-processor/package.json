@@ -28,6 +28,7 @@
   },
   "scripts": {
     "build": "vp build",
+    "test": "vp test run",
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {

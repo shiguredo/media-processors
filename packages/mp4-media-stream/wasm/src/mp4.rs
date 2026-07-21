@@ -5,10 +5,10 @@ use serde::Serialize;
 use shiguredo_mp4::{
     aux::SampleTableAccessor,
     boxes::{
-        Av01Box, Avc1Box, FtypBox, HdlrBox, Hev1Box, IgnoredBox, MoovBox, Mp4aBox, OpusBox,
-        SampleEntry, StblBox, TrakBox, Vp08Box, Vp09Box,
+        Av01Box, Avc1Box, FtypBox, HdlrBox, Hev1Box, MoovBox, Mp4aBox, OpusBox, SampleEntry,
+        StblBox, TrakBox, Vp08Box, Vp09Box,
     },
-    BaseBox, Decode, Either, Encode,
+    BaseBox, BoxHeader, Decode, Encode,
 };
 
 #[derive(Debug, Serialize)]
@@ -21,12 +21,11 @@ pub struct VideoDecoderConfig {
 }
 
 impl VideoDecoderConfig {
-    pub fn from_avc1_box(b: &Avc1Box) -> Self {
-        let mut description = Vec::new();
-        b.avcc_box.encode(&mut description).expect("unreachable");
+    pub fn from_avc1_box(b: &Avc1Box) -> orfail::Result<Self> {
+        let mut description = b.avcc_box.encode_to_vec().or_fail()?;
         description.drain(..8); // ボックスヘッダ部分を取り除く
 
-        Self {
+        Ok(Self {
             codec: format!(
                 "avc1.{:02x}{:02x}{:02x}",
                 b.avcc_box.avc_profile_indication,
@@ -36,12 +35,11 @@ impl VideoDecoderConfig {
             description,
             coded_width: b.visual.width,
             coded_height: b.visual.height,
-        }
+        })
     }
 
-    pub fn from_hev1_box(b: &Hev1Box) -> Self {
-        let mut description = Vec::new();
-        b.hvcc_box.encode(&mut description).expect("unreachable");
+    pub fn from_hev1_box(b: &Hev1Box) -> orfail::Result<Self> {
+        let mut description = b.hvcc_box.encode_to_vec().or_fail()?;
         description.drain(..8); // ボックスヘッダ部分を取り除く
 
         let mut constraints = b
@@ -54,38 +52,40 @@ impl VideoDecoderConfig {
             constraints.pop();
         }
 
-        Self {
-            // ISO / IEC 14496-15 E.3
+        // ISO / IEC 14496-15 E.3
+        let profile_space = match b.hvcc_box.general_profile_space.get() {
+            1 => format!("A{}", b.hvcc_box.general_profile_idc.get()),
+            2 => format!("B{}", b.hvcc_box.general_profile_idc.get()),
+            3 => format!("C{}", b.hvcc_box.general_profile_idc.get()),
+            v => format!("{v}"),
+        };
+        let profile_compatibility_flags = b
+            .hvcc_box
+            .general_profile_compatibility_flags
+            .reverse_bits();
+        let level = format!(
+            "{}{}",
+            if b.hvcc_box.general_tier_flag.get() == 0 {
+                'L'
+            } else {
+                'H'
+            },
+            b.hvcc_box.general_level_idc
+        );
+        let constraints = constraints
+            .into_iter()
+            .map(|b| format!("{:02X}", b))
+            .collect::<Vec<_>>()
+            .join(".");
+
+        Ok(Self {
             codec: format!(
-                "hev1.{}.{:X}.{}.{}",
-                match b.hvcc_box.general_profile_space.get() {
-                    1 => format!("A{}", b.hvcc_box.general_profile_idc.get()),
-                    2 => format!("B{}", b.hvcc_box.general_profile_idc.get()),
-                    3 => format!("C{}", b.hvcc_box.general_profile_idc.get()),
-                    v => format!("{v}"),
-                },
-                b.hvcc_box
-                    .general_profile_compatibility_flags
-                    .reverse_bits(),
-                format!(
-                    "{}{}",
-                    if b.hvcc_box.general_tier_flag.get() == 0 {
-                        'L'
-                    } else {
-                        'H'
-                    },
-                    b.hvcc_box.general_level_idc
-                ),
-                constraints
-                    .into_iter()
-                    .map(|b| format!("{:02X}", b))
-                    .collect::<Vec<_>>()
-                    .join(".")
+                "hev1.{profile_space}.{profile_compatibility_flags:X}.{level}.{constraints}"
             ),
             description,
             coded_width: b.visual.width,
             coded_height: b.visual.height,
-        }
+        })
     }
 
     pub fn from_vp08_box(b: &Vp08Box) -> Self {
@@ -169,8 +169,8 @@ impl AudioDecoderConfig {
                 .es
                 .dec_config_descr
                 .dec_specific_info
-                .payload
-                .get(0)
+                .as_ref()
+                .and_then(|info| info.payload.first())
             {
                 let audio_object_type = b >> 3;
                 codec.push_str(&format!(".{audio_object_type}"));
@@ -272,26 +272,29 @@ impl Mp4 {
             .or_fail_with(|()| "Unsupported: multiple video tracks".to_owned())?;
 
         Ok(Self {
-            info: Self::get_mp4_info(&tracks),
+            info: Self::get_mp4_info(&tracks)?,
             tracks,
         })
     }
 
     fn load_moov_box(mut reader: &[u8]) -> orfail::Result<MoovBox> {
-        FtypBox::decode(&mut reader).or_fail()?;
+        let (_, consumed) = FtypBox::decode(reader).or_fail()?;
+        reader = &reader[consumed..];
         loop {
             if reader.is_empty() {
                 return Err(Failure::new("No 'moov' box found"));
             }
-            if let Either::A(moov_box) =
-                IgnoredBox::decode_or_ignore(&mut reader, |ty| ty == MoovBox::TYPE).or_fail()?
-            {
+            let (header, payload) = BoxHeader::decode_header_and_payload(reader).or_fail()?;
+            let box_size = header.external_size() + payload.len();
+            if header.box_type == MoovBox::TYPE {
+                let (moov_box, _) = MoovBox::decode(&reader[..box_size]).or_fail()?;
                 return Ok(moov_box);
             }
+            reader = &reader[box_size..];
         }
     }
 
-    fn get_mp4_info(tracks: &[Track]) -> Mp4Info {
+    fn get_mp4_info(tracks: &[Track]) -> orfail::Result<Mp4Info> {
         let mut audio_configs = Vec::new();
         let mut video_configs = Vec::new();
         let mut known_sample_entries = HashSet::new();
@@ -304,10 +307,10 @@ impl Mp4 {
 
                 match chunk.sample_entry() {
                     SampleEntry::Avc1(b) => {
-                        video_configs.push(VideoDecoderConfig::from_avc1_box(b));
+                        video_configs.push(VideoDecoderConfig::from_avc1_box(b)?);
                     }
                     SampleEntry::Hev1(b) => {
-                        video_configs.push(VideoDecoderConfig::from_hev1_box(b));
+                        video_configs.push(VideoDecoderConfig::from_hev1_box(b)?);
                     }
                     SampleEntry::Vp08(b) => {
                         video_configs.push(VideoDecoderConfig::from_vp08_box(b));
@@ -332,9 +335,9 @@ impl Mp4 {
             }
         }
 
-        Mp4Info {
+        Ok(Mp4Info {
             audio_configs,
             video_configs,
-        }
+        })
     }
 }

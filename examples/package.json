@@ -4,7 +4,7 @@
     "dev": "vp dev",
     "preview": "vp preview",
     "build": "vp build",
-    "check": "tsc --noEmit"
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@shiguredo/mp4-media-stream": "workspace:*",
