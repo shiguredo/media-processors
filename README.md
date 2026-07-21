@@ -1,6 +1,9 @@
 # Media Processors
 
+[![GitHub tag](https://img.shields.io/github/tag/shiguredo/media-processors.svg)](https://github.com/shiguredo/media-processors)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+[![GitHub Actions](https://github.com/shiguredo/media-processors/actions/workflows/ci.yaml/badge.svg)](https://github.com/shiguredo/media-processors/actions/workflows/ci.yaml)
+[![Discord](https://img.shields.io/badge/Discord-%235865F2.svg?logo=discord&logoColor=white)](https://discord.gg/shiguredo)
 
 仮想背景やノイズ抑制、MP4 メディアストリームといったメディア処理をブラウザで簡単に行えるようにするためのライブラリです。
 
