@@ -1,6 +1,8 @@
 # Media Processors
 
-[![GitHub tag](https://img.shields.io/github/tag/shiguredo/media-processors.svg)](https://github.com/shiguredo/media-processors)
+[![npm @shiguredo/virtual-background](https://badge.fury.io/js/@shiguredo%2Fvirtual-background.svg)](https://www.npmjs.com/package/@shiguredo/virtual-background)
+[![npm @shiguredo/noise-suppression](https://badge.fury.io/js/@shiguredo%2Fnoise-suppression.svg)](https://www.npmjs.com/package/@shiguredo/noise-suppression)
+[![npm @shiguredo/mp4-media-stream](https://badge.fury.io/js/@shiguredo%2Fmp4-media-stream.svg)](https://www.npmjs.com/package/@shiguredo/mp4-media-stream)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![GitHub Actions](https://github.com/shiguredo/media-processors/actions/workflows/ci.yaml/badge.svg)](https://github.com/shiguredo/media-processors/actions/workflows/ci.yaml)
 [![Discord](https://img.shields.io/badge/Discord-%235865F2.svg?logo=discord&logoColor=white)](https://discord.gg/shiguredo)
