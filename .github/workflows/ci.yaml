@@ -16,7 +16,7 @@ jobs:
     strategy:
       matrix:
         node:
-          - "25"
+          - "26"
           - "24"
           - "22"
     steps:
@@ -31,6 +31,7 @@ jobs:
       - run: vp run build
       - run: vp run lint
       - run: vp run typecheck
+      - run: vp run test
 
   slack_notify:
     needs: [ci]

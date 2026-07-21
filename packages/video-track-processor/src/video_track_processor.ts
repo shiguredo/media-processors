@@ -12,9 +12,9 @@ type ProcessImageCallback = (
  * 実際の変換処理は利用側がコールバック関数として指定する
  */
 class VideoTrackProcessor {
-  private trackProcessor?: Processor;
-  private processedTrack?: MediaStreamVideoTrack;
-  private originalTrack?: MediaStreamVideoTrack;
+  private trackProcessor?: Processor | undefined;
+  private processedTrack?: MediaStreamVideoTrack | undefined;
+  private originalTrack?: MediaStreamVideoTrack | undefined;
 
   static isSupported(): boolean {
     return BreakoutBoxProcessor.isSupported() || RequestVideoFrameCallbackProcessor.isSupported();
@@ -104,15 +104,15 @@ abstract class Processor {
   recordStartFrame() {
     const now = performance.now();
     const idx = this.count % this.numFramesToRecord;
-    this.currentFps = this.numFramesToRecord / ((now - this.startTimes[idx]) / 1000);
+    this.currentFps = this.numFramesToRecord / ((now - (this.startTimes[idx] ?? 0)) / 1000);
     this.startTimes[idx] = now;
   }
 
   recordStopFrame() {
     const now = performance.now();
     const idx = this.count % this.numFramesToRecord;
-    const prevTime = this.processTimes[idx];
-    const startTime = this.startTimes[idx];
+    const prevTime = this.processTimes[idx] ?? 0;
+    const startTime = this.startTimes[idx] ?? 0;
     const processTime = now - startTime;
     this.currentSumProcessedTimeMs = this.currentSumProcessedTimeMs - prevTime + processTime;
     this.processTimes[this.count % this.numFramesToRecord] = processTime;
@@ -205,7 +205,7 @@ class BreakoutBoxProcessor extends Processor {
 
 class RequestVideoFrameCallbackProcessor extends Processor {
   private readonly video: HTMLVideoElement;
-  private requestVideoFrameCallbackHandle?: number;
+  private requestVideoFrameCallbackHandle?: number | undefined;
 
   // 処理結果画像を書き込むキャンバス
   private readonly canvas: HTMLCanvasElement;
@@ -252,7 +252,11 @@ class RequestVideoFrameCallbackProcessor extends Processor {
     await this.video.play();
 
     const stream = this.canvas.captureStream();
-    return stream.getVideoTracks()[0];
+    const track = stream.getVideoTracks()[0];
+    if (track === undefined) {
+      throw new Error("Failed to get video track from canvas capture stream");
+    }
+    return track;
   }
 
   stopProcessing() {

@@ -4,8 +4,6 @@ import { defineConfig } from "vite-plus";
 import dts from "vite-plugin-dts";
 import pkg from "./package.json" with { type: "json" };
 
-const __dirname = import.meta.dirname;
-
 const banner = `/**
  * ${pkg.name}
  * ${pkg.description}
@@ -19,12 +17,11 @@ export default defineConfig({
   build: {
     emptyOutDir: true,
     lib: {
-      entry: path.resolve(__dirname, "src/mp4_media_stream.ts"),
+      entry: path.resolve(import.meta.dirname, "src/mp4_media_stream.ts"),
       fileName: "mp4_media_stream",
       formats: ["es"],
       name: "Shiguredo",
     },
-    manifest: true,
     minify: "esbuild",
     rolldownOptions: {
       output: {
@@ -46,13 +43,14 @@ export default defineConfig({
           name: "audio-processor-loader",
           transform(code) {
             return code.replaceAll("__AUDIO_PROCESSOR__", () =>
-              fs.readFileSync("src/audio_processor.js"),
+              fs.readFileSync("src/audio_processor.js", "utf8"),
             );
           },
         },
       ],
     },
-    target: "es2023",
+    // ルート tsconfig.json の target と一致させる
+    target: "es2022",
   },
   plugins: [
     dts({

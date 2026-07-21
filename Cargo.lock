@@ -199,9 +199,9 @@ dependencies = [
 
 [[package]]
 name = "shiguredo_mp4"
-version = "2024.4.0"
+version = "2026.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dcf4f0930981f4cbd245d45fe7f3159ee71a66fe3027fc0f4615f6f7b55d9fcd"
+checksum = "b135058874815f8f13edae644ceedb659f7238fe4a9e2b1bdceecc72dc659b35"
 
 [[package]]
 name = "slab"

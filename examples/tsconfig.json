@@ -2,18 +2,24 @@
   "compilerOptions": {
     "target": "ES2022",
     "module": "ES2022",
+    // examples は動作確認用アプリなので、ライブラリとしての型定義出力は不要
+    "declaration": false,
     "strict": true,
-    "declaration": true,
-    "strictNullChecks": true,
     "importHelpers": true,
     "moduleResolution": "bundler",
-    "experimentalDecorators": true,
+    // dist 未ビルド状態でも typecheck / lint が通るように、workspace パッケージは src を参照する
+    "paths": {
+      "@shiguredo/mp4-media-stream": ["../packages/mp4-media-stream/src/mp4_media_stream.ts"],
+      "@shiguredo/noise-suppression": ["../packages/noise-suppression/src/noise_suppression.ts"],
+      "@shiguredo/virtual-background": ["../packages/virtual-background/src/virtual_background.ts"]
+    },
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "resolveJsonModule": true,
     "stripInternal": true,
+    "skipLibCheck": true,
     "newLine": "LF",
-    "types": [],
+    "types": ["dom-mediacapture-transform"],
     "lib": ["ES2022", "dom"]
   },
   "exclude": ["node_modules"]

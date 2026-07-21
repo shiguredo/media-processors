@@ -9,19 +9,31 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const assetsPath = ".";
   const processor = new VirtualBackgroundProcessor(assetsPath);
+
+  const elapsedElement = document.querySelector("#elapsed");
+  const fpsElement = document.querySelector("#fps");
   setInterval(() => {
-    const elapsed = processor.getAverageProcessedTimeMs() / 1000;
-    document.querySelector("#elapsed").textContent = elapsed.toFixed(4).padStart(4, "0");
-    const fps = processor.getFps();
-    document.querySelector("#fps").textContent = fps.toFixed(2).padStart(5, "0");
+    if (elapsedElement !== null) {
+      const elapsed = processor.getAverageProcessedTimeMs() / 1000;
+      elapsedElement.textContent = elapsed.toFixed(4).padStart(4, "0");
+    }
+    if (fpsElement !== null) {
+      const fps = processor.getFps();
+      fpsElement.textContent = fps.toFixed(2).padStart(5, "0");
+    }
   }, 300);
 
   async function getUserMedia() {
+    const deviceSelect = document.querySelector<HTMLSelectElement>("#videoDevice");
+    const fpsInput = document.querySelector<HTMLInputElement>("#videoFps");
+    const heightInput = document.querySelector<HTMLInputElement>("#videoHeight");
+    const widthInput = document.querySelector<HTMLInputElement>("#videoWidth");
+
     const constraints = {
-      deviceId: document.querySelector("#videoDevice").value,
-      frameRate: { ideal: document.querySelector("#videoFps").value },
-      height: document.querySelector("#videoHeight").value,
-      width: document.querySelector("#videoWidth").value,
+      deviceId: deviceSelect === null ? undefined : deviceSelect.value,
+      frameRate: { ideal: fpsInput === null ? 30 : Number(fpsInput.value) },
+      height: heightInput === null ? 480 : Number(heightInput.value),
+      width: widthInput === null ? 640 : Number(widthInput.value),
     };
     return navigator.mediaDevices.getUserMedia({ video: constraints }).then((result) => {
       updateDeviceList();
@@ -38,7 +50,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
     void navigator.mediaDevices.enumerateDevices().then((devices) => {
       const videoDevices = devices.filter((device) => device.kind === "videoinput" && device.label);
-      const select = document.querySelector("#videoDevice");
+      const select = document.querySelector<HTMLSelectElement>("#videoDevice");
+      if (select === null) {
+        return;
+      }
       videoDevices.forEach((device) => {
         const option = document.createElement("option");
         option.value = device.deviceId;
@@ -51,7 +66,10 @@ document.addEventListener("DOMContentLoaded", () => {
   function showOriginalVideo() {
     processor.stopProcessing();
 
-    const videoElement = document.querySelector("#video");
+    const videoElement = document.querySelector<HTMLVideoElement>("#video");
+    if (videoElement === null) {
+      return;
+    }
     void getUserMedia().then((stream) => {
       videoElement.srcObject = stream;
     });
@@ -60,16 +78,24 @@ document.addEventListener("DOMContentLoaded", () => {
   function showProcessedVideo() {
     processor.stopProcessing();
 
-    const videoElement = document.querySelector("#video");
+    const videoElement = document.querySelector<HTMLVideoElement>("#video");
+    if (videoElement === null) {
+      return;
+    }
     void getUserMedia().then((stream) => {
       const track = stream.getVideoTracks()[0];
+      if (track === undefined) {
+        return;
+      }
 
-      let blurRadius: number;
-      let backgroundImage: HTMLImageElement;
-      const virtualBackgroundType = document.querySelector("#virtualBackgroundType")!;
+      const virtualBackgroundType =
+        document.querySelector<HTMLSelectElement>("#virtualBackgroundType");
       if (virtualBackgroundType === null) {
         return;
       }
+
+      let blurRadius = 0;
+      let backgroundImage: HTMLImageElement | undefined;
       switch (virtualBackgroundType.value) {
         case "blur-5": {
           blurRadius = 5;

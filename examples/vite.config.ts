@@ -5,7 +5,8 @@ import { viteStaticCopy } from "vite-plugin-static-copy";
 export default defineConfig({
   base: process.env.NODE_ENV === "production" ? "/media-processors/" : "/",
   build: {
-    rollupOptions: {
+    // Rolldown のオプションで各ページのエントリを指定する
+    rolldownOptions: {
       input: {
         index: resolve(__dirname, "index.html"),
         mp4MediaStream: resolve(__dirname, "mp4-media-stream/index.html"),
@@ -16,6 +17,7 @@ export default defineConfig({
   },
   envDir: resolve(__dirname, ".."),
   optimizeDeps: {
+    // workspace パッケージは dist エイリアスで解決するため事前バンドルから除外する
     exclude: [
       "@shiguredo/virtual-background",
       "@shiguredo/noise-suppression",
@@ -40,6 +42,7 @@ export default defineConfig({
     }),
   ],
   resolve: {
+    // workspace 内のパッケージはビルド済みの dist ファイルを直接参照する
     alias: {
       "@shiguredo/mp4-media-stream": resolve(
         __dirname,

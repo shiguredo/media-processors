@@ -2,5 +2,6 @@ packages:
   - packages/*
   - examples
 
-onlyBuiltDependencies:
-  - esbuild
+# pnpm 11 では build スクリプトの許可を allowBuilds で管理する
+allowBuilds:
+  esbuild: true

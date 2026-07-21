@@ -35,6 +35,7 @@
 
 - Erlang/OTP のコードを書くときは `shiguredo-erlang` スキルを参照すること
 - Rust のコードを書くときは `shiguredo-rust` スキルを参照すること
+- Python のコードを書くときは `shiguredo-python` スキルを参照すること
 - TypeScript のコードを書くときは `shiguredo-typescript` スキルを参照すること
 
 ## 変更履歴について

@@ -1,23 +1,107 @@
 {
   "compilerOptions": {
+    // === 出力ターゲット ===
+    // サポート対象のブラウザ / Node.js が ES2022 をネイティブで扱えるため、
+    // トランスパイル時の構文変換を最小限に抑える。
     "target": "ES2022",
-    "module": "ES2022",
+    // ネイティブ ESM を使用し、import attributes 等の新しいモジュール構文も型検査できるように ESNext を採用する。
+    // 出力される JavaScript の構文レベルは target で制御するため、実行環境への影響はない。
+    "module": "ESNext",
+
+    // === strict 系オプション ===
+    // noImplicitAny / strictNullChecks / strictFunctionTypes /
+    // strictBindCallApply / strictPropertyInitialization /
+    // alwaysStrict / noImplicitThis / useUnknownInCatchVariables を一括有効化し、
+    // メディア処理のような実行時エラーの許容範囲が小さいコードベースの型安全性の基盤とする。
     "strict": true,
-    "declaration": true,
+    // null / undefined 参照によるランタイムエラーを減らすため、nullable な値へのアクセスを厳密にチェックする。
     "strictNullChecks": true,
-    "importHelpers": true,
-    "moduleResolution": "bundler",
-    "experimentalDecorators": true,
-    "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
-    "resolveJsonModule": true,
+    // オプショナルプロパティ (?:) と「明示的に undefined」を区別し、
+    // 設定オブジェクト等で意図しない undefined の混入を防ぐ。
+    "exactOptionalPropertyTypes": true,
+    // 配列 / オブジェクトのインデックスアクセス結果に undefined の可能性を含めることで、
+    // 範囲外アクセスや存在しないキーへのアクセスを検出する。
+    "noUncheckedIndexedAccess": true,
+    // インデックスシグネチャで定義されたプロパティにはドット記法ではなくブラケット記法を使い、
+    // Wasm exports 等の動的キーへのアクセスを明示する。
+    "noPropertyAccessFromIndexSignature": true,
+    // 親クラスのメソッドをオーバーライドするときに override キーワードを必須にし、
+    // 誤って同名メソッドを新規定義するのを防ぐ。
+    "noImplicitOverride": true,
+
+    // === 型定義ファイル (.d.ts) 出力 ===
+    // 各パッケージをライブラリとして配布するため .d.ts を出力し、利用側の型補完を支える。
+    "declaration": true,
+    // @internal タグが付いた API は公開型定義から除外し、内部実装の誤用を防ぐ。
     "stripInternal": true,
+
+    // === モジュール解決 / 相互運用 ===
+    // __extends / __awaiter 等の TypeScript ヘルパーを tslib から import し、
+    // 各ファイルに同じヘルパーが重複して展開されるのを避ける。
+    "importHelpers": true,
+    // Vite / esbuild 等の最新バンドラが採用する解決方式に合わせ、import の挙動を統一する。
+    "moduleResolution": "bundler",
+    // CommonJS 由来のモジュールも default import できるようにし、互換性を高める。
+    "esModuleInterop": true,
+    // default export が存在しないモジュールに対しても default import を許容する。
+    "allowSyntheticDefaultImports": true,
+    // package.json 等の JSON ファイルを import して型推論できるようにする。
+    "resolveJsonModule": true,
+    // import type / export type を使う際の意図を明確にし、
+    // 不要なランタイム import の発生を防ぐ。
+    "verbatimModuleSyntax": true,
+    // 各ファイルを独立してトランスパイルできるように制約を加え、
+    // Babel / swc / esbuild 等の高速コンパイラとの互換性を保つ。
+    "isolatedModules": true,
+    // ファイル名の大文字小文字の不一致を検出し、
+    // macOS / Windows / Linux 間でのクロスプラットフォーム問題を防ぐ。
+    "forceConsistentCasingInFileNames": true,
+    // クラスフィールドの初期化を Object.defineProperty 相当にし、ES2022 標準の挙動に合わせる。
+    "useDefineForClassFields": true,
+
+    // === コード品質: 未使用検出 ===
+    // 未使用のローカル変数を検出し、コードの整理を促す。
     "noUnusedLocals": true,
+    // 未使用の関数パラメータを検出する。
     "noUnusedParameters": true,
+
+    // === コード品質: 制御フロー ===
+    // 関数内の全コードパスが値を返すことを保証し、undefined が返る implicit な分岐を防ぐ。
+    "noImplicitReturns": true,
+    // switch 文での意図しないフォールスルーを禁止する。
+    "noFallthroughCasesInSwitch": true,
+
+    // === 追加の厳格化 ===
+    // 到達不能コードを検出する。
+    "allowUnreachableCode": false,
+    // 未使用のラベルを検出する。
+    "allowUnusedLabels": false,
+    // 型エラーがある場合はファイルの出力を行わない。
+    "noEmitOnError": true,
+    // 副作用のみの import に対して型宣言の有無や解決不能を検出する。
+    "noUncheckedSideEffectImports": true,
+    // enum / namespace / パラメータプロパティ等、TypeScript 独自で消去できない構文を禁止する。
+    "erasableSyntaxOnly": true,
+
+    // === 出力フォーマット ===
+    // 生成ファイルの改行コードを LF に統一し、開発環境の違いによる差分を抑える。
     "newLine": "LF",
+
+    // === 組み込みで利用する型定義 ===
+    // Insertable Streams 等の MediaStream Track Processor API の型を含める。
     "types": ["dom-mediacapture-transform"],
+    // ECMAScript 2022 と DOM API の型を利用する。
     "lib": ["ES2022", "dom"],
+
+    // === 出力先 ===
+    // ビルド成果物の出力先を dist に統一する。
     "outDir": "dist",
-    "skipLibCheck": true
+
+    // === エラー報告 ===
+    // onnxruntime-web 等、依存ライブラリの .d.ts 間で型定義が競合しても
+    // 各パッケージのビルドが壊れないようにする。
+    "skipLibCheck": true,
+    // 型エラーメッセージを省略せずに表示し、デバッグ時の原因特定を容易にする。
+    "noErrorTruncation": true
   }
 }
