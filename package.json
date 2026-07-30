@@ -14,7 +14,7 @@
   "devDependencies": {
     "@types/dom-mediacapture-transform": "0.1.12",
     "@typescript/typescript6": "6.0.2",
-    "jsdom": "30.0.0",
+    "jsdom": "30.0.1",
     "typescript": "7.0.2",
     "vite": "npm:@voidzero-dev/vite-plus-core@0.2.6",
     "vite-plugin-dts": "5.0.3",
